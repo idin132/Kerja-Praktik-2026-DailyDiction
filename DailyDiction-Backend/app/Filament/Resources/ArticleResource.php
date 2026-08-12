@@ -6,6 +6,7 @@ use App\Filament\Resources\ArticleResource\Pages;
 use App\Models\Article;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -23,13 +24,19 @@ class ArticleResource extends Resource
                 Forms\Components\TextInput::make('title')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\TextInput::make('author')
+                    ->required()
+                    ->maxLength(255),
                 Forms\Components\TextInput::make('slug')
                     ->label('Slug: Alamat URL')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('category')
-                    ->required()
-                    ->maxLength(255),
+                Forms\Components\Select::make('category')
+                    ->options([
+                        'action' => 'Action',
+                        'Romance' => 'Romance'
+                    ])
+                    ->required(),
                 Forms\Components\TextInput::make('category_color')
                     ->required()
                     ->maxLength(255)
@@ -39,9 +46,25 @@ class ArticleResource extends Resource
                     ->columnSpanFull(),
                 Forms\Components\Textarea::make('content')
                     ->required()
-                    ->columnSpanFull(),
+                    ->columnSpanFull()
+                    ->live(onBlur: true) // Trigger pembaruan saat user selesai ketik/pindah focus
+                    ->afterStateUpdated(function (string $state = null, Set $set) {
+                        if (! $state) {
+                            $set('read_time', '1 MIN READ');
+                            return;
+                        }
 
-                // Component Upload Gambar (Sudah Diperbaiki)
+                        // Hitung jumlah kata
+                        $wordCount = str_word_count(strip_tags($state));
+
+                        // Rata-rata orang membaca 200 kata/menit (dibulatkan ke atas minimal 1)
+                        $minutes = max(1, ceil($wordCount / 200));
+
+                        // Set otomatis nilai read_time
+                        $set('read_time', "{$minutes} MIN READ");
+                    }),
+
+                // Component Upload Gambar
                 Forms\Components\FileUpload::make('image_url')
                     ->label('Thumbnail Artikel')
                     ->image()
@@ -61,7 +84,8 @@ class ArticleResource extends Resource
                 Forms\Components\TextInput::make('read_time')
                     ->required()
                     ->maxLength(255)
-                    ->default('5 MIN READ'),
+                    ->default('1 MIN READ')
+                    ->readOnly(),
                 Forms\Components\Toggle::make('is_featured')
                     ->required(),
                 Forms\Components\Toggle::make('is_published')
