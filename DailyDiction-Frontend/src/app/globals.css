@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@import "tailwindcss";
+
+@theme {
+  /* Warna Custom DailyDiction*/
+  --color-dark-bg: #0d0f12;
+  --color-dark-card: #161920;
+  --color-dark-border: #262a36;
+
+  --color-brand-crimson: #ff3e3e;
+  --color-brand-cyan: #00e5ff;
+
+  --color-text-primary: #eceff4;
+  --color-text-muted: #8a94a6;
+
+  /* Font Family */
+  --font-mono: var(--font-jetbrains-mono), monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-dark-bg);
+  color: var(--color-text-primary);
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
