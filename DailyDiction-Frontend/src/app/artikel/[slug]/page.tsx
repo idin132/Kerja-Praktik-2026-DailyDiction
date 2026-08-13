@@ -59,10 +59,12 @@ export default async function ArticleDetailPage({ params }: PageProps) {
           )}
 
           {/* Content Body */}
-          <div 
-            className="prose prose-invert max-w-none text-text-primary leading-relaxed space-y-4"
-            dangerouslySetInnerHTML={{ __html: article.content }}
-          />
+          {/* Content Body */}
+           <div 
+             className="prose prose-invert max-w-none text-text-primary leading-relaxed space-y-4"
+             // Coba ambil dari .data.content dulu, jika tidak ada baru .content, dan pastikan selalu berupa string
+             dangerouslySetInnerHTML={{ __html: article?.data?.content || article?.content || "" }}
+           />
 
         </article>
       </main>
