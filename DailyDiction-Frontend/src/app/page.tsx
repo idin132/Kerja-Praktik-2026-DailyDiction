@@ -49,6 +49,7 @@ export default async function Home() {
                     title={item.title}
                     summary={item.summary}
                     imageUrl={item.image_full_url || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"}
+                    slug={item.slug}
                   />
                 ))}
               </div>

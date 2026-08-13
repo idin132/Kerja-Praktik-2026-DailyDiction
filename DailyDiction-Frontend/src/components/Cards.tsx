@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowUpRight, Flame, Star } from "lucide-react";
+import Link from 'next/link';
 
 interface NewsFeedCardProps {
   category: string;
@@ -9,20 +10,22 @@ interface NewsFeedCardProps {
   title: string;
   summary: string;
   imageUrl: string;
+  slug: string;
 }
 
-export function NewsFeedCard({ category, categoryColor, title, summary, imageUrl }: NewsFeedCardProps) {
+export function NewsFeedCard({ category, categoryColor, title, summary, imageUrl, slug }: NewsFeedCardProps) {
   return (
-    <motion.article 
-      whileHover={{ y: -4 }}
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/50 hover:shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
-    >
-      <div className="relative h-48 w-full overflow-hidden">
-        <img 
-          src={imageUrl} 
-          alt={title} 
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+    <Link href={`/artikel/${slug}`} className="block h-full cursor-pointer">
+      <motion.article
+        whileHover={{ y: -4 }}
+        className="group relative flex flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/50 hover:shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+      >
+        <div className="relative h-48 w-full overflow-hidden">
+          <img 
+            src={imageUrl} 
+            alt={title} 
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+          />
         <span className={`absolute top-3 left-3 rounded-md px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-black ${
           categoryColor === "crimson" ? "bg-brand-crimson text-white" : "bg-brand-cyan"
         }`}>
@@ -46,6 +49,7 @@ export function NewsFeedCard({ category, categoryColor, title, summary, imageUrl
         </div>
       </div>
     </motion.article>
+    </Link>
   );
 }
 
@@ -54,6 +58,8 @@ interface ReviewCardProps {
   title: string;
   rating: string;
   imageUrl: string;
+  slug: string;
+  summary: string;
 }
 
 export function ReviewCard({ platform, title, rating, imageUrl }: ReviewCardProps) {
