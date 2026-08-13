@@ -88,3 +88,33 @@ export function ReleaseRadar() {
     </div>
   );
 }
+
+export function SponsorBanner() {
+  return (
+    <div className="relative flex flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/50 hover:shadow-[0_0_20px_rgba(255,62,62,0.1)] group cursor-pointer">
+      
+      {/* Label "SPONSORED" */}
+      <div className="absolute left-0 top-0 z-10 rounded-br-lg border-b border-r border-dark-border bg-dark-bg/90 px-3 py-1 text-[10px] font-mono font-bold tracking-wider text-text-muted backdrop-blur-md">
+        SPONSORED
+      </div>
+      
+      {/* Area Kotak Iklan (Placeholder Garena) */}
+      <div className="relative flex h-[250px] w-full flex-col items-center justify-center bg-[#111] p-6">
+        {/* Efek hover gradient */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-brand-crimson/10 to-brand-cyan/10 opacity-0 transition-opacity group-hover:opacity-100" />
+        
+        <div className="relative z-10 flex flex-col items-center gap-3">
+          {/* Teks Dummy Logo */}
+          <h3 className="text-4xl font-black tracking-widest text-white/30 transition-colors group-hover:text-white">
+            GARENA
+          </h3>
+          <p className="text-center font-mono text-xs text-text-muted">
+            Space Iklan / Sponsor
+            <br />
+            (300 x 250 px)
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
