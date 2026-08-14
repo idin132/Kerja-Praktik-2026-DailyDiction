@@ -193,7 +193,7 @@ export default function NewsPage() {
                             <div className="flex items-center gap-4">
                               <div className="flex items-center gap-1.5">
                                 <User className="h-3.5 w-3.5 text-brand-crimson" />
-                                <span>Redaksi AnakTua</span>
+                                <span>Redaksi Daily Diction</span>
                               </div>
                               <div className="flex items-center gap-1.5">
                                 <Clock className="h-3.5 w-3.5 text-brand-cyan" />
@@ -242,7 +242,7 @@ export default function NewsPage() {
                 </h3>
 
                 <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
-                  Join server Discord AnakTua buat mabar, berbagi info gacha, pamer spek PC, atau sekadar gibahin industri pop culture!
+                  Join server Discord Daily Diction buat mabar, berbagi info gacha, pamer spek PC, atau sekadar gibahin industri pop culture!
                 </p>
 
                 <a

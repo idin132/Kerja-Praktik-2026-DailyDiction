@@ -24,7 +24,7 @@ export default function Navbar() {
         
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-1 font-mono text-xl font-black tracking-wider text-text-primary">
-          ANAK<span className="text-brand-crimson">TUA</span>
+          Daily<span className="text-brand-crimson">Diction</span>
           <span className="h-2 w-2 rounded-full bg-brand-crimson animate-pulse" />
         </Link>
 

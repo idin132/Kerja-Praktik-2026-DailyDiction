@@ -14,4 +14,6 @@ Route::prefix('v1')->group(function () {
     Route::get('/articles/{slug}', [ArticleController::class, 'show']);
 
     Route::get('/reviews', [ArticleController::class, 'reviews']);
+
+    Route::get('/reels', [ArticleController::class, 'reels']);
 });
