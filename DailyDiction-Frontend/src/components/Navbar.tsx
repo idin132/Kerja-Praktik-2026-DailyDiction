@@ -17,7 +17,7 @@ export default function Navbar() {
     { name: "HOME", href: "/", icon: Flame },
     { name: "NEWS", href: "/news", icon: Newspaper },
     { name: "REELS", href: "/reels", icon: Clapperboard, isReels: true },
-    { name: "REVIEW", href: "/review", icon: Star },
+    { name: "REVIEW", href: "/reviews", icon: Star },
     { name: "KOMUNITAS", href: "/komunitas", icon: Users },
   ];
 

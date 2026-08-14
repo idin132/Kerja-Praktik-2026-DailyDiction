@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Str;
 
 class Article extends Model
 {
@@ -33,7 +34,22 @@ class Article extends Model
     protected function imageFullUrl(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->image_url ? asset('storage/' . $this->image_url) : null,
+            get: fn() => $this->image_url ? asset('storage/' . $this->image_url) : null,
         );
+    }
+
+    public function getImageFullUrlAttribute()
+    {
+        if (! $this->image_url) {
+            return null;
+        }
+
+        // Jika sudah link lengkap (http:// atau https://), kembalikan langsung
+        if (Str::startsWith($this->image_url, ['http://', 'https://'])) {
+            return $this->image_url;
+        }
+
+        // Jika file lokal dari storage
+        return asset('storage/' . $this->image_url);
     }
 }
