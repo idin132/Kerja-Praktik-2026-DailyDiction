@@ -16,14 +16,14 @@ Route::prefix('v1')->group(function () {
     Route::get('/articles/{slug}', [ArticleController::class, 'show']);
     Route::get('/reviews', [ArticleController::class, 'reviews']);  
 
-    // Jembatan untuk Sponsor (Dimasukkan ke v1 biar rapi)
+    // Jembatan untuk Sponsor (Dari Rizqi)
     Route::get('/sponsors', function () {
         return response()->json([
             'data' => Sponsor::latest()->get()
         ]);
     });
 
-    // Jembatan untuk Iklan (Dimasukkan ke v1 biar rapi)
+    // Jembatan untuk Iklan (Dari Rizqi)
     Route::get('/advertisements', function () {
         return response()->json([
             'data' => Advertisement::latest()->get()

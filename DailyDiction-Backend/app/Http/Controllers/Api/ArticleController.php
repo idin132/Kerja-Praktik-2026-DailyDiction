@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\GameReview;
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use App\Models\Reel;
 use Illuminate\Http\Request;
 
 class ArticleController extends Controller
@@ -57,6 +58,18 @@ class ArticleController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => $reviews
+        ]);
+    }
+
+    public function reels()
+    {
+        $reels = Reel::where('is_published', true)
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $reels
         ]);
     }
 }
