@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ArticleResource\Pages;
 use App\Models\Article;
+use FilamentTiptapEditor\TiptapEditor;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -12,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+
 
 class ArticleResource extends Resource
 {
@@ -26,47 +28,74 @@ class ArticleResource extends Resource
                 Forms\Components\TextInput::make('title')
                     ->required()
                     ->maxLength(255),
+
                 Forms\Components\TextInput::make('author')
                     ->required()
                     ->maxLength(255),
+
                 Forms\Components\TextInput::make('slug')
                     ->label('Slug: Alamat URL')
                     ->required()
                     ->maxLength(255),
+
                 Forms\Components\Select::make('category')
                     ->options([
                         'action' => 'Action',
-                        'Romance' => 'Romance'
+                        'Romance' => 'Romance',
                     ])
                     ->required(),
+
                 Forms\Components\TextInput::make('category_color')
                     ->required()
                     ->maxLength(255)
                     ->default('crimson'),
+
                 Forms\Components\Textarea::make('summary')
                     ->required()
                     ->columnSpanFull(),
-                Forms\Components\Textarea::make('content')
-                    ->required()
+
+                TiptapEditor::make('content')
+                    ->label('Konten Artikel')
+                    ->tools([
+                        'heading',
+                        'blockquote',
+                        'bold',
+                        'italic',
+                        'strike',
+                        'link',
+                        'media',  // Fitur insert/embed gambar (mendukung upload file maupun via URL gambar)
+                        'oembed', // Fitur embed link video (YouTube, Vimeo, dll) langsung dengan live preview
+                        'bullet-list',
+                        'ordered-list',
+                        'code-block',
+                        'undo',
+                        'redo',
+                    ])
+                    ->disk('public')
+                    ->directory('articles/content-images')
                     ->columnSpanFull()
-                    ->live(onBlur: true) // Trigger pembaruan saat user selesai ketik/pindah focus
-                    ->afterStateUpdated(function (string $state = null, Set $set) {
+                    ->required()
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(function (mixed $state, Set $set) {
                         if (! $state) {
                             $set('read_time', '1 MIN READ');
                             return;
                         }
 
-                        // Hitung jumlah kata
-                        $wordCount = str_word_count(strip_tags($state));
+                        // 1. Ambil format string baik berupa JSON Block array maupun HTML
+                        $rawText = is_array($state) ? json_encode($state) : (string) $state;
 
-                        // Rata-rata orang membaca 200 kata/menit (dibulatkan ke atas minimal 1)
+                        // 2. Bersihkan tag HTML/simbol sebelum hitung kata
+                        $cleanText = strip_tags($rawText);
+                        $wordCount = str_word_count($cleanText);
+
+                        // 3. Hitung estimasi waktu baca otomatis
                         $minutes = max(1, ceil($wordCount / 200));
 
-                        // Set otomatis nilai read_time
                         $set('read_time', "{$minutes} MIN READ");
                     }),
 
-                // Component Upload Gambar
+                // Thumbnail via Embed URL + Preview
                 Forms\Components\TextInput::make('image_url')
                     ->label('Thumbnail Artikel (URL Gambar)')
                     ->url()
@@ -82,55 +111,56 @@ class ArticleResource extends Resource
                             return new HtmlString('<span class="text-xs text-gray-400">Belum ada preview (masukkan URL gambar di atas)</span>');
                         }
                         return new HtmlString('
-                        <div class="mt-1">
-                            <img src="' . e($url) . '" alt="Thumbnail Preview" class="max-h-48 rounded-lg object-cover border border-gray-200 shadow-sm" onerror="this.src=\'https://placehold.co/600x400?text=Gambar+Tidak+Valid\'"/>
-                        </div>
-                    ');
-                    })
-                    ->columnSpanFull(),
-
-                // VIDEO EMBED LINK + PREVIEW
-                Forms\Components\TextInput::make('video_url')
-                    ->label('Link Embed Video / YouTube')
-                    ->url()
-                    ->placeholder('https://www.youtube.com/watch?v=... atau https://www.youtube.com/embed/...')
-                    ->live(onBlur: true)
-                    ->columnSpanFull(),
-
-                Forms\Components\Placeholder::make('video_preview')
-                    ->label('Preview Video')
-                    ->content(function (Get $get) {
-                        $url = $get('video_url');
-                        if (! $url) {
-                            return new HtmlString('<span class="text-xs text-gray-400">Belum ada preview (masukkan URL video di atas)</span>');
-                        }
-
-                        // Konversi URL YouTube ke format embed iframe
-                        $embedUrl = $url;
-                        if (str_contains($url, 'youtube.com/watch?v=')) {
-                            parse_str(parse_url($url, PHP_URL_QUERY), $params);
-                            $videoId = $params['v'] ?? '';
-                            $embedUrl = "https://www.youtube.com/embed/{$videoId}";
-                        } elseif (str_contains($url, 'youtu.be/')) {
-                            $videoId = trim(parse_url($url, PHP_URL_PATH), '/');
-                            $embedUrl = "https://www.youtube.com/embed/{$videoId}";
-                        }
-
-                        return new HtmlString('
-                            <div class="mt-1 aspect-square max-w-sm rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                                <iframe class="w-full h-full" src="' . e($embedUrl) . '" frameborder="0" allowfullscreen></iframe>
+                            <div class="mt-1">
+                                <img src="' . e($url) . '" alt="Thumbnail Preview" class="max-h-48 rounded-lg object-cover border border-gray-200 shadow-sm" onerror="this.src=\'https://placehold.co/600x400?text=Gambar+Tidak+Valid\'"/>
                             </div>
                         ');
                     })
                     ->columnSpanFull(),
+
+                // // Video via Embed URL + Preview Persegi (1:1)
+                // Forms\Components\TextInput::make('video_url')
+                //     ->label('Link Embed Video / YouTube')
+                //     ->url()
+                //     ->placeholder('https://www.youtube.com/watch?v=... atau https://www.youtube.com/embed/...')
+                //     ->live(onBlur: true)
+                //     ->columnSpanFull(),
+
+                // Forms\Components\Placeholder::make('video_preview')
+                //     ->label('Preview Video')
+                //     ->content(function (Get $get) {
+                //         $url = $get('video_url');
+                //         if (! $url) {
+                //             return new HtmlString('<span class="text-xs text-gray-400">Belum ada preview (masukkan URL video di atas)</span>');
+                //         }
+
+                //         $embedUrl = $url;
+                //         if (str_contains($url, 'youtube.com/watch?v=')) {
+                //             parse_str(parse_url($url, PHP_URL_QUERY), $params);
+                //             $videoId = $params['v'] ?? '';
+                //             $embedUrl = "https://www.youtube.com/embed/{$videoId}";
+                //         } elseif (str_contains($url, 'youtu.be/')) {
+                //             $videoId = trim(parse_url($url, PHP_URL_PATH), '/');
+                //             $embedUrl = "https://www.youtube.com/embed/{$videoId}";
+                //         }
+
+                //         return new HtmlString('
+                //             <div class="mt-1 aspect-square max-w-sm rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                //                 <iframe class="w-full h-full" src="' . e($embedUrl) . '" frameborder="0" allowfullscreen></iframe>
+                //             </div>
+                //         ');
+                //     })
+                //     ->columnSpanFull(),
 
                 Forms\Components\TextInput::make('read_time')
                     ->required()
                     ->maxLength(255)
                     ->default('1 MIN READ')
                     ->readOnly(),
+
                 Forms\Components\Toggle::make('is_featured')
                     ->required(),
+
                 Forms\Components\Toggle::make('is_published')
                     ->required(),
             ]);
@@ -142,8 +172,7 @@ class ArticleResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')
                     ->label('Thumbnail')
-                    ->disk('public') // Memastikan image column membaca dari disk public
-                    ->square(),
+                    ->square(), // Tanpa ->disk('public') agar membaca format URL eksternal
                 Tables\Columns\TextColumn::make('title')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('slug')
