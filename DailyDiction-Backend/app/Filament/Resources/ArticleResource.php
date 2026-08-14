@@ -6,10 +6,12 @@ use App\Filament\Resources\ArticleResource\Pages;
 use App\Models\Article;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 
 class ArticleResource extends Resource
 {
@@ -65,20 +67,61 @@ class ArticleResource extends Resource
                     }),
 
                 // Component Upload Gambar
-                Forms\Components\FileUpload::make('image_url')
-                    ->label('Thumbnail Artikel')
-                    ->image()
-                    ->disk('public')
-                    ->directory('articles')
-                    ->visibility('public')
-                    ->maxSize(5120)
-                    ->acceptedFileTypes([
-                        'image/jpeg',
-                        'image/png',
-                        'image/webp',
-                    ])
-                    ->nullable()
-                    ->dehydrated(fn($state) => filled($state))
+                Forms\Components\TextInput::make('image_url')
+                    ->label('Thumbnail Artikel (URL Gambar)')
+                    ->url()
+                    ->placeholder('https://example.com/image.jpg')
+                    ->live(onBlur: true)
+                    ->columnSpanFull(),
+
+                Forms\Components\Placeholder::make('image_preview')
+                    ->label('Preview Thumbnail')
+                    ->content(function (Get $get) {
+                        $url = $get('image_url');
+                        if (! $url) {
+                            return new HtmlString('<span class="text-xs text-gray-400">Belum ada preview (masukkan URL gambar di atas)</span>');
+                        }
+                        return new HtmlString('
+                        <div class="mt-1">
+                            <img src="' . e($url) . '" alt="Thumbnail Preview" class="max-h-48 rounded-lg object-cover border border-gray-200 shadow-sm" onerror="this.src=\'https://placehold.co/600x400?text=Gambar+Tidak+Valid\'"/>
+                        </div>
+                    ');
+                    })
+                    ->columnSpanFull(),
+
+                // VIDEO EMBED LINK + PREVIEW
+                Forms\Components\TextInput::make('video_url')
+                    ->label('Link Embed Video / YouTube')
+                    ->url()
+                    ->placeholder('https://www.youtube.com/watch?v=... atau https://www.youtube.com/embed/...')
+                    ->live(onBlur: true)
+                    ->columnSpanFull(),
+
+                Forms\Components\Placeholder::make('video_preview')
+                    ->label('Preview Video')
+                    ->content(function (Get $get) {
+                        $url = $get('video_url');
+                        if (! $url) {
+                            return new HtmlString('<span class="text-xs text-gray-400">Belum ada preview (masukkan URL video di atas)</span>');
+                        }
+
+                        // Konversi URL YouTube ke format embed iframe
+                        $embedUrl = $url;
+                        if (str_contains($url, 'youtube.com/watch?v=')) {
+                            parse_str(parse_url($url, PHP_URL_QUERY), $params);
+                            $videoId = $params['v'] ?? '';
+                            $embedUrl = "https://www.youtube.com/embed/{$videoId}";
+                        } elseif (str_contains($url, 'youtu.be/')) {
+                            $videoId = trim(parse_url($url, PHP_URL_PATH), '/');
+                            $embedUrl = "https://www.youtube.com/embed/{$videoId}";
+                        }
+
+                        return new HtmlString('
+                            <div class="mt-1 aspect-square max-w-sm rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                                <iframe class="w-full h-full" src="' . e($embedUrl) . '" frameborder="0" allowfullscreen></iframe>
+                            </div>
+                        ');
+                    })
                     ->columnSpanFull(),
 
                 Forms\Components\TextInput::make('read_time')
