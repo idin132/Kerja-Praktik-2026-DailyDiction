@@ -1,75 +1,98 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getArticleBySlug } from "@/lib/api";
+import { getArticleBySlug } from "@/lib/api"; // Pastikan Idin udah bikin fungsi ini di api.ts ya!
 import { notFound } from "next/navigation";
-import { Clock, Calendar, Bookmark, Flame } from "lucide-react";
 
-interface PageProps {
-  params: Promise<{ slug: string }>;
-}
+// 1. Tipe params jadi Promise
+export default async function DetailArtikel({ params }: { params: Promise<{ slug: string }> }) {
+  
+  // 2. Ekstrak slug
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug;
 
-export default async function ArticleDetailPage({ params }: PageProps) {
-  const { slug } = await params;
+  // 3. Panggil API Artikel (Bukan Review, dan jangan di-comment!)
   const article = await getArticleBySlug(slug);
 
+  // 4. Cek variabel article, bukan review
   if (!article) {
-    notFound(); // Menampilkan 404 jika slug tidak ditemukan di database
+    notFound();
   }
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
       <Navbar />
 
-      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <article className="max-w-4xl mx-auto">
-          
-          {/* Category */}
-          <div className="flex items-center gap-2 mb-4 font-mono text-[11px] font-bold">
-            <span className="rounded bg-brand-crimson px-2.5 py-1 text-white uppercase tracking-wider">
-              {article.category}
+      <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+        
+        <div className="mb-8 space-y-6">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Label Artikel (Rating & Platform dihapus karena ini berita biasa) */}
+            <span className="rounded bg-brand-cyan/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-cyan border border-brand-cyan/30">
+              Berita Utama
             </span>
           </div>
 
-          {/* Title */}
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-text-primary mb-6">
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white">
             {article.title}
           </h1>
 
-          {/* Meta Bar */}
-          <div className="flex items-center gap-6 border-y border-dark-border py-3 mb-8 text-xs font-mono text-text-muted">
-            <div className="flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 text-brand-cyan" />
-              <span>{new Date(article.created_at).toLocaleDateString("id-ID")}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-brand-crimson" />
-              <span>{article.read_time}</span>
-            </div>
-          </div>
+          <p className="text-lg text-text-muted font-medium border-l-4 border-brand-crimson pl-4">
+            {/* Catatan: Kalau di database artikel nama kolomnya bukan summary, ganti jadi excerpt atau yang sesuai */}
+            {article.summary || "Simak berita selengkapnya di bawah ini."} 
+          </p>
+        </div>
 
-          {/* Featured Image */}
-          {article.image_full_url && (
-            <div className="relative overflow-hidden rounded-xl border border-dark-border mb-8">
-              <img 
-                src={article.image_full_url} 
-                alt={article.title}
-                className="w-full h-[400px] object-cover"
-              />
-            </div>
-          )}
+        <div className="relative mb-12 aspect-[21/9] w-full overflow-hidden rounded-2xl border border-dark-border shadow-2xl">
+          <img
+            // Catatan: Kalau di database artikel kolom gambarnya namanya beda, sesuaikan ya (misal: article.image)
+            src={article.image_full_url || `http://127.0.0.1:8000/storage/${article.cover_game}`}
+            alt={article.title}
+            className="h-full w-full object-cover"
+          />
+        </div>
 
-          {/* Content Body */}
-          {/* Content Body */}
-           <div 
-             className="prose prose-invert max-w-none text-text-primary leading-relaxed space-y-4"
-             // Coba ambil dari .data.content dulu, jika tidak ada baru .content, dan pastikan selalu berupa string
-             dangerouslySetInnerHTML={{ __html: article?.data?.content || article?.content || "" }}
-           />
-
+        <article className="rich-text-content bg-dark-card/50 p-6 md:p-10 rounded-2xl border border-dark-border">
+          <div dangerouslySetInnerHTML={{ __html: article.content }} />
         </article>
+
       </main>
 
       <Footer />
+
+      <style dangerouslySetInnerHTML={{__html: `
+        .rich-text-content {
+          font-size: 1.125rem;
+          line-height: 1.75;
+          color: #d1d5db; 
+        }
+        .rich-text-content p {
+          margin-bottom: 1.5em;
+        }
+        .rich-text-content h2, .rich-text-content h3 {
+          color: white;
+          font-weight: 900;
+          margin-top: 2em;
+          margin-bottom: 0.75em;
+        }
+        .rich-text-content img {
+          width: 100%;
+          height: auto;
+          border-radius: 0.75rem;
+          margin-top: 2rem;
+          margin-bottom: 2rem;
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        .rich-text-content a {
+          color: #00e5ff; 
+          text-decoration: none;
+        }
+        .rich-text-content a:hover {
+          text-decoration: underline;
+        }
+        .rich-text-content strong {
+          color: white;
+        }
+      `}} />
     </div>
   );
 }

@@ -48,6 +48,7 @@ class ArticleController extends Controller
         ]);
     }
 
+    // Get list of Game Reviews
     public function reviews()
     {
         $reviews = GameReview::where('is_published', true)
@@ -61,6 +62,7 @@ class ArticleController extends Controller
         ]);
     }
 
+    // Get list of Reels
     public function reels()
     {
         $reels = Reel::where('is_published', true)
@@ -70,6 +72,26 @@ class ArticleController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => $reels
+        ]);
+    }
+
+    // Get detail Game Review berdasarkan slug (untuk halaman /review/[slug])
+    public function showReview($slug)
+    {
+        $review = GameReview::where('slug', $slug)
+            ->where('is_published', true)
+            ->first();
+
+        if (!$review) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Review tidak ditemukan'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $review
         ]);
     }
 }

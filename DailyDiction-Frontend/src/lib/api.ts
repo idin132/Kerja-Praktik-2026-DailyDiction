@@ -58,3 +58,17 @@ export async function getArticleBySlug(slug: string) {
     return null;
   }
 }
+
+export async function getGameReviewBySlug(slug: string) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/reviews/${slug}`, { 
+      next: { revalidate: 60 } 
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data;
+  } catch (error) {
+    console.error("Error fetching review by slug:", error);
+    return null;
+  }
+}

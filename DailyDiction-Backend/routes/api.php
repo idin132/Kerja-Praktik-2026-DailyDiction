@@ -15,7 +15,10 @@ Route::prefix('v1')->group(function () {
     Route::get('/articles/featured', [ArticleController::class, 'featured']);
     Route::get('/articles/{slug}', [ArticleController::class, 'show']);
     Route::get('/reviews', [ArticleController::class, 'reviews']);  
-
+    Route::get('/reviews/{slug}', [ArticleController::class, 'showReview']); 
+    
+    Route::get('/reels', [ArticleController::class, 'reels']);
+    
     // Jembatan untuk Sponsor (Dari Rizqi)
     Route::get('/sponsors', function () {
         return response()->json([
