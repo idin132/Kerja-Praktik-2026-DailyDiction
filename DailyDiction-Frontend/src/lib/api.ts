@@ -14,11 +14,21 @@ export async function getArticles() {
 // 2. Fetch Game Reviews
 export async function getGameReviews() {
   try {
-    const res = await fetch(`${API_BASE_URL}/game-reviews`, { cache: 'no-store' });
-    if (!res.ok) return { data: [] };
-    return await res.json();
+    // Pastikan URL-nya benar pakai 'reviews' (pakai s)
+    // cache: 'no-store' WAJIB ADA biar Next.js selalu ambil data terbaru
+    const res = await fetch("http://127.0.0.1:8000/api/v1/reviews", {
+      cache: "no-store", 
+    });
+    
+    if (!res.ok) {
+      throw new Error("Gagal mengambil data review");
+    }
+    
+    const data = await res.json();
+    return data;
   } catch (error) {
-    return { data: [] };
+    console.error("Error fetching game reviews:", error);
+    return []; // Kalau error, kembalikan array kosong biar web ga nge-crash
   }
 }
 

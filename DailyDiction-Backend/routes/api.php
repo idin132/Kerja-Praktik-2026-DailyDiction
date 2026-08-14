@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ArticleController;
 use App\Models\Sponsor;
 use App\Models\Advertisement;
+use App\Http\Controllers\YoutubeController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -17,8 +18,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/reviews', [ArticleController::class, 'reviews']);  
     Route::get('/reviews/{slug}', [ArticleController::class, 'showReview']); 
     Route::get('/reels', [ArticleController::class, 'reels']);
-    
-    Route::get('/reels', [ArticleController::class, 'reels']);
+    Route::get('/youtube-videos', [YoutubeController::class, 'getVideos']);
+    Route::get('/youtube-shorts', [YoutubeController::class, 'getShorts']);
     
     // Jembatan untuk Sponsor (Dari Rizqi)
     Route::get('/sponsors', function () {
