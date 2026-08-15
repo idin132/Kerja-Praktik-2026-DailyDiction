@@ -10,7 +10,10 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-// 1. TAMBAHIN IMPORT INI DI SINI
+// IMPORT TAMBAHAN BUAT HYBRID FORM
+use Filament\Forms\Get;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Columns\TextColumn;
@@ -30,19 +33,44 @@ class AdvertisementResource extends Resource
                 TextInput::make('title')
                     ->label('Judul / Nama Iklan')
                     ->required()
-                    ->maxLength(255),
-                
+                    ->maxLength(255)
+                    ->columnSpanFull(),
+
+                // Select Tipe Iklan
+                Select::make('type')
+                    ->label('Tipe Iklan')
+                    ->options([
+                        'banner' => 'Gambar Banner Manual',
+                        'script' => 'Script / Google Ads',
+                    ])
+                    ->default('banner')
+                    ->live() // Bikin form di bawahnya reaktif berubah
+                    ->required()
+                    ->columnSpanFull(),
+
+                // MUNCUL KALAU PILIH BANNER
                 FileUpload::make('banner_image')
                     ->label('Gambar Banner Iklan')
                     ->image()
-                    ->directory('advertisements') // File masuk ke folder advertisements
-                    ->required(),
+                    ->directory('advertisements')
+                    ->visible(fn (Get $get) => $get('type') === 'banner')
+                    ->required(fn (Get $get) => $get('type') === 'banner'),
 
                 TextInput::make('url_link')
                     ->label('Link Tujuan (URL)')
-                    ->url() // Validasi otomatis: Admin harus masukin format link (https://...)
-                    ->required()
+                    ->url()
+                    ->visible(fn (Get $get) => $get('type') === 'banner')
+                    ->required(fn (Get $get) => $get('type') === 'banner')
                     ->maxLength(255),
+
+                // MUNCUL KALAU PILIH SCRIPT
+                Textarea::make('script_code')
+                    ->label('Script Google Ads / HTML')
+                    ->rows(6)
+                    ->visible(fn (Get $get) => $get('type') === 'script')
+                    ->required(fn (Get $get) => $get('type') === 'script')
+                    ->columnSpanFull()
+                    ->helperText('Paste kode script Google Adsense atau HTML iframe di sini.'),
             ]);
     }
 
@@ -56,17 +84,27 @@ class AdvertisementResource extends Resource
                 TextColumn::make('title')
                     ->label('Judul Iklan')
                     ->searchable(),
+
+                // Tambahan badge penanda tipe iklan di tabel
+                TextColumn::make('type')
+                    ->label('Tipe')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'banner' => 'success',
+                        'script' => 'warning',
+                        default => 'gray',
+                    }),
                 
                 TextColumn::make('url_link')
                     ->label('Link Tujuan')
-                    ->limit(30), // Biar link-nya ga kepanjangan di tabel dan ngerusak layout
+                    ->limit(30),
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(), // Tombol hapus
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
