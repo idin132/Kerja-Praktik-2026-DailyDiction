@@ -5,7 +5,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ShieldCheck, Sparkles, Trophy, ArrowRight, Filter, Search } from "lucide-react";
+import { Star, Trophy, ArrowRight, Filter, Search } from "lucide-react";
 
 interface ReviewItem {
   id: number;
@@ -30,7 +30,7 @@ export default function GameReviewsPage() {
       try {
         const res = await fetch("http://127.0.0.1:8000/api/v1/reviews");
         if (res.ok) {
-          const json = await res.ok ? await res.json() : { data: [] };
+          const json = await res.json();
           setReviews(json.data || []);
         }
       } catch (err) {
@@ -42,7 +42,6 @@ export default function GameReviewsPage() {
     fetchReviews();
   }, []);
 
-  // Filtering berdasarkan Platform dan Search Query
   const filteredReviews = reviews.filter((item) => {
     const matchPlatform =
       selectedPlatform === "ALL" ||
@@ -53,7 +52,7 @@ export default function GameReviewsPage() {
     return matchPlatform && matchSearch;
   });
 
-  const featuredReview = reviews[0]; // Review paling baru sebagai Highlight Utama
+  const featuredReview = reviews[0]; 
   const platformsList = ["ALL", "PC", "PS5", "SWITCH", "XBOX"];
 
   return (
@@ -90,7 +89,7 @@ export default function GameReviewsPage() {
             </div>
           </div>
 
-          {/* Featured Highlight Review (Jika ada data) */}
+          {/* Featured Highlight Review */}
           {featuredReview && !searchQuery && selectedPlatform === "ALL" && (
             <section className="mb-12">
               <Link href={`/review/${featuredReview.slug}`}>
@@ -99,7 +98,6 @@ export default function GameReviewsPage() {
                   transition={{ duration: 0.3 }}
                   className="group relative overflow-hidden rounded-2xl border border-dark-border bg-dark-card shadow-2xl flex flex-col lg:flex-row"
                 >
-                  {/* Image Banner */}
                   <div className="relative h-64 sm:h-96 lg:h-auto lg:w-3/5 overflow-hidden">
                     <img
                       src={
@@ -115,14 +113,12 @@ export default function GameReviewsPage() {
                     </span>
                   </div>
 
-                  {/* Info Overlay */}
                   <div className="flex flex-col justify-between p-6 sm:p-8 lg:w-2/5 z-10">
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-4">
                         <span className="rounded-md border border-brand-cyan/40 bg-brand-cyan/10 px-2.5 py-1 text-[11px] font-mono font-bold uppercase text-brand-cyan">
                           {featuredReview.platform}
                         </span>
-                        {/* Rating Badge */}
                         <div className="flex items-center gap-1.5 rounded-lg bg-yellow-500/20 border border-yellow-500/40 px-3 py-1">
                           <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                           <span className="font-mono text-sm font-black text-yellow-400">
@@ -182,10 +178,7 @@ export default function GameReviewsPage() {
               ))}
             </div>
           ) : filteredReviews.length > 0 ? (
-            <motion.div
-              layout
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            >
+            <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <AnimatePresence>
                 {filteredReviews.map((item) => (
                   <motion.article
@@ -198,7 +191,6 @@ export default function GameReviewsPage() {
                     transition={{ duration: 0.3 }}
                     className="group flex flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/50 shadow-lg"
                   >
-                    {/* Image Thumbnail */}
                     <div className="relative h-48 w-full overflow-hidden">
                       <img
                         src={
@@ -208,11 +200,9 @@ export default function GameReviewsPage() {
                         alt={item.title}
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                      {/* Platform Tag */}
                       <span className="absolute top-3 left-3 rounded border border-dark-border bg-dark-bg/80 px-2.5 py-1 font-mono text-[10px] font-bold uppercase text-brand-cyan backdrop-blur-md">
                         {item.platform}
                       </span>
-                      {/* Score Badge Floating */}
                       <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-lg bg-dark-bg/90 border border-yellow-500/40 px-2.5 py-1 backdrop-blur-md">
                         <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
                         <span className="font-mono text-xs font-black text-yellow-400">
@@ -221,7 +211,6 @@ export default function GameReviewsPage() {
                       </div>
                     </div>
 
-                    {/* Content Box */}
                     <div className="flex flex-1 flex-col justify-between p-5">
                       <div>
                         <Link href={`/review/${item.slug}`}>
@@ -257,7 +246,6 @@ export default function GameReviewsPage() {
           )}
         </main>
       </div>
-
       <Footer />
     </div>
   );

@@ -1,5 +1,8 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
+import YoutubeHero from "@/components/YoutubeHero"; // <-- Import YoutubeHero ditambah di sini
+import YoutubeShorts from "@/components/YoutubeShorts";
+import InstagramFeed from "@/components/InstagramFeed";
 import { NewsFeedCard, ReviewCard } from "@/components/Cards";
 import { DiscordWidget, ReleaseRadar } from "@/components/Sidebar";
 import Footer from "@/components/Footer";
@@ -11,6 +14,9 @@ import {
 } from "@/lib/api";
 import { Flame, Star, ArrowRight } from "lucide-react";
 
+// Memastikan Halaman Home selalu dirender ulang tanpa cache
+export const revalidate = 0;
+
 // Helper untuk membersihkan & memvalidasi URL Gambar
 function formatImageUrl(
   imageUrl: string | null | undefined,
@@ -18,9 +24,7 @@ function formatImageUrl(
 ): string {
   if (!imageUrl) return fallback;
 
-  // Jika URL adalah link web utuh (https:// atau http://)
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    // Jika tidak sengaja ter-prefix storage lokal, bersihkan prefix-nya
     if (imageUrl.includes("127.0.0.1:8000/storage/http")) {
       return imageUrl.replace(
         /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
@@ -30,31 +34,42 @@ function formatImageUrl(
     return imageUrl;
   }
 
-  // Jika memang path file lokal storage dari Laravel
   return `http://127.0.0.1:8000/storage/${imageUrl}`;
 }
 
 export default async function Home() {
-  const [articlesData, reviews, sponsorsData, adsData] = await Promise.all([
+  const [articlesData, reviewsData, sponsorsData, adsData] = await Promise.all([
     getArticles(),
     getGameReviews(),
     getSponsors(),
     getAdvertisements(),
   ]);
 
+  // Ekstraksi array data secara fleksibel & aman
   const articles = articlesData?.data || [];
+  const reviews = Array.isArray(reviewsData)
+    ? reviewsData
+    : reviewsData?.data || [];
   const sponsors = sponsorsData?.data || [];
   const sidebarAd = adsData?.data?.[0] || null;
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
       <Navbar />
+      
+      {/* 1. Hero Section Animasi Asli (Tetap Ada) */}
       <HeroSection />
 
-      <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Main Content */}
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        
+        {/* 2. Banner Video YouTube Panjang (Lebar Full) */}
+        <YoutubeHero />
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-4">
+          
+          {/* Main Content (Kiri) */}
           <div className="lg:col-span-8 space-y-12">
+            
             {/* News Feed Section */}
             <section>
               <div className="flex items-center justify-between mb-6">
@@ -81,7 +96,6 @@ export default async function Home() {
                     categoryColor={item.category_color}
                     title={item.title}
                     summary={item.summary}
-                    // Gunakan item.image_url atau item.image_full_url yang sudah difilter
                     imageUrl={formatImageUrl(
                       item.image_url || item.image_full_url,
                       "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
@@ -133,9 +147,15 @@ export default async function Home() {
                 )}
               </div>
             </section>
+
+            {/* YouTube Shorts Section */}
+            <YoutubeShorts />
+
+            {/* Instagram Feed Section */}
+            <InstagramFeed />
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar (Kanan) */}
           <aside className="lg:col-span-4 space-y-8">
             <div className="flex h-[250px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
               {sidebarAd ? (
