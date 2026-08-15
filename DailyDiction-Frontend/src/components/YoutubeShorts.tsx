@@ -41,7 +41,7 @@ export default function YoutubeShorts() {
   return (
     <section className="mb-16">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-black text-white">WOR Shorts</h2>
+        <h2 className="text-2xl font-black text-white">Youtube Shorts</h2>
         <Link href={channelUrl} target="_blank" className="text-sm font-bold text-brand-crimson hover:underline">
           Lihat Semua di YouTube →
         </Link>

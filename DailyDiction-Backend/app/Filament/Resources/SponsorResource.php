@@ -13,7 +13,6 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-// 1. TAMBAHIN IMPORT INI DI SINI BIAR KOMPONENNYA KEBACA
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Columns\TextColumn;
@@ -25,10 +24,12 @@ class SponsorResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    // 👇 Baris ajaib biar menu Sponsor ngilang dari sidebar admin 👇
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Form $form): Form
     {
         return $form
-            // 2. TARUH KODINGAN FORM-NYA DI DALAM SCHEMA SINI
             ->schema([
                 TextInput::make('name')
                     ->label('Nama Sponsor')
@@ -38,8 +39,8 @@ class SponsorResource extends Resource
                 FileUpload::make('logo_image')
                     ->label('Upload Logo Sponsor')
                     ->image()
-                    ->imageEditor() // Biar admin bisa nge-crop atau edit gambar langsung
-                    ->directory('sponsors') // File akan masuk ke storage/app/public/sponsors
+                    ->imageEditor()
+                    ->directory('sponsors')
                     ->required(),
             ]);
     }
@@ -47,15 +48,14 @@ class SponsorResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            // 3. TARUH KODINGAN TABELNYA DI DALAM COLUMNS SINI
             ->columns([
                 ImageColumn::make('logo_image')
                     ->label('Logo')
-                    ->circular(), // Biar tampilannya bulet di tabel admin (opsional)
+                    ->circular(),
                 
                 TextColumn::make('name')
                     ->label('Nama Sponsor')
-                    ->searchable() // Biar bisa dicari di kolom pencarian
+                    ->searchable()
                     ->sortable(),
                     
                 TextColumn::make('created_at')
@@ -69,7 +69,7 @@ class SponsorResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(), // Tambahin ini biar bisa langsung hapus
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

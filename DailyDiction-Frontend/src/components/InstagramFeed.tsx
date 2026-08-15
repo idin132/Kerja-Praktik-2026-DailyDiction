@@ -44,7 +44,7 @@ export default function InstagramFeed() {
           <h2 className="text-2xl font-black text-white">Di Instagram</h2>
         </div>
         <Link href={igUrl} target="_blank" className="text-sm font-bold text-pink-500 hover:underline">
-          Follow @anaktua_ →
+          Follow @DailyDiction →
         </Link>
       </div>
 

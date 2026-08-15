@@ -9,10 +9,12 @@ class Advertisement extends Model
 {
     use HasFactory;
 
-    // Menentukan kolom mana saja yang boleh diisi
+    // Menentukan kolom mana saja yang boleh diisi (Mass Assignment)
     protected $fillable = [
         'title',
+        'type',          // <-- Tambahan buat nentuin banner / script
         'banner_image',
         'url_link',
+        'script_code',   // <-- Tambahan buat nyimpen kode adsense
     ];
 }

@@ -115,6 +115,7 @@ class ArticleController extends Controller
     // Get detail Game Review berdasarkan slug (untuk halaman /review/[slug])
     public function showReview($slug)
     {
+        // 1. Cari review utama
         $review = GameReview::where('slug', $slug)
             ->where('is_published', true)
             ->first();
@@ -126,9 +127,36 @@ class ArticleController extends Controller
             ], 404);
         }
 
+        // 2. Cari Review Sebelumnya
+        $prevReview = GameReview::where('is_published', true)
+            ->where('id', '<', $review->id)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        // 3. Cari Review Selanjutnya
+        $nextReview = GameReview::where('is_published', true)
+            ->where('id', '>', $review->id)
+            ->orderBy('id', 'asc')
+            ->first();
+
+        $reviewData = $review->toArray();
+
+        // 4. Selipin data prev dan next
+        $reviewData['prev'] = $prevReview ? [
+            'slug' => $prevReview->slug,
+            'title' => $prevReview->title,
+            'thumbnail' => $prevReview->image_url ?? $prevReview->image_full_url ?? $prevReview->image ?? null,
+        ] : null;
+
+        $reviewData['next'] = $nextReview ? [
+            'slug' => $nextReview->slug,
+            'title' => $nextReview->title,
+            'thumbnail' => $nextReview->image_url ?? $nextReview->image_full_url ?? $nextReview->image ?? null,
+        ] : null;
+
         return response()->json([
             'status' => 'success',
-            'data' => $review
+            'data' => $reviewData
         ]);
     }
 }
