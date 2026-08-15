@@ -101,6 +101,9 @@ export default async function Home() {
                       "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                     )}
                     slug={item.slug}
+                    // 👇 TAMBAHIN DUA BARIS INI BIAR DATANYA NYAMBUNG 👇
+                    author={item.author}
+                    createdAt={item.created_at}
                   />
                 ))}
               </div>

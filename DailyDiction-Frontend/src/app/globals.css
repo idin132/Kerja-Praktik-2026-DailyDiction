@@ -1,6 +1,5 @@
 @import "tailwindcss";
-
-@import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @theme {
   /* Warna Custom DailyDiction*/

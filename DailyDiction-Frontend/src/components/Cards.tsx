@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowUpRight, Flame, Star } from "lucide-react";
+import { ArrowUpRight, Flame, Star, User, Calendar } from "lucide-react";
 import Link from 'next/link';
 
 interface NewsFeedCardProps {
@@ -11,9 +11,11 @@ interface NewsFeedCardProps {
   summary: string;
   imageUrl: string;
   slug: string;
+  author?: string;
+  createdAt?: string;
 }
 
-export function NewsFeedCard({ category, categoryColor, title, summary, imageUrl, slug }: NewsFeedCardProps) {
+export function NewsFeedCard({ category, categoryColor, title, summary, imageUrl, slug, author, createdAt }: NewsFeedCardProps) {
   return (
     <Link href={`/artikel/${slug}`} className="block h-full cursor-pointer">
       <motion.article
@@ -43,10 +45,35 @@ export function NewsFeedCard({ category, categoryColor, title, summary, imageUrl
           </p>
         </div>
         
-        <div className="mt-4 flex items-center justify-between border-t border-dark-border/60 pt-3 text-[11px] font-mono text-text-muted">
-          <span>5 MIN READ</span>
-          <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand-cyan" />
+        {/* INFO PENULIS DAN TANGGALNYA ADA DI SINI */}
+        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-dark-border/60 pt-4 text-[10px] md:text-xs font-mono text-text-muted">
+          
+          <div className="flex items-center gap-1.5">
+            <User className="h-3.5 w-3.5 text-brand-crimson" />
+            <span className="font-semibold text-white truncate max-w-[120px]">
+              {author || "Redaksi"}
+            </span>
+          </div>
+
+          <span className="text-dark-border hidden sm:inline-block">•</span>
+
+          {createdAt ? (
+            <div className="flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5" />
+              <span>
+                {new Date(createdAt).toLocaleDateString("id-ID", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </span>
+            </div>
+          ) : (
+            <span>Baru saja</span>
+          )}
+          
         </div>
+
       </div>
     </motion.article>
     </Link>

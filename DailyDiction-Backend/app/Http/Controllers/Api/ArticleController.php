@@ -23,13 +23,50 @@ class ArticleController extends Controller
     // Get detail artikel berdasarkan slug (untuk halaman /artikel/[slug])
     public function show($slug)
     {
+        // 1. Cari artikel utama
         $article = Article::where('slug', $slug)
             ->where('is_published', true)
-            ->firstOrFail();
+            ->first();
+
+        if (!$article) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Artikel tidak ditemukan'
+            ], 404);
+        }
+
+        // 2. Cari Artikel Sebelumnya (ID lebih kecil dari artikel sekarang)
+        $prevArticle = Article::where('is_published', true)
+            ->where('id', '<', $article->id)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        // 3. Cari Artikel Selanjutnya (ID lebih besar dari artikel sekarang)
+        $nextArticle = Article::where('is_published', true)
+            ->where('id', '>', $article->id)
+            ->orderBy('id', 'asc')
+            ->first();
+
+        // 4. Ubah object artikel jadi array biar gampang diselipin data baru
+        $articleData = $article->toArray();
+
+        // 5. Selipin data prev dan next ke dalam response
+        $articleData['prev'] = $prevArticle ? [
+            'slug' => $prevArticle->slug,
+            'title' => $prevArticle->title,
+            // Sesuaikan dengan nama kolom gambar/thumbnail di database kamu (misal: image, image_url, atau thumbnail)
+            'thumbnail' => $prevArticle->image_url ?? $prevArticle->image_full_url ?? $prevArticle->image ?? null,
+        ] : null;
+
+        $articleData['next'] = $nextArticle ? [
+            'slug' => $nextArticle->slug,
+            'title' => $nextArticle->title,
+            'thumbnail' => $nextArticle->image_url ?? $nextArticle->image_full_url ?? $nextArticle->image ?? null,
+        ] : null;
 
         return response()->json([
             'status' => 'success',
-            'data' => $article
+            'data' => $articleData
         ]);
     }
 

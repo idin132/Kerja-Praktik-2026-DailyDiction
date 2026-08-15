@@ -2,18 +2,27 @@
 
 import Link from 'next/link';
 import { motion } from "framer-motion";
-import { ArrowUpRight, Flame } from "lucide-react";
+import { ArrowUpRight, Flame, User, Calendar, Clock } from "lucide-react";
 
+// 1. Tambahin author & createdAt di props
 interface NewsCardProps {
   category: string;
   title: string;
   readTime: string;
-  slug: string; // <-- 1. Wajib ditambahin biar kartunya tau URL beritanya
+  slug: string;
+  author?: string;     // <-- Tambahan baru
+  createdAt?: string;  // <-- Tambahan baru
 }
 
-export default function NewsCard({ category, title, readTime, slug }: NewsCardProps) {
+export default function NewsCard({ 
+  category, 
+  title, 
+  readTime, 
+  slug, 
+  author, 
+  createdAt 
+}: NewsCardProps) {
   return (
-    // 2. Bungkus seluruh kartunya pakai <Link> di sini
     <Link href={`/artikel/${slug}`} className="block h-full cursor-pointer">
       <motion.article
         whileHover={{ y: -4 }}
@@ -26,7 +35,8 @@ export default function NewsCard({ category, title, readTime, slug }: NewsCardPr
               <Flame className="h-3.5 w-3.5" />
               {category}
             </span>
-            <span className="text-text-muted">{readTime}</span>
+            {/* Panah urang pindahin ke atas biar kece */}
+            <ArrowUpRight className="h-4 w-4 text-text-muted transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand-cyan" />
           </div>
 
           <h3 className="mt-4 text-xl font-bold tracking-tight text-text-primary group-hover:text-brand-cyan transition-colors">
@@ -34,9 +44,42 @@ export default function NewsCard({ category, title, readTime, slug }: NewsCardPr
           </h3>
         </div>
 
-        <div className="mt-6 flex items-center justify-between pt-4 border-t border-dark-border/50 text-xs text-text-muted">
-          <span>DailyDiction Editorial</span>
-          <ArrowUpRight className="h-4 w-4 text-text-muted transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand-cyan" />
+        {/* 2. Info Penulis, Tanggal, & Read Time ditaruh di sini */}
+        <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 pt-4 border-t border-dark-border/50 text-[10px] md:text-xs font-mono text-text-muted">
+          
+          {/* Author */}
+          <div className="flex items-center gap-1.5">
+            <User className="h-3.5 w-3.5 text-brand-crimson" />
+            <span className="font-semibold text-white truncate max-w-[100px]">
+              {author || "Redaksi"}
+            </span>
+          </div>
+
+          <span className="text-dark-border hidden sm:inline-block">•</span>
+
+          {/* Tanggal */}
+          {createdAt && (
+            <>
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5" />
+                <span>
+                  {new Date(createdAt).toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+              <span className="text-dark-border hidden sm:inline-block">•</span>
+            </>
+          )}
+
+          {/* Read Time */}
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5" />
+            <span className="uppercase tracking-wider">{readTime || "3 MIN READ"}</span>
+          </div>
+          
         </div>
       </motion.article>
     </Link>
