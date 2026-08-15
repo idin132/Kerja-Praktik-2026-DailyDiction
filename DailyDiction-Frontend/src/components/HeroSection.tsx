@@ -1,84 +1,207 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Play, ArrowRight, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, ArrowRight, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+
+interface ArticleItem {
+  id: number;
+  title: string;
+  slug: string;
+  category: string;
+  summary: string;
+  image_full_url?: string;
+  read_time?: string;
+}
 
 export default function HeroSection() {
+  const [articles, setArticles] = useState<ArticleItem[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch 3 artikel terbaru
+  useEffect(() => {
+    async function fetchHeroArticles() {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/v1/articles");
+        if (res.ok) {
+          const json = await res.json();
+          const data = json.data || [];
+          setArticles(data.slice(0, 3));
+        }
+      } catch (error) {
+        console.error("Gagal memuat berita slider hero:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchHeroArticles();
+  }, []);
+
+  // Auto-slide interval setiap 6 detik
+  useEffect(() => {
+    if (articles.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % articles.length);
+    }, 6000);
+
+    return () => clearInterval(timer);
+  }, [articles.length]);
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev === 0 ? articles.length - 1 : prev - 1));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % articles.length);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="relative w-full aspect-[16/9] sm:h-[60vh] md:h-[75vh] md:min-h-[520px] bg-dark-card animate-pulse border-b border-dark-border" />
+    );
+  }
+
+  if (articles.length === 0) {
+    return null;
+  }
+
+  const currentArticle = articles[currentIndex];
+
   return (
-    /* 
-       UBAHAN 1: 
-       - Di mobile (default): Menggunakan aspect-video (16:9) agar rasio video pas di HP.
-       - Di desktop (md:): Kembali menggunakan h-[80vh] min-h-[550px].
-    */
-    <section className="relative w-full aspect-video md:h-[80vh] md:min-h-[550px] overflow-hidden border-b border-dark-border">
-      {/* Background Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        /* 
-           UBAHAN 2: 
-           - Di mobile: object-contain (menampilkan seluruh video utuh).
-           - Di desktop: md:object-cover (agar memenuhi background desktop).
-        */
-        className="absolute inset-0 h-full w-full object-contain md:object-cover object-center scale-100 filter brightness-125 contrast-125"
-      >
-        <source src="/videos/dd.mp4" type="video/mp4" />
-      </video>
-
-      {/* <img
-        src="/videos/elden-ring.jpg"
-        alt="genshin-impact-hero"
-        className="absolute inset-0 h-full w-full object-cover object-center scale-105 brightness-75"
-      /> */}
-
-      {/* Overlay Gradients */}
-      <div className="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/40 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-r from-dark-bg/80 via-dark-bg/20 to-transparent" />
-
-      {/* Content Overlay */}
-      <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-end px-4 pb-16 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="max-w-2xl"
-        >
-          {/* Badge */}
-          {/* <div className="inline-flex items-center gap-2 rounded-full border border-brand-crimson/40 bg-brand-crimson/10 px-3 py-1 text-xs font-mono font-bold uppercase tracking-widest text-brand-crimson backdrop-blur-md">
-            <Sparkles className="h-3 w-3" />
-            <span>Berita Utama</span>
-          </div> */}
-
-          {/* Title */}
-          {/* <h1 className="mt-4 text-3xl font-black tracking-tight text-text-primary sm:text-5xl lg:text-6xl leading-[1.1]">
-            Resident Evil 4 Remake: <span className="text-brand-crimson">Kembalinya</span> Game Horor Legendaris
-          </h1> */}
-
-          {/* Description */}
-          {/* <p className="mt-4 text-sm sm:text-base text-text-muted line-clamp-2 leading-relaxed">
-            Resident Evil 4 Remake menghadirkan pengalaman horor yang lebih mendalam dengan grafis yang memukau, 
-            gameplay yang diperbarui, dan cerita yang lebih intens. Bergabunglah dalam petualangan menegangkan ini dan 
-            rasakan kembali ketegangan dari game horor legendaris ini.
-          </p> */}
-
-          {/* Call to Actions */}
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            {/* <a
-              href="#baca"
-              className="flex items-center gap-2 rounded-lg bg-brand-crimson px-6 py-3 text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-brand-crimson/90 hover:shadow-[0_0_20px_rgba(255,62,62,0.5)]"
+    <section className="relative w-full overflow-hidden border-b border-dark-border bg-black">
+      {/* 
+        Container Responsif:
+        - Mobile: aspek rasio landscape 16:9 proporsional
+        - Desktop (md:): Tinggi dinamis 75vh dengan min-height 520px
+      */}
+      <div className="relative w-full aspect-[16/10] sm:aspect-video md:aspect-auto md:h-[75vh] md:min-h-[520px] overflow-hidden">
+        
+        {/* Background / Image Carousel dengan Link Klik */}
+        <Link href={`/artikel/${currentArticle.slug}`} className="absolute inset-0 block group">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentArticle.id}
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6 }}
+              className="relative h-full w-full"
             >
-              <span>Baca Artikel</span>
-              <ArrowRight className="h-4 w-4" />
-            </a> */}
+              <img
+                src={
+                  currentArticle.image_full_url ||
+                  "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
+                }
+                alt={currentArticle.title}
+                className="h-full w-full object-cover object-center filter brightness-[0.7] group-hover:scale-105 transition-transform duration-700 ease-out"
+              />
+            </motion.div>
+          </AnimatePresence>
 
-            {/* <button className="flex items-center gap-2 rounded-lg border border-dark-border bg-dark-card/60 px-6 py-3 text-xs font-bold uppercase tracking-wider text-text-primary backdrop-blur-md transition-all hover:border-brand-cyan hover:text-brand-cyan">
-              <Play className="h-4 w-4 fill-current" />
-              <span>Lihat Trailer</span>
-            </button> */}
+          {/* Gradients Overlay agar teks terbaca jelas */}
+          <div className="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-dark-bg/90 via-dark-bg/30 to-transparent hidden sm:block" />
+        </Link>
+
+        {/* Konten Teks & Kontrol Overlay */}
+        <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-end p-4 sm:px-6 lg:px-8 pb-4 sm:pb-10 pointer-events-none">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            
+            {/* Teks Artikel (Klikable) */}
+            <div className="max-w-2xl pointer-events-auto">
+              <Link href={`/artikel/${currentArticle.slug}`} className="block group">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentArticle.id}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    {/* Badge Category & Highlight */}
+                    <div className="flex items-center gap-2 mb-2">
+                      {/* <span className="inline-flex items-center gap-1 rounded-full border border-brand-crimson/50 bg-brand-crimson/20 px-2.5 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-brand-crimson backdrop-blur-md">
+                        <Sparkles className="h-3 w-3" />
+                        <span>Top Story</span>
+                      </span> */}
+                      <span className="rounded border border-brand-cyan/40 bg-dark-bg/80 px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-brand-cyan backdrop-blur-md">
+                        {currentArticle.category}
+                      </span>
+                    </div>
+
+                    {/* Judul Artikel */}
+                    <h1 className="text-base sm:text-2xl md:text-4xl lg:text-5xl font-black tracking-tight text-white leading-snug sm:leading-tight line-clamp-2 group-hover:text-brand-crimson transition-colors drop-shadow-md">
+                      {currentArticle.title}
+                    </h1>
+
+                    {/* Deskripsi / Ringkasan */}
+                    <p className="mt-1.5 sm:mt-2 text-[11px] sm:text-sm text-text-muted line-clamp-1 sm:line-clamp-2 leading-relaxed max-w-xl">
+                      {currentArticle.summary}
+                    </p>
+                  </motion.div>
+                </AnimatePresence>
+              </Link>
+
+              {/* Action Button & Read Time */}
+              <div className="mt-3 sm:mt-5 flex items-center gap-3">
+                <Link
+                  href={`/artikel/${currentArticle.slug}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg sm:rounded-xl bg-brand-crimson px-3 py-1.5 sm:px-5 sm:py-2.5 font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white shadow-[0_0_15px_rgba(255,62,62,0.4)] transition-all hover:bg-brand-crimson/90 active:scale-95 pointer-events-auto"
+                >
+                  <span>Baca</span>
+                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Link>
+
+                <div className="flex items-center gap-1 font-mono text-[10px] sm:text-xs text-text-muted">
+                  <Clock className="h-3 w-3 text-brand-cyan" />
+                  <span>{currentArticle.read_time || "5 MIN"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Kontrol Navigasi Slider & Indikator */}
+            <div className="flex items-center justify-between sm:justify-end gap-3 font-mono z-20 pointer-events-auto mt-2 sm:mt-0">
+              {/* Indikator Titik */}
+              <div className="flex items-center gap-1.5">
+                {articles.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentIndex(idx)}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      currentIndex === idx
+                        ? "w-6 sm:w-8 bg-brand-crimson"
+                        : "w-2 bg-dark-border hover:bg-text-muted"
+                    }`}
+                    aria-label={`Slide ${idx + 1}`}
+                  />
+                ))}
+              </div>
+
+              {/* Tombol Panah Prev/Next */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handlePrev}
+                  aria-label="Previous Slide"
+                  className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg border border-dark-border bg-dark-card/80 text-text-muted backdrop-blur-md transition-all hover:border-brand-crimson hover:text-white active:scale-95"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </button>
+                <button
+                  onClick={handleNext}
+                  aria-label="Next Slide"
+                  className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg border border-dark-border bg-dark-card/80 text-text-muted backdrop-blur-md transition-all hover:border-brand-crimson hover:text-white active:scale-95"
+                >
+                  <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </button>
+              </div>
+            </div>
+
           </div>
-        </motion.div>
+        </div>
+
       </div>
     </section>
   );

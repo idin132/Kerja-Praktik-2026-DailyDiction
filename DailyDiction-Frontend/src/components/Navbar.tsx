@@ -36,7 +36,7 @@ export default function Navbar() {
         
         {/* Brand Logo (Dari Idin) */}
         <Link href="/" className="flex items-center gap-1 font-mono text-xl font-black tracking-wider text-text-primary">
-          ANAK<span className="text-brand-crimson">TUA</span>
+          DAILY<span className="text-brand-crimson">DICTION</span>
           <span className="h-2 w-2 rounded-full bg-brand-crimson animate-pulse" />
         </Link>
 
