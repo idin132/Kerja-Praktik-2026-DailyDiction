@@ -24,22 +24,14 @@ class Article extends Model
     ];
 
     protected $casts = [
-        'content' => 'array', // atau 'json'
+        'category' => 'array',     // <-- WAJIB DITAMBAHKAN BIAR MULTI-CATEGORY AMAN
+        'content' => 'array', 
+        'is_featured' => 'boolean',
+        'is_published' => 'boolean',
     ];
 
     // Menyertakan 'image_full_url' secara otomatis saat dipanggil sebagai JSON/API
     protected $appends = ['image_full_url'];
-
-    /**
-     * Accessor untuk URL lengkap gambar (khusus dipanggil API Next.js).
-     * Membiarkan $this->image_url tetap murni berisi path 'articles/filename.jpg' untuk Filament.
-     */
-    // protected function imageFullUrl(): Attribute
-    // {
-    //     return Attribute::make(
-    //         get: fn() => $this->image_url ? asset('storage/' . $this->image_url) : null,
-    //     );
-    // }
 
     public function getImageFullUrlAttribute()
     {

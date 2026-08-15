@@ -13,10 +13,8 @@ import {
 } from "@/lib/api";
 import { Flame, Star, ArrowRight } from "lucide-react";
 
-// Memastikan Halaman Home selalu dirender ulang tanpa cache
 export const revalidate = 0;
 
-// Helper untuk membersihkan & memvalidasi URL Gambar
 function formatImageUrl(
   imageUrl: string | null | undefined,
   fallback: string,
@@ -37,14 +35,12 @@ function formatImageUrl(
 }
 
 export default async function Home() {
-  // getSponsors dihapus dari sini biar lebih ringan
   const [articlesData, reviewsData, adsData] = await Promise.all([
     getArticles(),
     getGameReviews(),
     getAdvertisements(),
   ]);
 
-  // Ekstraksi array data secara fleksibel & aman
   const articles = articlesData?.data || [];
   const reviews = Array.isArray(reviewsData)
     ? reviewsData
@@ -55,18 +51,18 @@ export default async function Home() {
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
       <Navbar />
       
-      {/* 1. Hero Section Animasi Asli (Tetap Ada) */}
       <HeroSection />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* 👇 UBAH MAX-W-7XL JADI MAX-W-[1600PX] BIAR LEBAR DI MONITOR 27" 👇 */}
+      <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
         
-        {/* 2. Banner Video YouTube Panjang (Lebar Full) */}
         <YoutubeHero />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-4">
+        {/* Gap diperlebar dikit di layar ultra wide (2xl) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12 mt-4">
           
-          {/* Main Content (Kiri) */}
-          <div className="lg:col-span-8 space-y-12">
+          {/* Main Content (Kiri) - Di layar gede dapet 9 kolom biar makin leluasa */}
+          <div className="lg:col-span-8 2xl:col-span-9 space-y-12">
             
             {/* News Feed Section */}
             <section>
@@ -86,7 +82,8 @@ export default async function Home() {
                 </a>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* 👇 TAMBAHIN 2XL:GRID-COLS-3 BIAR DI MONITOR 27" JADI 3 KARTU SEJAJAR 👇 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
                 {articles.map((item: any) => (
                   <NewsFeedCard
                     key={item.id}
@@ -124,7 +121,8 @@ export default async function Home() {
                 </a>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* 👇 INI JUGA JADI 3 KARTU DI MONITOR GEDE 👇 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
                 {reviews.length > 0 ? (
                   reviews.map((review: any) => (
                     <ReviewCard
@@ -132,7 +130,6 @@ export default async function Home() {
                       summary={review.summary}
                       title={review.title}
                       platform={review.platform}
-                      rating={review.rating}
                       imageUrl={formatImageUrl(
                         review.image_url || review.image_full_url,
                         "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
@@ -141,50 +138,30 @@ export default async function Home() {
                     />
                   ))
                 ) : (
-                  <p className="text-xs font-mono text-text-muted col-span-2">
+                  <p className="text-xs font-mono text-text-muted col-span-2 2xl:col-span-3">
                     Belum ada ulasan game yang dipublikasikan dari Admin Panel.
                   </p>
                 )}
               </div>
             </section>
 
-            {/* YouTube Shorts Section */}
             <YoutubeShorts />
-
-            {/* Instagram Feed Section */}
             <InstagramFeed />
           </div>
 
-          {/* Sidebar (Kanan) */}
-          <aside className="lg:col-span-4 space-y-8">
+          {/* Sidebar (Kanan) - Di layar gede dapet 3 kolom aja biar konten utamanya yang mendominasi */}
+          <aside className="lg:col-span-4 2xl:col-span-3 space-y-8">
             <div className="flex h-[250px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
               {sidebarAd ? (
-                <a
-                  href={sidebarAd.url_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full h-full block"
-                >
-                  <img
-                    src={formatImageUrl(sidebarAd.banner_image, "")}
-                    alt={sidebarAd.title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <span className="absolute top-2 right-3 text-[9px] text-white bg-black/50 px-1 rounded">
-                    Ad
-                  </span>
+                <a href={sidebarAd.url_link} target="_blank" rel="noopener noreferrer" className="w-full h-full block">
+                  <img src={formatImageUrl(sidebarAd.banner_image, "")} alt={sidebarAd.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  <span className="absolute top-2 right-3 text-[9px] text-white bg-black/50 px-1 rounded">Ad</span>
                 </a>
               ) : (
                 <>
-                  <span className="absolute top-2 right-3 text-[9px] text-text-muted/50 font-mono border border-text-muted/20 px-1 rounded">
-                    Ad
-                  </span>
-                  <span className="text-xs font-mono text-text-muted">
-                    Space Iklan Google Ads
-                  </span>
-                  <span className="text-[10px] font-mono text-brand-crimson/50 mt-1">
-                    300 x 250 px
-                  </span>
+                  <span className="absolute top-2 right-3 text-[9px] text-text-muted/50 font-mono border border-text-muted/20 px-1 rounded">Ad</span>
+                  <span className="text-xs font-mono text-text-muted">Space Iklan Google Ads</span>
+                  <span className="text-[10px] font-mono text-brand-crimson/50 mt-1">300 x 250 px</span>
                 </>
               )}
             </div>
