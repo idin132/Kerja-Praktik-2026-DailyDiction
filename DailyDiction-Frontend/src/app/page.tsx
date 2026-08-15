@@ -1,6 +1,6 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import YoutubeHero from "@/components/YoutubeHero"; // <-- Import YoutubeHero ditambah di sini
+import YoutubeHero from "@/components/YoutubeHero";
 import YoutubeShorts from "@/components/YoutubeShorts";
 import InstagramFeed from "@/components/InstagramFeed";
 import { NewsFeedCard, ReviewCard } from "@/components/Cards";
@@ -9,7 +9,6 @@ import Footer from "@/components/Footer";
 import {
   getArticles,
   getGameReviews,
-  getSponsors,
   getAdvertisements,
 } from "@/lib/api";
 import { Flame, Star, ArrowRight } from "lucide-react";
@@ -38,10 +37,10 @@ function formatImageUrl(
 }
 
 export default async function Home() {
-  const [articlesData, reviewsData, sponsorsData, adsData] = await Promise.all([
+  // getSponsors dihapus dari sini biar lebih ringan
+  const [articlesData, reviewsData, adsData] = await Promise.all([
     getArticles(),
     getGameReviews(),
-    getSponsors(),
     getAdvertisements(),
   ]);
 
@@ -50,7 +49,6 @@ export default async function Home() {
   const reviews = Array.isArray(reviewsData)
     ? reviewsData
     : reviewsData?.data || [];
-  const sponsors = sponsorsData?.data || [];
   const sidebarAd = adsData?.data?.[0] || null;
 
   return (
@@ -92,7 +90,7 @@ export default async function Home() {
                 {articles.map((item: any) => (
                   <NewsFeedCard
                     key={item.id}
-                    category={item.category}
+                    category={item.category?.name || item.category || "Berita"}
                     categoryColor={item.category_color}
                     title={item.title}
                     summary={item.summary}
@@ -101,7 +99,6 @@ export default async function Home() {
                       "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                     )}
                     slug={item.slug}
-                    // 👇 TAMBAHIN DUA BARIS INI BIAR DATANYA NYAMBUNG 👇
                     author={item.author}
                     createdAt={item.created_at}
                   />
@@ -197,70 +194,6 @@ export default async function Home() {
           </aside>
         </div>
       </main>
-
-      {/* Sponsor Area */}
-      <section className="bg-dark-bg pt-10 pb-0 border-b border-dark-border/10 overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
-          <div className="text-xs font-mono text-text-muted mb-8 tracking-widest uppercase flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-brand-cyan animate-pulse"></span>
-            Sponsored by
-          </div>
-
-          <div className="w-full relative flex overflow-x-hidden">
-            <style>{`
-              @keyframes marquee {
-                0% { transform: translateX(0%); }
-                100% { transform: translateX(-100%); }
-              }
-              .animate-marquee {
-                display: flex;
-                animation: marquee 20s linear infinite;
-              }
-              .animate-marquee:hover {
-                animation-play-state: paused;
-              }
-            `}</style>
-
-            <div className="animate-marquee whitespace-nowrap flex items-center">
-              {/* Kelompok Logo 1 */}
-              <div className="flex items-center justify-around min-w-full gap-16 px-8 opacity-40 grayscale transition-all duration-300 hover:grayscale-0 hover:opacity-100">
-                {sponsors.length > 0 ? (
-                  sponsors.map((sponsor: any) => (
-                    <img
-                      key={`group1-${sponsor.id}`}
-                      src={formatImageUrl(sponsor.logo_image, "")}
-                      alt={sponsor.name}
-                      className="h-10 md:h-14 object-contain"
-                    />
-                  ))
-                ) : (
-                  <h3 className="text-sm font-mono text-text-muted">
-                    Belum ada sponsor
-                  </h3>
-                )}
-              </div>
-
-              {/* Kelompok Logo 2 */}
-              <div className="flex items-center justify-around min-w-full gap-16 px-8 opacity-40 grayscale transition-all duration-300 hover:grayscale-0 hover:opacity-100">
-                {sponsors.length > 0 ? (
-                  sponsors.map((sponsor: any) => (
-                    <img
-                      key={`group2-${sponsor.id}`}
-                      src={formatImageUrl(sponsor.logo_image, "")}
-                      alt={sponsor.name}
-                      className="h-10 md:h-14 object-contain"
-                    />
-                  ))
-                ) : (
-                  <h3 className="text-sm font-mono text-text-muted">
-                    Belum ada sponsor
-                  </h3>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <Footer />
     </div>
