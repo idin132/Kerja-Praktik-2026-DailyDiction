@@ -5,10 +5,11 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ArticleResource\Pages;
 use App\Models\Article;
 use FilamentTiptapEditor\TiptapEditor;
+use App\Filament\Actions\CustomMediaAction;
+use Filament\Forms\Set;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -63,16 +64,15 @@ class ArticleResource extends Resource
                         'italic',
                         'strike',
                         'link',
-                        'media',  // Fitur insert/embed gambar (mendukung upload file maupun via URL gambar)
-                        'oembed', // Fitur embed link video (YouTube, Vimeo, dll) langsung dengan live preview
+                        'media',
+                        'oembed',
                         'bullet-list',
                         'ordered-list',
                         'code-block',
                         'undo',
                         'redo',
                     ])
-                    ->disk('public')
-                    ->directory('articles/content-images')
+                    ->mediaAction(CustomMediaAction::class)
                     ->columnSpanFull()
                     ->required()
                     ->live(onBlur: true)
@@ -82,14 +82,9 @@ class ArticleResource extends Resource
                             return;
                         }
 
-                        // 1. Ambil format string baik berupa JSON Block array maupun HTML
                         $rawText = is_array($state) ? json_encode($state) : (string) $state;
-
-                        // 2. Bersihkan tag HTML/simbol sebelum hitung kata
                         $cleanText = strip_tags($rawText);
                         $wordCount = str_word_count($cleanText);
-
-                        // 3. Hitung estimasi waktu baca otomatis
                         $minutes = max(1, ceil($wordCount / 200));
 
                         $set('read_time', "{$minutes} MIN READ");

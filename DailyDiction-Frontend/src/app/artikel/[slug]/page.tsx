@@ -57,10 +57,77 @@ export default async function ArticleDetailPage({ params }: PageProps) {
           </div>
 
           {/* Content Body (Gambar & Video embed otomatis dirender di sini via Tiptap) */}
-          <div
+          {/* <div
             className="prose prose-invert max-w-none text-text-primary leading-relaxed space-y-4"
             dangerouslySetInnerHTML={{ __html: article.content || "" }}
-          />
+          /> */}
+          <div className="space-y-6">
+            {Array.isArray(article.content) ? (
+              article.content.map((block: any, idx: number) => {
+                // 1. Blok Teks/Paragraf
+                if (block.type === "paragraph") {
+                  return (
+                    <div
+                      key={idx}
+                      className="prose prose-invert max-w-none text-text-primary leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: block.data.body || "",
+                      }}
+                    />
+                  );
+                }
+
+                // 2. Blok Link Gambar
+                if (block.type === "image_embed") {
+                  return (
+                    <div
+                      key={idx}
+                      className="my-6 overflow-hidden rounded-xl border border-dark-border"
+                    >
+                      <img
+                        src={block.data.url}
+                        alt="Article Media"
+                        className="w-full h-auto max-h-[500px] object-cover"
+                      />
+                    </div>
+                  );
+                }
+
+                // 3. Blok Video Embed
+                if (block.type === "video_embed") {
+                  let embedUrl = block.data.url || "";
+                  if (embedUrl.includes("youtube.com/watch?v=")) {
+                    const videoId = new URL(embedUrl).searchParams.get("v");
+                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                  } else if (embedUrl.includes("youtu.be/")) {
+                    const videoId = embedUrl.split("/").pop();
+                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                  }
+
+                  return (
+                    <div
+                      key={idx}
+                      className="my-6 aspect-video max-w-2xl mx-auto rounded-xl overflow-hidden border border-dark-border shadow-lg"
+                    >
+                      <iframe
+                        className="w-full h-full"
+                        src={embedUrl}
+                        allowFullScreen
+                      />
+                    </div>
+                  );
+                }
+
+                return null;
+              })
+            ) : (
+              // Fallback jika artikel lama masih berupa string HTML
+              <div
+                className="prose prose-invert max-w-none text-text-primary leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: article.content || "" }}
+              />
+            )}
+          </div>
         </article>
       </main>
 

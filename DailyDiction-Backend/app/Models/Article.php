@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Str;
 
 class Article extends Model
@@ -24,6 +23,10 @@ class Article extends Model
         'is_published',
     ];
 
+    protected $casts = [
+        'content' => 'array', // atau 'json'
+    ];
+
     // Menyertakan 'image_full_url' secara otomatis saat dipanggil sebagai JSON/API
     protected $appends = ['image_full_url'];
 
@@ -31,12 +34,12 @@ class Article extends Model
      * Accessor untuk URL lengkap gambar (khusus dipanggil API Next.js).
      * Membiarkan $this->image_url tetap murni berisi path 'articles/filename.jpg' untuk Filament.
      */
-    protected function imageFullUrl(): Attribute
-    {
-        return Attribute::make(
-            get: fn() => $this->image_url ? asset('storage/' . $this->image_url) : null,
-        );
-    }
+    // protected function imageFullUrl(): Attribute
+    // {
+    //     return Attribute::make(
+    //         get: fn() => $this->image_url ? asset('storage/' . $this->image_url) : null,
+    //     );
+    // }
 
     public function getImageFullUrlAttribute()
     {
