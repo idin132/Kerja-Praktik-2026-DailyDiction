@@ -13,7 +13,8 @@ class ArticleController extends Controller
     // Get all published articles (dengan Pagination)
     public function index()
     {
-        $articles = Article::where('is_published', true)
+        $articles = Article::with('categories')
+            ->where('is_published', true)
             ->latest()
             ->paginate(10);
 
@@ -23,6 +24,11 @@ class ArticleController extends Controller
     // Get detail artikel berdasarkan slug (untuk halaman /artikel/[slug])
     public function show($slug)
     {
+        $article = Article::with('categories')  // ← tambahkan ini
+            ->where('slug', $slug)
+            ->where('is_published', true)
+            ->first();
+
         // 1. Cari artikel utama
         $article = Article::where('slug', $slug)
             ->where('is_published', true)
@@ -73,7 +79,8 @@ class ArticleController extends Controller
     // Get featured articles (untuk Hero Section / Reels)
     public function featured()
     {
-        $featured = Article::where('is_published', true)
+        $featured = Article::with('categories')
+            ->where('is_published', true)
             ->where('is_featured', true)
             ->latest()
             ->take(5)

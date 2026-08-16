@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 class Article extends Model
@@ -13,7 +14,6 @@ class Article extends Model
         'title',
         'author',
         'slug',
-        'category',
         'category_color',
         'summary',
         'content',
@@ -24,8 +24,7 @@ class Article extends Model
     ];
 
     protected $casts = [
-        'category' => 'array',     // <-- WAJIB DITAMBAHKAN BIAR MULTI-CATEGORY AMAN
-        'content' => 'array', 
+        'content' => 'array',
         'is_featured' => 'boolean',
         'is_published' => 'boolean',
     ];
@@ -46,5 +45,10 @@ class Article extends Model
 
         // Jika file lokal dari storage
         return asset('storage/' . $this->image_url);
+    }
+
+    public function categories(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'article_category');
     }
 }

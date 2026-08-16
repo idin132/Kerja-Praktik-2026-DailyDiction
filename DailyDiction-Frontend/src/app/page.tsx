@@ -5,11 +5,7 @@ import YoutubeShorts from "@/components/YoutubeShorts";
 import { NewsFeedCard, ReviewCard } from "@/components/Cards";
 import { DiscordWidget, ReleaseRadar } from "@/components/Sidebar";
 import Footer from "@/components/Footer";
-import {
-  getArticles,
-  getGameReviews,
-  getAdvertisements,
-} from "@/lib/api";
+import { getArticles, getGameReviews, getAdvertisements } from "@/lib/api";
 import { getYouTubeVideos } from "@/lib/youtube";
 import { Flame, Star, ArrowRight } from "lucide-react";
 
@@ -36,12 +32,13 @@ function formatImageUrl(
 }
 
 export default async function Home() {
-  const [articlesData, reviewsData, adsData, allYouTubeVideos] = await Promise.all([
-    getArticles().catch(() => ({ data: [] })),
-    getGameReviews().catch(() => ({ data: [] })),
-    getAdvertisements().catch(() => ({ data: [] })),
-    getYouTubeVideos(50).catch(() => []),
-  ]);
+  const [articlesData, reviewsData, adsData, allYouTubeVideos] =
+    await Promise.all([
+      getArticles().catch(() => ({ data: [] })),
+      getGameReviews().catch(() => ({ data: [] })),
+      getAdvertisements().catch(() => ({ data: [] })),
+      getYouTubeVideos(50).catch(() => []),
+    ]);
 
   const articles = articlesData?.data || [];
   const reviews = Array.isArray(reviewsData)
@@ -49,18 +46,20 @@ export default async function Home() {
     : reviewsData?.data || [];
   const sidebarAd = adsData?.data?.[0] || null;
 
- // --- FILTER YOUTUBE: SHORTS VS VIDEO PANJANG ---
+  // --- FILTER YOUTUBE: SHORTS VS VIDEO PANJANG ---
   // Helper buat ngubah format durasi YouTube (PT1M30S) jadi total detik
   const getDurationInSeconds = (duration: string) => {
-    let hours = 0, minutes = 0, seconds = 0;
+    let hours = 0,
+      minutes = 0,
+      seconds = 0;
     const hMatch = duration.match(/(\d+)H/);
     const mMatch = duration.match(/(\d+)M/);
     const sMatch = duration.match(/(\d+)S/);
-    
+
     if (hMatch) hours = parseInt(hMatch[1]);
     if (mMatch) minutes = parseInt(mMatch[1]);
     if (sMatch) seconds = parseInt(sMatch[1]);
-    
+
     return hours * 3600 + minutes * 60 + seconds;
   };
 
@@ -69,9 +68,11 @@ export default async function Home() {
     const durationSec = getDurationInSeconds(durationStr);
     const title = vid.snippet?.title?.toLowerCase() || "";
     const desc = vid.snippet?.description?.toLowerCase() || "";
-    
+
     // Masuk Shorts jika: durasi <= 180 detik (3 menit) ATAU judul/deskripsi mengandung '#short'
-    return durationSec <= 180 || title.includes('#short') || desc.includes('#short');
+    return (
+      durationSec <= 180 || title.includes("#short") || desc.includes("#short")
+    );
   });
 
   const longVideosList = allYouTubeVideos.filter((vid: any) => {
@@ -79,10 +80,11 @@ export default async function Home() {
     const durationSec = getDurationInSeconds(durationStr);
     const title = vid.snippet?.title?.toLowerCase() || "";
     const desc = vid.snippet?.description?.toLowerCase() || "";
-    
+
     // Apakah ini video Shorts?
-    const isShort = durationSec <= 180 || title.includes('#short') || desc.includes('#short');
-    
+    const isShort =
+      durationSec <= 180 || title.includes("#short") || desc.includes("#short");
+
     // Masuk Hero cuma kalau DIA BUKAN SHORTS
     return !isShort;
   });
@@ -90,19 +92,16 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
       <Navbar />
-      
+
       <HeroSection />
 
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
-        
         {/* Youtube Hero (Video Panjang) */}
         <YoutubeHero videos={longVideosList} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12 mt-4">
-          
           {/* Main Content (Kiri) */}
           <div className="lg:col-span-8 2xl:col-span-9 space-y-12">
-            
             {/* News Feed Section */}
             <section>
               <div className="flex items-center justify-between mb-6">
@@ -125,7 +124,11 @@ export default async function Home() {
                 {articles.map((item: any) => (
                   <NewsFeedCard
                     key={item.id}
-                    category={item.category?.name || item.category || "Berita"}
+                    category={
+                      item.categories && item.categories.length > 0
+                        ? item.categories.map((c: any) => c.name) // ← array of string
+                        : ["Berita"]
+                    }
                     categoryColor={item.category_color}
                     title={item.title}
                     summary={item.summary}
@@ -190,21 +193,38 @@ export default async function Home() {
           <aside className="lg:col-span-4 2xl:col-span-3 space-y-8">
             <div className="flex h-[250px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
               {sidebarAd ? (
-                <a href={sidebarAd.url_link} target="_blank" rel="noopener noreferrer" className="w-full h-full block">
-                  <img src={formatImageUrl(sidebarAd.banner_image, "")} alt={sidebarAd.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                  <span className="absolute top-2 right-3 text-[9px] text-white bg-black/50 px-1 rounded">Ad</span>
+                <a
+                  href={sidebarAd.url_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full h-full block"
+                >
+                  <img
+                    src={formatImageUrl(sidebarAd.banner_image, "")}
+                    alt={sidebarAd.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <span className="absolute top-2 right-3 text-[9px] text-white bg-black/50 px-1 rounded">
+                    Ad
+                  </span>
                 </a>
               ) : (
                 <>
-                  <span className="absolute top-2 right-3 text-[9px] text-text-muted/50 font-mono border border-text-muted/20 px-1 rounded">Ad</span>
-                  <span className="text-xs font-mono text-text-muted">Space Iklan Google Ads</span>
-                  <span className="text-[10px] font-mono text-brand-crimson/50 mt-1">300 x 250 px</span>
+                  <span className="absolute top-2 right-3 text-[9px] text-text-muted/50 font-mono border border-text-muted/20 px-1 rounded">
+                    Ad
+                  </span>
+                  <span className="text-xs font-mono text-text-muted">
+                    Space Iklan Google Ads
+                  </span>
+                  <span className="text-[10px] font-mono text-brand-crimson/50 mt-1">
+                    300 x 250 px
+                  </span>
                 </>
               )}
             </div>
 
             <DiscordWidget />
-            <ReleaseRadar />
+            {/* <ReleaseRadar /> */}
           </aside>
         </div>
       </main>

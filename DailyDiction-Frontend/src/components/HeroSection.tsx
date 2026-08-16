@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ArrowRight, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 
 interface ArticleItem {
   id: number;
@@ -11,8 +11,31 @@ interface ArticleItem {
   slug: string;
   category: string;
   summary: string;
+  thumbnail?: string;
+  thumbnail_url?: string;
+  image?: string;
   image_full_url?: string;
   read_time?: string;
+}
+
+function formatHeroImage(article: ArticleItem): string {
+  const rawUrl =
+    article.thumbnail_url ||
+    article.thumbnail ||
+    article.image_full_url ||
+    article.image;
+
+  if (!rawUrl) return "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600";
+
+  const clean = rawUrl.trim();
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    return clean;
+  }
+  const cleanPath = clean.startsWith("/") ? clean.slice(1) : clean;
+  if (cleanPath.startsWith("storage/")) {
+    return `http://127.0.0.1:8000/${cleanPath}`;
+  }
+  return `http://127.0.0.1:8000/storage/${cleanPath}`;
 }
 
 export default function HeroSection() {
@@ -20,7 +43,6 @@ export default function HeroSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch 3 artikel terbaru
   useEffect(() => {
     async function fetchHeroArticles() {
       try {
@@ -39,7 +61,6 @@ export default function HeroSection() {
     fetchHeroArticles();
   }, []);
 
-  // Auto-slide interval setiap 6 detik
   useEffect(() => {
     if (articles.length <= 1) return;
 
@@ -72,14 +93,9 @@ export default function HeroSection() {
 
   return (
     <section className="relative w-full overflow-hidden border-b border-dark-border bg-black">
-      {/* 
-        Container Responsif:
-        - Mobile: aspek rasio landscape 16:9 proporsional
-        - Desktop (md:): Tinggi dinamis 75vh dengan min-height 520px
-      */}
       <div className="relative w-full aspect-[16/10] sm:aspect-video md:aspect-auto md:h-[75vh] md:min-h-[520px] overflow-hidden">
         
-        {/* Background / Image Carousel dengan Link Klik */}
+        {/* Background Image Slider */}
         <Link href={`/artikel/${currentArticle.slug}`} className="absolute inset-0 block group">
           <AnimatePresence mode="wait">
             <motion.div
@@ -91,17 +107,13 @@ export default function HeroSection() {
               className="relative h-full w-full"
             >
               <img
-                src={
-                  currentArticle.image_full_url ||
-                  "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
-                }
+                src={formatHeroImage(currentArticle)}
                 alt={currentArticle.title}
                 className="h-full w-full object-cover object-center filter brightness-[0.7] group-hover:scale-105 transition-transform duration-700 ease-out"
               />
             </motion.div>
           </AnimatePresence>
 
-          {/* Gradients Overlay agar teks terbaca jelas */}
           <div className="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/60 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-dark-bg/90 via-dark-bg/30 to-transparent hidden sm:block" />
         </Link>
@@ -110,7 +122,7 @@ export default function HeroSection() {
         <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-end p-4 sm:px-6 lg:px-8 pb-4 sm:pb-10 pointer-events-none">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             
-            {/* Teks Artikel (Klikable) */}
+            {/* Teks Artikel */}
             <div className="max-w-2xl pointer-events-auto">
               <Link href={`/artikel/${currentArticle.slug}`} className="block group">
                 <AnimatePresence mode="wait">
@@ -121,23 +133,16 @@ export default function HeroSection() {
                     exit={{ opacity: 0, y: -15 }}
                     transition={{ duration: 0.4 }}
                   >
-                    {/* Badge Category & Highlight */}
                     <div className="flex items-center gap-2 mb-2">
-                      {/* <span className="inline-flex items-center gap-1 rounded-full border border-brand-crimson/50 bg-brand-crimson/20 px-2.5 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-brand-crimson backdrop-blur-md">
-                        <Sparkles className="h-3 w-3" />
-                        <span>Top Story</span>
-                      </span> */}
                       <span className="rounded border border-brand-cyan/40 bg-dark-bg/80 px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-brand-cyan backdrop-blur-md">
                         {currentArticle.category}
                       </span>
                     </div>
 
-                    {/* Judul Artikel */}
                     <h1 className="text-base sm:text-2xl md:text-4xl lg:text-5xl font-black tracking-tight text-white leading-snug sm:leading-tight line-clamp-2 group-hover:text-brand-crimson transition-colors drop-shadow-md">
                       {currentArticle.title}
                     </h1>
 
-                    {/* Deskripsi / Ringkasan */}
                     <p className="mt-1.5 sm:mt-2 text-[11px] sm:text-sm text-text-muted line-clamp-1 sm:line-clamp-2 leading-relaxed max-w-xl">
                       {currentArticle.summary}
                     </p>
@@ -145,7 +150,6 @@ export default function HeroSection() {
                 </AnimatePresence>
               </Link>
 
-              {/* Action Button & Read Time */}
               <div className="mt-3 sm:mt-5 flex items-center gap-3">
                 <Link
                   href={`/artikel/${currentArticle.slug}`}
@@ -162,9 +166,8 @@ export default function HeroSection() {
               </div>
             </div>
 
-            {/* Kontrol Navigasi Slider & Indikator */}
+            {/* Navigasi & Indikator */}
             <div className="flex items-center justify-between sm:justify-end gap-3 font-mono z-20 pointer-events-auto mt-2 sm:mt-0">
-              {/* Indikator Titik */}
               <div className="flex items-center gap-1.5">
                 {articles.map((_, idx) => (
                   <button
@@ -180,7 +183,6 @@ export default function HeroSection() {
                 ))}
               </div>
 
-              {/* Tombol Panah Prev/Next */}
               <div className="flex items-center gap-1">
                 <button
                   onClick={handlePrev}
@@ -205,4 +207,4 @@ export default function HeroSection() {
       </div>
     </section>
   );
-}
+} 
