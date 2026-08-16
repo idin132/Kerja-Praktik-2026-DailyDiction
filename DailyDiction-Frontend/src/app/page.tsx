@@ -11,9 +11,11 @@ import {
   getGameReviews,
   getAdvertisements,
 } from "@/lib/api";
+import { getYouTubeVideos } from "@/lib/youtube";
 import { Flame, Star, ArrowRight } from "lucide-react";
 
-export const revalidate = 0;
+// Revalidate 3600 detik (1 jam) agar kuota API YouTube awet dan data tetap otomatis update
+export const revalidate = 3600;
 
 function formatImageUrl(
   imageUrl: string | null | undefined,
@@ -35,10 +37,11 @@ function formatImageUrl(
 }
 
 export default async function Home() {
-  const [articlesData, reviewsData, adsData] = await Promise.all([
-    getArticles(),
-    getGameReviews(),
-    getAdvertisements(),
+  const [articlesData, reviewsData, adsData, allYouTubeVideos] = await Promise.all([
+    getArticles().catch(() => ({ data: [] })),
+    getGameReviews().catch(() => ({ data: [] })),
+    getAdvertisements().catch(() => ({ data: [] })),
+    getYouTubeVideos(15).catch(() => []),
   ]);
 
   const articles = articlesData?.data || [];
@@ -47,21 +50,31 @@ export default async function Home() {
     : reviewsData?.data || [];
   const sidebarAd = adsData?.data?.[0] || null;
 
+  // Filter YouTube: Shorts vs Video Panjang
+  const shortsList = allYouTubeVideos.filter((vid: any) => {
+    const duration = vid.contentDetails?.duration || "";
+    return !duration.includes("M") && !duration.includes("H");
+  });
+
+  const longVideosList = allYouTubeVideos.filter((vid: any) => {
+    const duration = vid.contentDetails?.duration || "";
+    return duration.includes("M") || duration.includes("H");
+  });
+
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
       <Navbar />
       
       <HeroSection />
 
-      {/* 👇 UBAH MAX-W-7XL JADI MAX-W-[1600PX] BIAR LEBAR DI MONITOR 27" 👇 */}
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
         
-        <YoutubeHero />
+        {/* Youtube Hero (Video Panjang) */}
+        <YoutubeHero videos={longVideosList} />
 
-        {/* Gap diperlebar dikit di layar ultra wide (2xl) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12 mt-4">
           
-          {/* Main Content (Kiri) - Di layar gede dapet 9 kolom biar makin leluasa */}
+          {/* Main Content (Kiri) */}
           <div className="lg:col-span-8 2xl:col-span-9 space-y-12">
             
             {/* News Feed Section */}
@@ -82,7 +95,6 @@ export default async function Home() {
                 </a>
               </div>
 
-              {/* 👇 TAMBAHIN 2XL:GRID-COLS-3 BIAR DI MONITOR 27" JADI 3 KARTU SEJAJAR 👇 */}
               <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
                 {articles.map((item: any) => (
                   <NewsFeedCard
@@ -121,7 +133,6 @@ export default async function Home() {
                 </a>
               </div>
 
-              {/* 👇 INI JUGA JADI 3 KARTU DI MONITOR GEDE 👇 */}
               <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
                 {reviews.length > 0 ? (
                   reviews.map((review: any) => (
@@ -145,11 +156,14 @@ export default async function Home() {
               </div>
             </section>
 
-            <YoutubeShorts />
+            {/* Youtube Shorts */}
+            <YoutubeShorts videos={shortsList} />
+            
+            {/* Instagram Feed */}
             <InstagramFeed />
           </div>
 
-          {/* Sidebar (Kanan) - Di layar gede dapet 3 kolom aja biar konten utamanya yang mendominasi */}
+          {/* Sidebar (Kanan) */}
           <aside className="lg:col-span-4 2xl:col-span-3 space-y-8">
             <div className="flex h-[250px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
               {sidebarAd ? (
