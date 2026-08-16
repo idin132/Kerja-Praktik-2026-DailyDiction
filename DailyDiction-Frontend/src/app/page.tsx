@@ -2,7 +2,6 @@ import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import YoutubeHero from "@/components/YoutubeHero";
 import YoutubeShorts from "@/components/YoutubeShorts";
-import InstagramFeed from "@/components/InstagramFeed";
 import { NewsFeedCard, ReviewCard } from "@/components/Cards";
 import { DiscordWidget, ReleaseRadar } from "@/components/Sidebar";
 import Footer from "@/components/Footer";
@@ -41,7 +40,7 @@ export default async function Home() {
     getArticles().catch(() => ({ data: [] })),
     getGameReviews().catch(() => ({ data: [] })),
     getAdvertisements().catch(() => ({ data: [] })),
-    getYouTubeVideos(15).catch(() => []),
+    getYouTubeVideos(50).catch(() => []),
   ]);
 
   const articles = articlesData?.data || [];
@@ -50,15 +49,42 @@ export default async function Home() {
     : reviewsData?.data || [];
   const sidebarAd = adsData?.data?.[0] || null;
 
-  // Filter YouTube: Shorts vs Video Panjang
+ // --- FILTER YOUTUBE: SHORTS VS VIDEO PANJANG ---
+  // Helper buat ngubah format durasi YouTube (PT1M30S) jadi total detik
+  const getDurationInSeconds = (duration: string) => {
+    let hours = 0, minutes = 0, seconds = 0;
+    const hMatch = duration.match(/(\d+)H/);
+    const mMatch = duration.match(/(\d+)M/);
+    const sMatch = duration.match(/(\d+)S/);
+    
+    if (hMatch) hours = parseInt(hMatch[1]);
+    if (mMatch) minutes = parseInt(mMatch[1]);
+    if (sMatch) seconds = parseInt(sMatch[1]);
+    
+    return hours * 3600 + minutes * 60 + seconds;
+  };
+
   const shortsList = allYouTubeVideos.filter((vid: any) => {
-    const duration = vid.contentDetails?.duration || "";
-    return !duration.includes("M") && !duration.includes("H");
+    const durationStr = vid.contentDetails?.duration || "";
+    const durationSec = getDurationInSeconds(durationStr);
+    const title = vid.snippet?.title?.toLowerCase() || "";
+    const desc = vid.snippet?.description?.toLowerCase() || "";
+    
+    // Masuk Shorts jika: durasi <= 180 detik (3 menit) ATAU judul/deskripsi mengandung '#short'
+    return durationSec <= 180 || title.includes('#short') || desc.includes('#short');
   });
 
   const longVideosList = allYouTubeVideos.filter((vid: any) => {
-    const duration = vid.contentDetails?.duration || "";
-    return duration.includes("M") || duration.includes("H");
+    const durationStr = vid.contentDetails?.duration || "";
+    const durationSec = getDurationInSeconds(durationStr);
+    const title = vid.snippet?.title?.toLowerCase() || "";
+    const desc = vid.snippet?.description?.toLowerCase() || "";
+    
+    // Apakah ini video Shorts?
+    const isShort = durationSec <= 180 || title.includes('#short') || desc.includes('#short');
+    
+    // Masuk Hero cuma kalau DIA BUKAN SHORTS
+    return !isShort;
   });
 
   return (
@@ -158,9 +184,6 @@ export default async function Home() {
 
             {/* Youtube Shorts */}
             <YoutubeShorts videos={shortsList} />
-            
-            {/* Instagram Feed */}
-            <InstagramFeed />
           </div>
 
           {/* Sidebar (Kanan) */}
