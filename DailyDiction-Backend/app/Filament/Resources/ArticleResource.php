@@ -14,7 +14,9 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
-use Filament\Forms\Components\TagsInput;
+use App\Models\Category;
+
+
 
 
 class ArticleResource extends Resource
@@ -40,17 +42,10 @@ class ArticleResource extends Resource
                     ->required()
                     ->maxLength(255),
 
-                TagsInput::make('category')
-                    ->label('Category (Bisa pilih atau ketik baru)')
-                    ->placeholder('Ketik kategori baru lalu tekan Enter...')
-                    ->suggestions([
-                        'Action',
-                        'Romance',
-                        'RPG',
-                        'FPS',
-                        'Hardware',
-                        'Esports',
-                    ])
+                Forms\Components\TagsInput::make('category_input')
+                    ->label('Category')
+                    ->placeholder('Ketik kategori, tekan Enter...')
+                    ->suggestions(fn() => Category::pluck('name')->toArray())
                     ->required(),
 
                 Forms\Components\TextInput::make('category_color')
@@ -179,8 +174,10 @@ class ArticleResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('slug')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('category')
-                    ->badge(),
+                Tables\Columns\TextColumn::make('categories.name')
+                    ->label('Category')
+                    ->badge()
+                    ->separator(','),
                 Tables\Columns\TextColumn::make('category_color')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('read_time')
