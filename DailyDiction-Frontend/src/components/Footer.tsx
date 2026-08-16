@@ -33,22 +33,29 @@ export default function Footer() {
   return (
     <footer className="mt-20 border-t border-dark-border bg-dark-card/50 backdrop-blur-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        
         {/* Main Grid */}
         <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
-          
           {/* Brand Info (Spans 2 columns on medium+ screens) */}
           <div className="md:col-span-2 space-y-4">
-            <Link 
-              href="/" 
-              className="inline-flex items-center gap-1 font-mono text-2xl font-black tracking-wider text-text-primary transition-opacity hover:opacity-90"
+            <Link
+              href="/"
+              className="flex items-center gap-2 font-mono text-xl font-black tracking-wider text-text-primary group"
             >
-              DAILY<span className="text-brand-crimson">DICTION</span>
-              <span className="h-2 w-2 rounded-full bg-brand-crimson animate-pulse" />
+              <img
+                src="/image/logo-dd.png"
+                alt="Daily Diction Logo"
+                className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
+              />
+              <div className="flex items-center gap-1">
+                DAILY<span className="text-brand-yellow">DICTION</span>
+                <span className="h-2 w-2 rounded-full bg-brand-yellow animate-pulse" />
+              </div>
             </Link>
-            
+
             <p className="max-w-sm text-sm text-text-muted leading-relaxed">
-              Situs portal berita, media review jujur, dan wadah berkumpulnya komunitas gamer paling santai di Indonesia. Dapatkan update game & pop-culture harianmu di sini!
+              Situs portal berita, media review jujur, dan wadah berkumpulnya
+              komunitas gamer paling santai di Indonesia. Dapatkan update game &
+              pop-culture harianmu di sini!
             </p>
           </div>
 
@@ -59,16 +66,22 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2.5 text-sm text-text-muted">
               <li>
-                <Link href="/artikel" className="transition-colors hover:text-brand-crimson">
+                <Link
+                  href="/news"
+                  className="transition-colors hover:text-brand-crimson"
+                >
                   Berita Utama
                 </Link>
               </li>
               <li>
-                <Link href="/review" className="transition-colors hover:text-brand-crimson">
+                <Link
+                  href="/review"
+                  className="transition-colors hover:text-brand-crimson"
+                >
                   Ulasan Komplit
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link href="/hardware" className="transition-colors hover:text-brand-crimson">
                   Spesifikasi Hardware
                 </Link>
@@ -77,7 +90,7 @@ export default function Footer() {
                 <Link href="/pop-culture" className="transition-colors hover:text-brand-crimson">
                   Kultur Pop & Anime
                 </Link>
-              </li>
+              </li> */}
             </ul>
           </div>
 
@@ -125,14 +138,13 @@ export default function Footer() {
               </a>
             </div>
           </div>
-
         </div>
 
         {/* Bottom Bar / Copyright */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-dark-border/60 pt-6 text-xs text-text-muted sm:flex-row font-mono">
           <p>© 2026 Daily Diction. All rights reserved.</p>
-          
-          <div className="flex gap-6">
+
+          {/* <div className="flex gap-6">
             <Link href="/privacy" className="transition-colors hover:text-text-primary hover:underline">
               Privacy Policy
             </Link>
@@ -142,9 +154,8 @@ export default function Footer() {
             <Link href="/about" className="transition-colors hover:text-text-primary hover:underline">
               About Us
             </Link>
-          </div>
+          </div> */}
         </div>
-
       </div>
     </footer>
   );

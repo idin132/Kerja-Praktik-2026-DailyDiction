@@ -298,7 +298,7 @@ export default function NewsPage() {
               </div>
 
               {/* Game Rilis Widget */}
-              <div className="rounded-2xl border border-dark-border bg-dark-card p-5 font-mono">
+              {/* <div className="rounded-2xl border border-dark-border bg-dark-card p-5 font-mono">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-primary border-b border-dark-border pb-3 mb-4">
                   <Calendar className="h-4 w-4 text-brand-crimson" />
                   <span>GAME RILIS JULI 2026</span>
@@ -325,7 +325,7 @@ export default function NewsPage() {
                     </span>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
             </aside>
 

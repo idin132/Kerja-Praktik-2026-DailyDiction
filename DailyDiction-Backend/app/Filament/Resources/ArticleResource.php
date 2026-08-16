@@ -15,6 +15,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 use Filament\Forms\Components\TagsInput;
+use Illuminate\Support\Str;
 
 
 class ArticleResource extends Resource
@@ -28,8 +29,15 @@ class ArticleResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('title')
+                    ->label('Title')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(function (string $operation, ?string $state, Set $set) {
+                        if ($operation === 'create') {
+                            $set('slug', Str::slug($state));
+                        }
+                    }),
 
                 Forms\Components\TextInput::make('author')
                     ->required()
@@ -37,7 +45,9 @@ class ArticleResource extends Resource
 
                 Forms\Components\TextInput::make('slug')
                     ->label('Slug: Alamat URL')
+                    ->readOnly()
                     ->required()
+                    ->unique(ignoreRecord: true)
                     ->maxLength(255),
 
                 TagsInput::make('category')
@@ -55,6 +65,7 @@ class ArticleResource extends Resource
 
                 Forms\Components\TextInput::make('category_color')
                     ->required()
+                    ->hidden()
                     ->maxLength(255)
                     ->default('crimson'),
 
@@ -84,7 +95,7 @@ class ArticleResource extends Resource
                     ->required()
                     ->live(onBlur: true)
                     ->afterStateUpdated(function (mixed $state, Set $set) {
-                        if (! $state) {
+                        if (!$state) {
                             $set('read_time', '1 MIN READ');
                             return;
                         }
@@ -109,7 +120,7 @@ class ArticleResource extends Resource
                     ->label('Preview Thumbnail')
                     ->content(function (Get $get) {
                         $url = $get('image_url');
-                        if (! $url) {
+                        if (!$url) {
                             return new HtmlString('<span class="text-xs text-gray-400">Belum ada preview (masukkan URL gambar di atas)</span>');
                         }
                         return new HtmlString('
@@ -161,7 +172,8 @@ class ArticleResource extends Resource
                     ->readOnly(),
 
                 Forms\Components\Toggle::make('is_featured')
-                    ->required(),
+                    ->required()
+                    ->hidden(),
 
                 Forms\Components\Toggle::make('is_published')
                     ->required(),
