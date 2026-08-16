@@ -24,8 +24,22 @@ class GameReviewResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('title')->required(),
                 Forms\Components\TextInput::make('slug')->required(),
-                Forms\Components\TextInput::make('platform')->placeholder('PC / PS5 / SWITCH')->required(),
-                Forms\Components\TextInput::make('rating')->numeric()->step(0.1)->required(),
+                
+                // 👇 Platform diubah jadi dropdown multiple select 👇
+                Forms\Components\Select::make('platform')
+                    ->label('Platform')
+                    ->multiple() // Biar bisa pilih lebih dari 1
+                    ->options([
+                        'Playstation 5' => 'Playstation 5',
+                        'Xbox Series X/S' => 'Xbox Series X/S',
+                        'Nintendo Switch' => 'Nintendo Switch',
+                        'Mobile' => 'Mobile',
+                        'PC' => 'PC',
+                    ])
+                    ->required(),
+                
+                // ❌ TextInput untuk rating sudah dibuang ❌
+
                 Forms\Components\FileUpload::make('image_url')
                     ->label('Cover Game')
                     ->image()
@@ -48,14 +62,19 @@ class GameReviewResource extends Resource
                     ->disk('public')
                     ->square(),
                 Tables\Columns\TextColumn::make('title')->searchable(),
-                Tables\Columns\TextColumn::make('platform')->badge(),
-                Tables\Columns\TextColumn::make('rating')->sortable(),
+                
+                // Filament pinter kok, array multiple platform bakal otomatis dijadiin deretan badge sama dia
+                Tables\Columns\TextColumn::make('platform')->badge(), 
+                
+                // ❌ TextColumn rating di tabel juga sudah dibuang ❌
+                
                 Tables\Columns\IconColumn::make('is_published')->boolean(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(), // Urang tambahin sekalian biar gampang kalau mau ngehapus dari tabel
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

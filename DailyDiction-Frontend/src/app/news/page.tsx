@@ -9,9 +9,6 @@ import {
   Calendar, 
   Clock, 
   User, 
-  ChevronLeft, 
-  ChevronRight, 
-  Flame, 
   Send,
   Search,
   Filter,
@@ -23,13 +20,14 @@ interface ArticleItem {
   id: number;
   title: string;
   slug: string;
-  category: string;
+  category: string | string[]; // Mendukung array kategori
   category_color?: string;
   summary: string;
   content: string;
   image_full_url?: string;
   read_time: string;
   created_at: string;
+  author?: string;
 }
 
 export default function NewsPage() {
@@ -56,20 +54,38 @@ export default function NewsPage() {
     fetchArticles();
   }, []);
 
-  // Filter Kategori Dinamis dari Data yang Ada
-  const categoriesList = [
-    "ALL",
-    ...Array.from(new Set(articles.map((item) => item.category?.toUpperCase()).filter(Boolean)))
-  ];
+  // Helper untuk mengekstrak kategori menjadi array string yang bersih
+  const getCategoriesArray = (category: string | string[] | undefined): string[] => {
+    if (!category) return ["GAMING"];
+    if (Array.isArray(category)) return category;
+    if (typeof category === 'string') {
+      try {
+        return category.startsWith('[') ? JSON.parse(category) : [category];
+      } catch {
+        return [category];
+      }
+    }
+    return ["GAMING"];
+  };
+
+  // Filter Kategori Dinamis dari Data yang Ada (Mendukung Multi-Kategori)
+  const allCategories = articles.flatMap((item) => 
+    getCategoriesArray(item.category).map(cat => cat.toUpperCase())
+  );
+  const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
 
   // Filtering Berdasarkan Search & Category
   const filteredArticles = articles.filter((item) => {
+    const itemCats = getCategoriesArray(item.category).map(c => c.toUpperCase());
+    
     const matchCategory =
       selectedCategory === "ALL" ||
-      item.category?.toUpperCase() === selectedCategory;
+      itemCats.includes(selectedCategory);
+      
     const matchSearch =
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.summary.toLowerCase().includes(searchQuery.toLowerCase());
+      
     return matchCategory && matchSearch;
   });
 
@@ -78,7 +94,7 @@ export default function NewsPage() {
       <div>
         <Navbar />
 
-        <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <main className="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-8">
           
           {/* Header Section */}
           <div className="mb-8 border-b border-dark-border pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -108,10 +124,10 @@ export default function NewsPage() {
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12">
             
-            {/* Left Column: News List (8 Columns) */}
-            <div className="lg:col-span-8 space-y-6">
+            {/* Left Column: News List */}
+            <div className="lg:col-span-8 2xl:col-span-9 space-y-6">
               
               {/* Category Filter Pills */}
               {categoriesList.length > 1 && (
@@ -147,71 +163,96 @@ export default function NewsPage() {
                   ))}
                 </div>
               ) : filteredArticles.length > 0 ? (
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
                   <AnimatePresence>
-                    {filteredArticles.map((item) => (
-                      <motion.article
-                        key={item.id}
-                        layout
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        whileHover={{ y: -3 }}
-                        transition={{ duration: 0.2 }}
-                        className="group flex flex-col md:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/60 shadow-lg"
-                      >
-                        {/* Thumbnail Image */}
-                        <div className="relative h-52 md:h-auto md:w-72 flex-shrink-0 overflow-hidden">
-                          <img
-                            src={
-                              item.image_full_url ||
-                              "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
-                            }
-                            alt={item.title}
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                          <span className="absolute top-3 left-3 rounded-lg border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md">
-                            {item.category || "GAMING"}
-                          </span>
-                        </div>
+                    {filteredArticles.map((item) => {
+                      const itemCategories = getCategoriesArray(item.category);
 
-                        {/* Article Info */}
-                        <div className="flex flex-1 flex-col justify-between p-5 sm:p-6">
-                          <div>
-                            <Link href={`/artikel/${item.slug}`}>
-                              <h2 className="text-base sm:text-xl font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
-                                {item.title}
-                              </h2>
-                            </Link>
-                            <p className="mt-2.5 text-xs text-text-muted line-clamp-2 leading-relaxed">
-                              {item.summary}
-                            </p>
+                      return (
+                        <motion.article
+                          key={item.id}
+                          layout
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          whileHover={{ y: -3 }}
+                          transition={{ duration: 0.2 }}
+                          className="group flex flex-col md:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/60 shadow-lg"
+                        >
+                          {/* Thumbnail Image */}
+                          <div className="relative h-52 md:h-auto md:w-64 lg:w-72 flex-shrink-0 overflow-hidden">
+                            <img
+                              src={
+                                item.image_full_url ||
+                                "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
+                              }
+                              alt={item.title}
+                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                            
+                            {/* Looping Badge Kategori */}
+                            <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                              {itemCategories.map((cat, idx) => (
+                                <span key={idx} className="rounded-md border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md">
+                                  {cat}
+                                </span>
+                              ))}
+                            </div>
                           </div>
 
-                          {/* Metadata Footer */}
-                          <div className="mt-5 flex items-center justify-between text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-3">
-                            <div className="flex items-center gap-4">
-                              <div className="flex items-center gap-1.5">
-                                <User className="h-3.5 w-3.5 text-brand-crimson" />
-                                <span>Redaksi Daily Diction</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <Clock className="h-3.5 w-3.5 text-brand-cyan" />
-                                <span>{item.read_time || "5 MIN READ"}</span>
-                              </div>
+                          {/* Article Info */}
+                          <div className="flex flex-1 flex-col justify-between p-5 sm:p-6">
+                            <div>
+                              <Link href={`/artikel/${item.slug}`}>
+                                <h2 className="text-base sm:text-xl font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
+                                  {item.title}
+                                </h2>
+                              </Link>
+                              <p className="mt-2.5 text-xs text-text-muted line-clamp-2 leading-relaxed">
+                                {item.summary}
+                              </p>
                             </div>
 
-                            <Link
-                              href={`/artikel/${item.slug}`}
-                              className="flex items-center gap-1 font-bold text-brand-crimson hover:underline"
-                            >
-                              <span>BACA</span>
-                              <ArrowUpRight className="h-3.5 w-3.5" />
-                            </Link>
+                            {/* Metadata Footer */}
+                            <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4">
+                              <div className="flex items-center gap-3">
+                                
+                                <div className="flex items-center gap-1.5">
+                                  <User className="h-3.5 w-3.5 text-brand-crimson" />
+                                  <span className="truncate max-w-[100px] font-semibold text-white">
+                                    {item.author || "Redaksi"}
+                                  </span>
+                                </div>
+                                
+                                <span className="text-dark-border hidden sm:inline-block">•</span>
+                                
+                                {item.created_at && (
+                                  <div className="flex items-center gap-1.5 hidden sm:flex">
+                                    <Calendar className="h-3.5 w-3.5 text-text-muted" />
+                                    <span>
+                                      {new Date(item.created_at).toLocaleDateString("id-ID", {
+                                        day: "numeric",
+                                        month: "short",
+                                        year: "numeric",
+                                      })}
+                                    </span>
+                                  </div>
+                                )}
+                                
+                              </div>
+
+                              <Link
+                                href={`/artikel/${item.slug}`}
+                                className="flex items-center gap-1 font-bold text-brand-crimson hover:underline shrink-0 ml-2"
+                              >
+                                <span>BACA</span>
+                                <ArrowUpRight className="h-3.5 w-3.5" />
+                              </Link>
+                            </div>
                           </div>
-                        </div>
-                      </motion.article>
-                    ))}
+                        </motion.article>
+                      );
+                    })}
                   </AnimatePresence>
                 </div>
               ) : (
@@ -224,8 +265,8 @@ export default function NewsPage() {
               )}
             </div>
 
-            {/* Right Sidebar Column (4 Columns) */}
-            <aside className="lg:col-span-4 space-y-6">
+            {/* Right Sidebar Column */}
+            <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
               
               {/* DISCORD WIDGET */}
               <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">

@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use Filament\Forms\Components\TagsInput;
 
 
 class ArticleResource extends Resource
@@ -39,10 +40,16 @@ class ArticleResource extends Resource
                     ->required()
                     ->maxLength(255),
 
-                Forms\Components\Select::make('category')
-                    ->options([
-                        'action' => 'Action',
-                        'Romance' => 'Romance',
+                TagsInput::make('category')
+                    ->label('Category (Bisa pilih atau ketik baru)')
+                    ->placeholder('Ketik kategori baru lalu tekan Enter...')
+                    ->suggestions([
+                        'Action',
+                        'Romance',
+                        'RPG',
+                        'FPS',
+                        'Hardware',
+                        'Esports',
                     ])
                     ->required(),
 
