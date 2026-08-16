@@ -198,7 +198,8 @@ class ArticleResource extends Resource
                 Tables\Columns\TextColumn::make('read_time')
                     ->searchable(),
                 Tables\Columns\IconColumn::make('is_featured')
-                    ->boolean(),
+                    ->boolean()
+                    ->hidden(),
                 Tables\Columns\IconColumn::make('is_published')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
