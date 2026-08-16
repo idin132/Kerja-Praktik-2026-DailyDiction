@@ -224,7 +224,7 @@ export default async function Home() {
             </div>
 
             <DiscordWidget />
-            <ReleaseRadar />
+            {/* <ReleaseRadar /> */}
           </aside>
         </div>
       </main>
