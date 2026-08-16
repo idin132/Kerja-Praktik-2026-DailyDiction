@@ -9,7 +9,7 @@ interface ArticleItem {
   id: number;
   title: string;
   slug: string;
-  category: string;
+  categories?: { id: number; name: string }[];
   summary: string;
   thumbnail?: string;
   thumbnail_url?: string;
@@ -25,7 +25,8 @@ function formatHeroImage(article: ArticleItem): string {
     article.image_full_url ||
     article.image;
 
-  if (!rawUrl) return "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600";
+  if (!rawUrl)
+    return "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600";
 
   const clean = rawUrl.trim();
   if (clean.startsWith("http://") || clean.startsWith("https://")) {
@@ -94,9 +95,11 @@ export default function HeroSection() {
   return (
     <section className="relative w-full overflow-hidden border-b border-dark-border bg-black">
       <div className="relative w-full aspect-[16/10] sm:aspect-video md:aspect-auto md:h-[75vh] md:min-h-[520px] overflow-hidden">
-        
         {/* Background Image Slider */}
-        <Link href={`/artikel/${currentArticle.slug}`} className="absolute inset-0 block group">
+        <Link
+          href={`/artikel/${currentArticle.slug}`}
+          className="absolute inset-0 block group"
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={currentArticle.id}
@@ -121,10 +124,12 @@ export default function HeroSection() {
         {/* Konten Teks & Kontrol Overlay */}
         <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-end p-4 sm:px-6 lg:px-8 pb-4 sm:pb-10 pointer-events-none">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            
             {/* Teks Artikel */}
             <div className="max-w-2xl pointer-events-auto">
-              <Link href={`/artikel/${currentArticle.slug}`} className="block group">
+              <Link
+                href={`/artikel/${currentArticle.slug}`}
+                className="block group"
+              >
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentArticle.id}
@@ -134,9 +139,14 @@ export default function HeroSection() {
                     transition={{ duration: 0.4 }}
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="rounded border border-brand-cyan/40 bg-dark-bg/80 px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-brand-cyan backdrop-blur-md">
-                        {currentArticle.category}
-                      </span>
+                      {(currentArticle.categories ?? []).map((cat, idx) => (
+                        <span
+                          key={idx}
+                          className="rounded border border-brand-cyan/40 bg-dark-bg/80 px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-brand-cyan backdrop-blur-md"
+                        >
+                          {cat.name}
+                        </span>
+                      ))}
                     </div>
 
                     <h1 className="text-base sm:text-2xl md:text-4xl lg:text-5xl font-black tracking-tight text-white leading-snug sm:leading-tight line-clamp-2 group-hover:text-brand-crimson transition-colors drop-shadow-md">
@@ -200,11 +210,9 @@ export default function HeroSection() {
                 </button>
               </div>
             </div>
-
           </div>
         </div>
-
       </div>
     </section>
   );
-} 
+}
