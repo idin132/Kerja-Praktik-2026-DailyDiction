@@ -19,6 +19,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Pages\Auth\Login;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\Blade;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -38,6 +40,16 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('favicon.ico'))
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->renderHook(
+                PanelsRenderHook::USER_MENU_BEFORE,
+                fn (): string => Blade::render('
+                    @if(auth()->check())
+                        <div style="margin-right: 1rem; padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid {{ auth()->user()->role === \'superadmin\' ? \'#e11d48\' : \'#06b6d4\' }}; color: {{ auth()->user()->role === \'superadmin\' ? \'#e11d48\' : \'#06b6d4\' }}; background-color: {{ auth()->user()->role === \'superadmin\' ? \'rgba(225,29,72,0.1)\' : \'rgba(6,182,212,0.1)\' }};">
+                            {{ auth()->user()->role ?? \'Admin\' }}
+                        </div>
+                    @endif
+                ')
+            )
             ->pages([
                 Pages\Dashboard::class,
             ])
