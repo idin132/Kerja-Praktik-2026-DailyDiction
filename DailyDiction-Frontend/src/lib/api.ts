@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://127.0.0.1:8000/api/v1";
+const API_BASE_URL = "https://dailydiction.id/api/v1";
 
 // 1. Fetch Berita / Artikel
 export async function getArticles() {
@@ -16,7 +16,7 @@ export async function getGameReviews() {
   try {
     // Pastikan URL-nya benar pakai 'reviews' (pakai s)
     // cache: 'no-store' WAJIB ADA biar Next.js selalu ambil data terbaru
-    const res = await fetch("http://127.0.0.1:8000/api/v1/reviews", {
+    const res = await fetch("https://dailydiction.id/api/v1/reviews", {
       cache: "no-store", 
     });
     
