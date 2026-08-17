@@ -9,8 +9,12 @@ import { getArticles, getGameReviews, getAdvertisements } from "@/lib/api";
 import { getYouTubeVideos } from "@/lib/youtube";
 import { Flame, Star, ArrowRight } from "lucide-react";
 
-// Revalidate 3600 detik (1 jam) agar kuota API YouTube awet dan data tetap otomatis update
-export const revalidate = 3600;
+// ==========================================
+// JURUS NUKLIR ANTI-CACHE NEXT.JS
+// ==========================================
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 
 function formatImageUrl(
   imageUrl: string | null | undefined,
@@ -47,7 +51,6 @@ export default async function Home() {
   const sidebarAd = adsData?.data?.[0] || null;
 
   // --- FILTER YOUTUBE: SHORTS VS VIDEO PANJANG ---
-  // Helper buat ngubah format durasi YouTube (PT1M30S) jadi total detik
   const getDurationInSeconds = (duration: string) => {
     let hours = 0,
       minutes = 0,
@@ -69,7 +72,6 @@ export default async function Home() {
     const title = vid.snippet?.title?.toLowerCase() || "";
     const desc = vid.snippet?.description?.toLowerCase() || "";
 
-    // Masuk Shorts jika: durasi <= 180 detik (3 menit) ATAU judul/deskripsi mengandung '#short'
     return (
       durationSec <= 180 || title.includes("#short") || desc.includes("#short")
     );
@@ -81,11 +83,9 @@ export default async function Home() {
     const title = vid.snippet?.title?.toLowerCase() || "";
     const desc = vid.snippet?.description?.toLowerCase() || "";
 
-    // Apakah ini video Shorts?
     const isShort =
       durationSec <= 180 || title.includes("#short") || desc.includes("#short");
 
-    // Masuk Hero cuma kalau DIA BUKAN SHORTS
     return !isShort;
   });
 
@@ -96,12 +96,11 @@ export default async function Home() {
       <HeroSection />
 
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
-        {/* Youtube Hero (Video Panjang) */}
         <YoutubeHero videos={longVideosList} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12 mt-4">
-          {/* Main Content (Kiri) */}
           <div className="lg:col-span-8 2xl:col-span-9 space-y-12">
+            
             {/* News Feed Section */}
             <section>
               <div className="flex items-center justify-between mb-6">
@@ -121,26 +120,36 @@ export default async function Home() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
-                {articles.map((item: any) => (
-                  <NewsFeedCard
-                    key={item.id}
-                    category={
-                      item.categories && item.categories.length > 0
-                        ? item.categories.map((c: any) => c.name) // ← array of string
-                        : ["Berita"]
-                    }
-                    categoryColor={item.category_color}
-                    title={item.title}
-                    summary={item.summary}
-                    imageUrl={formatImageUrl(
-                      item.image_url || item.image_full_url,
-                      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
-                    )}
-                    slug={item.slug}
-                    author={item.author}
-                    createdAt={item.created_at}
-                  />
-                ))}
+                {articles.map((item: any) => {
+                  // --- LOGIC KATEGORI SUPER AMAN ---
+                  // Cek semua kemungkinan (category_input, category lama, atau categories relasi)
+                  let finalCategory = ["Berita"]; // Fallback Default
+
+                  if (item.category_input && item.category_input.length > 0) {
+                    finalCategory = item.category_input;
+                  } else if (item.category && item.category.length > 0) {
+                    finalCategory = item.category;
+                  } else if (item.categories && item.categories.length > 0) {
+                    finalCategory = item.categories.map((c: any) => c.name);
+                  }
+
+                  return (
+                    <NewsFeedCard
+                      key={item.id}
+                      category={finalCategory} 
+                      categoryColor={item.category_color || "crimson"}
+                      title={item.title}
+                      summary={item.summary}
+                      imageUrl={formatImageUrl(
+                        item.image_url || item.image_full_url,
+                        "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
+                      )}
+                      slug={item.slug}
+                      author={item.author}
+                      createdAt={item.created_at}
+                    />
+                  );
+                })}
               </div>
             </section>
 
@@ -169,7 +178,7 @@ export default async function Home() {
                       key={review.id}
                       summary={review.summary}
                       title={review.title}
-                      platform={review.platform}
+                      platform={review.platform || ["PC"]}
                       imageUrl={formatImageUrl(
                         review.image_url || review.image_full_url,
                         "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
@@ -224,7 +233,6 @@ export default async function Home() {
             </div>
 
             <DiscordWidget />
-            {/* <ReleaseRadar /> */}
           </aside>
         </div>
       </main>

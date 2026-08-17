@@ -40,7 +40,7 @@ export default function NewsPage() {
   useEffect(() => {
     async function fetchArticles() {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/articles");
+        const res = await fetch("http://127.0.0.1:8000/api/v1/articles?type=article");
         if (res.ok) {
           const json = await res.json();
           setArticles(json.data || []);
@@ -68,15 +68,17 @@ export default function NewsPage() {
     return ["GAMING"];
   };
 
-  // Filter Kategori Dinamis dari Data yang Ada (Mendukung Multi-Kategori)
-  const allCategories = articles.flatMap((item) => 
-    getCategoriesArray(item.category).map(cat => cat.toUpperCase())
+  // Filter Kategori Dinamis dari Data yang Ada
+  const allCategories = articles.flatMap((item: any) => 
+    // 👇 Ubah item.category jadi item.category_input 👇
+    getCategoriesArray(item.category_input).map(cat => cat.toUpperCase())
   );
   const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
 
   // Filtering Berdasarkan Search & Category
-  const filteredArticles = articles.filter((item) => {
-    const itemCats = getCategoriesArray(item.category).map(c => c.toUpperCase());
+  const filteredArticles = articles.filter((item: any) => {
+    // 👇 Ubah item.category jadi item.category_input 👇
+    const itemCats = getCategoriesArray(item.category_input).map(c => c.toUpperCase());
     
     const matchCategory =
       selectedCategory === "ALL" ||

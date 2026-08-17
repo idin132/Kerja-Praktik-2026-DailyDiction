@@ -12,6 +12,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::prefix('v1')->group(function () {
+    // Cuma butuh 3 baris ini untuk artikel & review!
     Route::get('/articles', [ArticleController::class, 'index']);
     Route::get('/articles/featured', [ArticleController::class, 'featured']);
     Route::get('/articles/{slug}', [ArticleController::class, 'show']);
