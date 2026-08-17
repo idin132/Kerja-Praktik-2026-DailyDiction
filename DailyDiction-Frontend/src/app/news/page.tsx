@@ -41,7 +41,7 @@ export default function NewsPage() {
 
     async function fetchArticles() {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/articles");
+        const res = await fetch("https://dailydiction.id/api/v1/articles");
         if (res.ok) {
           const json = await res.json();
           setArticles(json.data || []);
@@ -173,6 +173,10 @@ export default function NewsPage() {
                   <AnimatePresence>
                     {filteredArticles.map((item) => {
                       const itemCategories = getCategoriesArray(item.category);
+
+                      function formatNewsImage(item: ArticleItem): string | Blob | undefined {
+                        throw new Error("Function not implemented.");
+                      }
 
                       return (
                         <motion.article

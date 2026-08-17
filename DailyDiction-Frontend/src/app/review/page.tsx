@@ -16,7 +16,7 @@ function formatImageUrl(imageUrl: string | null | undefined, fallback: string): 
     }
     return imageUrl;
   }
-  return `http://127.0.0.1:8000/storage/${imageUrl}`;
+  return `https://dailydiction.id/storage/${imageUrl}`;
 }
 
 export default async function ReviewPage() {

@@ -12,7 +12,7 @@ function formatImageUrl(imageUrl: string | null | undefined, fallback: string): 
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
     return imageUrl.replace(/http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/, "$1");
   }
-  return `http://127.0.0.1:8000/storage/${imageUrl}`;
+  return `https://dailydiction.id/storage/${imageUrl}`;
 }
 
 export default async function DetailReview({

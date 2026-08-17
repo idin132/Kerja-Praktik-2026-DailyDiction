@@ -22,7 +22,7 @@ export default function InstagramFeed() {
     async function fetchInstagram() {
       try {
         // Nanti minta Idin bikin endpoint ini di Laravel buat narik API Instagram
-        const res = await fetch("http://127.0.0.1:8000/api/v1/instagram-feed");
+        const res = await fetch("https://dailydiction.id/api/v1/instagram-feed");
         if (res.ok) {
           const json = await res.json();
           setPosts(json.data || []);

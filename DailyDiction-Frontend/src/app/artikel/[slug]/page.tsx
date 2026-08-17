@@ -23,10 +23,10 @@ function formatImageUrl(
   const cleanPath = imageUrl.startsWith("/") ? imageUrl.slice(1) : imageUrl;
 
   if (cleanPath.startsWith("storage/")) {
-    return `http://127.0.0.1:8000/${cleanPath}`;
+    return `https://dailydiction.id/${cleanPath}`;
   }
 
-  return `http://127.0.0.1:8000/storage/${cleanPath}`;
+  return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
 export default async function DetailArtikel({
