@@ -56,9 +56,9 @@ class ArticleResource extends Resource
                 Forms\Components\TextInput::make('author')
                     ->label('Author')
                     ->required()
-                    ->maxLength(255)
-                    ->default(fn () => auth()->user()->name) // Ambil nama admin yang lagi login
-                    ->readOnly(), // Kunci field-nya biar nggak bisa diedit manual
+                    ->readonly()
+                    ->default(auth()->user()->name)
+                    ->maxLength(255),
 
                 Forms\Components\TextInput::make('slug')
                     ->label('Slug: Alamat URL')

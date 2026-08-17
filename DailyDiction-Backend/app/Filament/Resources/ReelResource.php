@@ -16,6 +16,8 @@ class ReelResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-film';
 
+    protected static bool $shouldRegisterNavigation = false; // untuk menyembunyikan menu Reels dari sidebar, jika ingin menampilkan ubah menjadi true
+
     public static function form(Form $form): Form
     {
         return $form
