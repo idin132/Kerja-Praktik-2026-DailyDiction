@@ -9,7 +9,7 @@ interface ArticleItem {
   id: number;
   title: string;
   slug: string;
-  category: string;
+  category: string | string[];
   summary: string;
   thumbnail?: string;
   thumbnail_url?: string;
@@ -25,7 +25,8 @@ function formatHeroImage(article: ArticleItem): string {
     article.image_full_url ||
     article.image;
 
-  if (!rawUrl) return "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600";
+  if (!rawUrl)
+    return "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600";
 
   const clean = rawUrl.trim();
   if (clean.startsWith("http://") || clean.startsWith("https://")) {
@@ -33,9 +34,25 @@ function formatHeroImage(article: ArticleItem): string {
   }
   const cleanPath = clean.startsWith("/") ? clean.slice(1) : clean;
   if (cleanPath.startsWith("storage/")) {
-    return `http://127.0.0.1:8000/${cleanPath}`;
+    return `https://dailydiction.id/${cleanPath}`;
   }
-  return `http://127.0.0.1:8000/storage/${cleanPath}`;
+  return `https://dailydiction.id/storage/${cleanPath}`;
+}
+
+function getFirstCategory(category: string | string[] | undefined): string {
+  if (!category) return "GAMING";
+  if (Array.isArray(category)) return category[0] || "GAMING";
+  if (typeof category === "string") {
+    try {
+      const parsed = category.startsWith("[")
+        ? JSON.parse(category)
+        : [category];
+      return parsed[0] || "GAMING";
+    } catch {
+      return category;
+    }
+  }
+  return "GAMING";
 }
 
 export default function HeroSection() {
@@ -44,21 +61,48 @@ export default function HeroSection() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchHeroArticles() {
+      // Pastikan hanya berjalan di sisi browser client
+      if (typeof window === "undefined") return;
+
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/articles");
-        if (res.ok) {
-          const json = await res.json();
-          const data = json.data || [];
-          setArticles(data.slice(0, 3));
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
+
+        const res = await fetch(`${apiUrl}/articles`, {
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const json = await res.json();
+        if (isMounted) {
+          setArticles(json.data || []);
         }
       } catch (error) {
-        console.error("Gagal memuat berita slider hero:", error);
+        console.warn("API belum siap saat build atau koneksi terputus:", error);
+        if (isMounted) {
+          setArticles([]);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
+
     fetchHeroArticles();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -94,9 +138,11 @@ export default function HeroSection() {
   return (
     <section className="relative w-full overflow-hidden border-b border-dark-border bg-black">
       <div className="relative w-full aspect-[16/10] sm:aspect-video md:aspect-auto md:h-[75vh] md:min-h-[520px] overflow-hidden">
-        
         {/* Background Image Slider */}
-        <Link href={`/artikel/${currentArticle.slug}`} className="absolute inset-0 block group">
+        <Link
+          href={`/artikel/${currentArticle.slug}`}
+          className="absolute inset-0 block group"
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={currentArticle.id}
@@ -121,10 +167,12 @@ export default function HeroSection() {
         {/* Konten Teks & Kontrol Overlay */}
         <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col justify-end p-4 sm:px-6 lg:px-8 pb-4 sm:pb-10 pointer-events-none">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            
             {/* Teks Artikel */}
             <div className="max-w-2xl pointer-events-auto">
-              <Link href={`/artikel/${currentArticle.slug}`} className="block group">
+              <Link
+                href={`/artikel/${currentArticle.slug}`}
+                className="block group"
+              >
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentArticle.id}
@@ -135,7 +183,7 @@ export default function HeroSection() {
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <span className="rounded border border-brand-cyan/40 bg-dark-bg/80 px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-brand-cyan backdrop-blur-md">
-                        {currentArticle.category}
+                        {getFirstCategory(currentArticle.category)}
                       </span>
                     </div>
 
@@ -200,11 +248,9 @@ export default function HeroSection() {
                 </button>
               </div>
             </div>
-
           </div>
         </div>
-
       </div>
     </section>
   );
-} 
+}
