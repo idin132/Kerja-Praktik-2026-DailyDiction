@@ -286,7 +286,7 @@ export default function NewsPage() {
                 </p>
 
                 <a
-                  href="https://discord.gg"
+                  href="https://discord.com/invite/DG6Nebkex9"
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex w-full items-center justify-center gap-2 bg-white text-indigo-950 font-mono font-bold text-[10px] lg:text-xs uppercase py-3 px-4 rounded-xl hover:bg-slate-100 transition-all shadow-md relative z-10"
