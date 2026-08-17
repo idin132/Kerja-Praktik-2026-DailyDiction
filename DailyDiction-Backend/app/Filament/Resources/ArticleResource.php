@@ -200,6 +200,15 @@ class ArticleResource extends Resource
                     ->badge()
                     ->separator(','),
 
+                // Tambahan kolom dari Idin
+                Tables\Columns\TextColumn::make('category_color')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('read_time')
+                    ->searchable(),
+                Tables\Columns\IconColumn::make('is_featured')
+                    ->boolean()
+                    ->hidden(),
+
                 Tables\Columns\IconColumn::make('is_published')
                     ->boolean(),
 

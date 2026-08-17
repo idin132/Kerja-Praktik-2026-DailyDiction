@@ -50,14 +50,14 @@ export default function YoutubeShorts({ videos = [] }: { videos?: any[] }) {
           rel="noopener noreferrer"
           className="text-xs font-bold text-brand-crimson hover:text-white transition-colors flex items-center gap-1"
         >
-          Lihat Semua &rarr;
+          Likat Semua &rarr;
         </a>
       </div>
 
       {/* ================= SLIDER SHORTS ================= */}
       <div className="relative group">
-        {/* Panah Kiri */}
-        {shortsLimit.length > 5 && (
+        {/* 👇 Syarat panah diturunin jadi > 2 biar selalu muncul 👇 */}
+        {shortsLimit.length > 2 && (
           <button
             onClick={scrollLeft}
             className="absolute -left-4 top-1/2 z-10 flex -translate-y-1/2 items-center justify-center rounded-full bg-black/80 p-2.5 text-white opacity-0 backdrop-blur-md transition-all duration-300 hover:bg-brand-crimson hover:scale-110 group-hover:opacity-100 shadow-[0_0_15px_rgba(0,0,0,0.5)] border border-dark-border"
@@ -114,8 +114,8 @@ export default function YoutubeShorts({ videos = [] }: { videos?: any[] }) {
           ))}
         </div>
 
-        {/* Panah Kanan */}
-        {shortsLimit.length > 5 && (
+        {/* 👇 Syarat panah diturunin jadi > 2 👇 */}
+        {shortsLimit.length > 2 && (
           <button
             onClick={scrollRight}
             className="absolute -right-4 top-1/2 z-10 flex -translate-y-1/2 items-center justify-center rounded-full bg-black/80 p-2.5 text-white opacity-0 backdrop-blur-md transition-all duration-300 hover:bg-brand-cyan hover:scale-110 group-hover:opacity-100 shadow-[0_0_15px_rgba(0,0,0,0.5)] border border-dark-border"
