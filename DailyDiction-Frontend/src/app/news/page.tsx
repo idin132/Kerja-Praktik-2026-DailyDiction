@@ -174,10 +174,6 @@ export default function NewsPage() {
                     {filteredArticles.map((item) => {
                       const itemCategories = getCategoriesArray(item.category);
 
-                      function formatNewsImage(item: ArticleItem): string | Blob | undefined {
-                        throw new Error("Function not implemented.");
-                      }
-
                       return (
                         <motion.article
                           key={item.id}
@@ -192,7 +188,7 @@ export default function NewsPage() {
                           {/* Thumbnail Image */}
                           <div className="relative h-52 md:h-auto md:w-64 lg:w-72 flex-shrink-0 overflow-hidden">
                             <img
-                              src={formatNewsImage(item)}
+                              // src={formatNewsImage(item)}
                               alt={item.title}
                               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
