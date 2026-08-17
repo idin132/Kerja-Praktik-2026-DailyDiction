@@ -19,10 +19,17 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
+        'role',
     ];
 
+    // Helper untuk mengecek Superadmin
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'superadmin';
+    }
     /**
      * The attributes that should be hidden for serialization.
      *

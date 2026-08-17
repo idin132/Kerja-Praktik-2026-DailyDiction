@@ -43,6 +43,8 @@ class ArticleResource extends Resource
 
                 Forms\Components\TextInput::make('author')
                     ->required()
+                    ->readonly()
+                    ->default(auth()->user()->name)
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('slug')
