@@ -262,7 +262,8 @@ export default function NewsPage() {
                         return (
                           <article
                             key={item.id}
-                            className="group flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/60 hover:-translate-y-1 shadow-lg h-full duration-300"
+                            // 1. Tambahin 'relative' dan 'cursor-pointer' di sini
+                            className="group relative flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/60 hover:-translate-y-1 shadow-lg h-full duration-300 cursor-pointer"
                           >
                             <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
                               <img
@@ -275,8 +276,8 @@ export default function NewsPage() {
                                 }}
                               />
 
-                              {/* Looping Badge Kategori */}
-                              <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                              {/* 2. Tambahin z-20 di badge kategori biar tetep nyala */}
+                              <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-20">
                                 {itemCategories.map((cat, idx) => (
                                   <span
                                     key={idx}
@@ -290,17 +291,23 @@ export default function NewsPage() {
 
                             <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
                               <div>
-                                <Link href={`/artikel/${item.slug}`}>
-                                  <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
+                                <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
+                                  {/* 3. Link disuntik 'before:absolute' biar areanya selebar ukuran parent */}
+                                  <Link 
+                                    href={`/artikel/${item.slug}`}
+                                    className="before:absolute before:inset-0 before:z-10 focus:outline-none"
+                                  >
                                     {item.title}
-                                  </h2>
-                                </Link>
-                                <p className="mt-2.5 text-xs text-text-muted line-clamp-2 leading-relaxed">
+                                  </Link>
+                                </h2>
+                                {/* 4. Tambahin z-20 dan pointer-events-none di teks summary */}
+                                <p className="mt-2.5 text-xs text-text-muted line-clamp-2 leading-relaxed relative z-20 pointer-events-none">
                                   {item.summary}
                                 </p>
                               </div>
 
-                              <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4">
+                              {/* 5. Footer card dikasih relative z-20 */}
+                              <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4 relative z-20">
                                 <div className="flex items-center gap-3">
                                   <div className="flex items-center gap-1.5">
                                     <User className="h-3.5 w-3.5 text-brand-crimson" />
@@ -330,13 +337,11 @@ export default function NewsPage() {
                                   )}
                                 </div>
 
-                                <Link
-                                  href={`/artikel/${item.slug}`}
-                                  className="flex items-center gap-1 font-bold text-brand-crimson hover:underline shrink-0 ml-1"
-                                >
+                                {/* 6. Tombol BACA ini diubah dari <Link> jadi <div> biasa */}
+                                <div className="flex items-center gap-1 font-bold text-brand-crimson group-hover:underline shrink-0 ml-1">
                                   <span className="hidden sm:inline">BACA</span>
                                   <ArrowUpRight className="h-3.5 w-3.5" />
-                                </Link>
+                                </div>
                               </div>
                             </div>
                           </article>
