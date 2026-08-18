@@ -1,7 +1,7 @@
 name: Deploy Frontend to cPanel
 
 on:
-  workflow_dispatch: # 1. Wajib ada agar muncul tombol Run manual
+  workflow_dispatch: # Mengaktifkan tombol Run manual di GitHub Actions
   push:
     branches:
       - master
@@ -45,12 +45,14 @@ jobs:
           mkdir -p tmp
           touch tmp/restart.txt
 
-      # 2. Menggunakan LFTP (stabil, bebas error input server)
       - name: Deploy to cPanel via LFTP
         run: |
           sudo apt-get update && sudo apt-get install -y lftp
           lftp -c "
             set ftp:ssl-allow no;
+            set ftp:passive-mode yes;
+            set net:timeout 15;
+            set net:max-retries 3;
             open -u 'press@dailydiction.id','N1pp0nch@ch4ch@' ftp.dailydiction.id;
-            mirror -R --delete --exclude .git/ --exclude node_modules/ --exclude src/ DailyDiction-Frontend/ /daily-frontend/;
+            mirror -R --delete --parallel=5 --exclude .git/ --exclude node_modules/ --exclude src/ DailyDiction-Frontend/ /daily-frontend/;
           "
