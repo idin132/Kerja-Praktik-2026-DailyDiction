@@ -3,9 +3,9 @@ name: Deploy Frontend to cPanel
 on:
   push:
     branches:
-      - master # Sesuai default branch di repo Anda
+      - master
     paths:
-      - 'DailyDiction-Frontend/**' # Hanya trigger jika ada perubahan pada folder frontend
+      - 'DailyDiction-Frontend/**'
 
 jobs:
   build-and-deploy:
@@ -13,7 +13,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./DailyDiction-Frontend # Menjalankan semua perintah di dalam folder frontend
+        working-directory: ./DailyDiction-Frontend
 
     steps:
       - name: Checkout Repository
@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: "npm"
           cache-dependency-path: DailyDiction-Frontend/package-lock.json
 
@@ -51,10 +51,8 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          # Path lokal yang di-upload HANYA isi folder frontend
-          local-dir: ./daily-Frontend/
-          # Path tujuan di server hosting cPanel
-          server-dir: /
+          local-dir: ./DailyDiction-Frontend/
+          server-dir: /dailydiction-frontend/
           exclude: |
             **/.git*
             **/.git*/**
