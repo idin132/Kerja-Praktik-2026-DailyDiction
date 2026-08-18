@@ -44,6 +44,12 @@ jobs:
           mkdir -p tmp
           touch tmp/restart.txt
 
+      - name: Debug - Check Secrets Exist
+        run: |
+          if [ -z "${{ secrets.FTP_SERVER }}" ]; then echo "FTP_SERVER is EMPTY"; else echo "FTP_SERVER is SET"; fi
+          if [ -z "${{ secrets.FTP_USERNAME }}" ]; then echo "FTP_USERNAME is EMPTY"; else echo "FTP_USERNAME is SET"; fi
+          if [ -z "${{ secrets.FTP_PASSWORD }}" ]; then echo "FTP_PASSWORD is EMPTY"; else echo "FTP_PASSWORD is SET"; fi
+
       - name: Sync Frontend to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
