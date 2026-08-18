@@ -5,6 +5,10 @@ on:
       - master
     paths:
       - 'DailyDiction-Frontend/**'
+
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -23,25 +27,32 @@ jobs:
         env:
           ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
       - name: Install Dependencies
+        working-directory: ./DailyDiction-Frontend
         run: npm ci
       - name: Build Next.js
+        working-directory: ./DailyDiction-Frontend
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: "https://dailydiction.id/api/v1"
       - name: Copy Static Files to Public
+        working-directory: ./DailyDiction-Frontend
         run: |
           mkdir -p public/_next
           cp -r .next/static public/_next/
+
       - name: Create Restart Trigger
+        working-directory: ./DailyDiction-Frontend
         run: |
           mkdir -p tmp
           touch tmp/restart.txt
       - name: Sync Frontend to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
+          server: "ftp.dailydiction.id"
+          username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./DailyDiction-Frontend/
-          server-dir: /dailydiction-frontend/
+          local-dir: "./DailyDiction-Frontend/"
+          server-dir: "/"
           exclude: |
             **/.git*
             **/.git*/**
