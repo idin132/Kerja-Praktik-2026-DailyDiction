@@ -1,0 +1,61 @@
+name: Deploy Frontend to cPanel
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'DailyDiction-Frontend/**'
+
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./DailyDiction-Frontend
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: DailyDiction-Frontend/package-lock.json
+        env:
+          ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
+      - name: Install Dependencies
+        working-directory: ./DailyDiction-Frontend
+        run: npm ci
+      - name: Build Next.js
+        working-directory: ./DailyDiction-Frontend
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: "https://dailydiction.id/api/v1"
+      - name: Copy Static Files to Public
+        working-directory: ./DailyDiction-Frontend
+        run: |
+          mkdir -p public/_next
+          cp -r .next/static public/_next/
+
+      - name: Create Restart Trigger
+        working-directory: ./DailyDiction-Frontend
+        run: |
+          mkdir -p tmp
+          touch tmp/restart.txt
+      - name: Sync Frontend to cPanel via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ftp.dailydiction.id
+          username: press@dailydiction.id
+          password: N1pp0nch@ch4ch@
+          local-dir: "./DailyDiction-Frontend/"
+          server-dir: "/daily-frontend/"
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            src/**
+            README.md
