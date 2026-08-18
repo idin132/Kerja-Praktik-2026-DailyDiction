@@ -1,0 +1,63 @@
+name: Deploy Frontend to cPanel
+
+on:
+  push:
+    branches:
+      - master # Sesuai default branch di repo Anda
+    paths:
+      - 'DailyDiction-Frontend/**' # Hanya trigger jika ada perubahan pada folder frontend
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./DailyDiction-Frontend # Menjalankan semua perintah di dalam folder frontend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: DailyDiction-Frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Next.js
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: "https://dailydiction.id/api/v1"
+
+      - name: Copy Static Files to Public
+        run: |
+          mkdir -p public/_next
+          cp -r .next/static public/_next/
+
+      # Trigger restart otomatis di cPanel Passenger
+      - name: Create Restart Trigger
+        run: |
+          mkdir -p tmp
+          touch tmp/restart.txt
+
+      - name: Sync Frontend to cPanel via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Path lokal yang di-upload HANYA isi folder frontend
+          local-dir: ./DailyDiction-Frontend/
+          # Path tujuan di server hosting cPanel
+          server-dir: /
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            src/**
+            README.md
