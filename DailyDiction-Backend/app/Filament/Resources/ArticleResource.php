@@ -225,7 +225,7 @@ class ArticleResource extends Resource
                     ->label('Thumbnail')
                     ->square(),
 
-                // Tambahan Badge biar di tabel kelihatan ini Berita atau Review
+                // Kolom lainnya...
                 Tables\Columns\TextColumn::make('type')
                     ->label('Tipe')
                     ->badge()
@@ -245,13 +245,11 @@ class ArticleResource extends Resource
                     ->badge()
                     ->separator(','),
 
-                // Tambahan kolom Platform buat di tabel
                 Tables\Columns\TextColumn::make('platform')
                     ->label('Platform')
                     ->badge()
                     ->separator(','),
 
-                // Tambahan kolom dari Idin
                 Tables\Columns\TextColumn::make('category_color')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('read_time')
@@ -268,8 +266,9 @@ class ArticleResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            // 👇 DEFAULT URUTAN TERBARU (DESCENDING) 👇
+            ->defaultSort('created_at', 'desc')
             ->filters([
-                // Filter berdasarkan Tipe Konten
                 Tables\Filters\SelectFilter::make('type')
                     ->label('Filter Tipe Konten')
                     ->options([
