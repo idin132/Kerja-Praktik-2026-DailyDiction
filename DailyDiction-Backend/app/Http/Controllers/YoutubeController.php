@@ -18,6 +18,23 @@ class YoutubeController extends Controller
         $this->channelId = env('YOUTUBE_CHANNEL_ID');
     }
 
+    public function getYoutubeVideos()
+    {
+        // Mengambil TTL 3600 detik (1 jam) dari file .env
+        $ttl = env('YOUTUBE_CACHE_TTL', 3600);
+
+        return Cache::remember('youtube_videos_cache', $ttl, function () {
+            // PERHATIKAN: URL-nya pakai playlistItems, bukan search!
+            $response = Http::get('https://youtube.googleapis.com/youtube/v3/playlistItems', [
+                'part' => 'snippet',
+                'playlistId' => env('YOUTUBE_PLAYLIST_ID'),
+                'maxResults' => 10,
+                'key' => env('YOUTUBE_API_KEY')
+            ]);
+
+            return $response->json();
+        });
+    }
     public function getVideos()
     {
         // Cache selama 1 jam (3600 detik)
@@ -76,11 +93,11 @@ class YoutubeController extends Controller
 
         foreach ($videoDetails as $video) {
             $duration = $video['contentDetails']['duration']; // Formatnya ISO 8601 (contoh: PT1M30S)
-            
+
             // Logic ngecek durasi: Kalau nggak ada huruf 'M' (menit) atau 'H' (jam), berarti cuma detik (Shorts)
             // Atau kalau persis 1 menit (PT1M / PT1M0S) juga dihitung Shorts
             $isDurationShort = (strpos($duration, 'M') === false && strpos($duration, 'H') === false) || $duration === 'PT1M' || $duration === 'PT1M0S';
-            
+
             // Filter sesuai permintaan yang manggil
             if ($isShort && !$isDurationShort) continue;
             if (!$isShort && $isDurationShort) continue;

@@ -5,21 +5,21 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Calendar, 
-  User, 
+import {
+  Calendar,
+  User,
   Send,
   Search,
   Filter,
   Newspaper,
-  ArrowUpRight
+  ArrowUpRight,
 } from "lucide-react";
 
 interface ArticleItem {
   id: number;
   title: string;
   slug: string;
-  category_input?: string | string[]; 
+  category_input?: string | string[];
   category?: string | string[];
   categories?: any[];
   category_color?: string;
@@ -30,6 +30,28 @@ interface ArticleItem {
   read_time: string;
   created_at: string;
   author?: string;
+  type?: string;
+}
+
+// Helper untuk validasi URL Gambar
+function formatNewsImage(item: ArticleItem): string {
+  const imageUrl = item.image_url || item.image_full_url;
+  const fallback =
+    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
+
+  if (!imageUrl) return fallback;
+
+  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+    if (imageUrl.includes("127.0.0.1:8000/storage/http")) {
+      return imageUrl.replace(
+        /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
+        "$1",
+      );
+    }
+    return imageUrl;
+  }
+
+  return `https://dailydiction.id/storage/${imageUrl}`;
 }
 
 export default function NewsPage() {
@@ -65,7 +87,7 @@ export default function NewsPage() {
   }, []);
 
   const getCategoriesArray = (
-    category: string | string[] | undefined
+    category: string | string[] | undefined,
   ): string[] => {
     if (!category) return ["GAMING"];
     if (Array.isArray(category)) return category;
@@ -73,20 +95,49 @@ export default function NewsPage() {
       try {
         return category.startsWith("[") ? JSON.parse(category) : [category];
       } catch {
-        return [rawCategory];
+        return [category];
       }
     }
     return ["BERITA"];
   };
 
-  const allCategories = articles.flatMap((item) =>
-    getCategoriesArray(item.category).map((cat) => cat.toUpperCase())
+  // Helper penyaring: Cek apakah item adalah tipe Review
+  const isReviewItem = (item: ArticleItem) => {
+    if (
+      item.type?.toLowerCase() === "review" ||
+      item.type?.toLowerCase() === "reviews"
+    ) {
+      return true;
+    }
+
+    const cats = [
+      ...(Array.isArray(item.category_input)
+        ? item.category_input
+        : [item.category_input]),
+      ...(Array.isArray(item.category) ? item.category : [item.category]),
+      ...(Array.isArray(item.categories)
+        ? item.categories.map((c: any) => c.name)
+        : []),
+    ]
+      .filter(Boolean)
+      .map((c) => String(c).toUpperCase());
+
+    return cats.some((cat) => cat.includes("REVIEW") || cat.includes("ULASAN"));
+  };
+
+  // 1. Filter awal: Hanya ambil artikel murni (bukan review)
+  const pureNewsArticles = articles.filter((item) => !isReviewItem(item));
+
+  // 2. Kategori diambil dari artikel murni
+  const allCategories = pureNewsArticles.flatMap((item) =>
+    getCategoriesArray(item.category).map((cat) => cat.toUpperCase()),
   );
   const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
 
-  const filteredArticles = articles.filter((item) => {
+  // 3. Filter berdasarkan kategori & kata kunci pencarian
+  const filteredArticles = pureNewsArticles.filter((item) => {
     const itemCats = getCategoriesArray(item.category).map((c) =>
-      c.toUpperCase()
+      c.toUpperCase(),
     );
 
     const matchCategory =
@@ -171,7 +222,7 @@ export default function NewsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8">
                   <AnimatePresence>
                     {filteredArticles.map((item) => {
-                      const itemCategories = getCategoriesArray(item);
+                      const itemCategories = getCategoriesArray(item.category);
 
                       return (
                         <motion.article
@@ -186,9 +237,13 @@ export default function NewsPage() {
                         >
                           <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
                             <img
-                              // src={formatNewsImage(item)}
+                              src={formatNewsImage(item)}
                               alt={item.title}
                               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src =
+                                  "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
+                              }}
                             />
 
                             {/* Looping Badge Kategori */}
@@ -234,7 +289,7 @@ export default function NewsPage() {
                                       <Calendar className="h-3.5 w-3.5 text-text-muted" />
                                       <span>
                                         {new Date(
-                                          item.created_at
+                                          item.created_at,
                                         ).toLocaleDateString("id-ID", {
                                           day: "numeric",
                                           month: "short",

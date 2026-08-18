@@ -7,26 +7,25 @@ import { DiscordWidget } from "@/components/Sidebar";
 import ShareWidget from "@/components/ShareWidget";
 import { User, Clock, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 
-// ==========================================
-// JURUS NUKLIR ANTI-CACHE NEXT.JS
-// ==========================================
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
-export const revalidate = 0;
+export const revalidate = 3600;
 
 // Helper buat bersihin URL Gambar
 function formatImageUrl(
   imageUrl: string | null | undefined,
-  fallback: string
+  fallback: string,
 ): string {
   if (!imageUrl) return fallback;
 
-  // Jika sudah berupa URL lengkap (http/https), langsung return
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+    if (imageUrl.includes("127.0.0.1:8000/storage/http")) {
+      return imageUrl.replace(
+        /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
+        "$1",
+      );
+    }
     return imageUrl;
   }
 
-  // Jika path diawali 'storage/', hilangkan slash depan jika ada
   const cleanPath = imageUrl.startsWith("/") ? imageUrl.slice(1) : imageUrl;
 
   if (cleanPath.startsWith("storage/")) {
@@ -44,12 +43,14 @@ export default async function DetailArtikel({
   const resolvedParams = await params;
   const slug = resolvedParams.slug;
 
-  const [article, adsData] = await Promise.all([
-    getArticleBySlug(slug),
+  const [articleRes, adsData] = await Promise.all([
+    getArticleBySlug(slug).catch(() => null),
     getAdvertisements().catch(() => null),
   ]);
 
-  if (!article) {
+  const article = articleRes?.data || articleRes;
+
+  if (!article || !article.title) {
     notFound();
   }
 
@@ -61,9 +62,7 @@ export default async function DetailArtikel({
   // LOGIC KATEGORI SUPER AMAN
   // ==========================================
   let categoryList: string[] = [];
-  
-  // 1. Coba ambil dari category_input (Hybrid baru) atau category (lama)
-  const rawCategory = article.category_input || article.category; 
+  const rawCategory = article.category_input || article.category;
 
   if (rawCategory) {
     if (Array.isArray(rawCategory)) {
@@ -77,9 +76,7 @@ export default async function DetailArtikel({
         categoryList = [rawCategory];
       }
     }
-  } 
-  // 2. Kalau masih kosong, coba ambil dari relasi tabel categories (Lama banget)
-  else if (article.categories && article.categories.length > 0) {
+  } else if (article.categories && article.categories.length > 0) {
     categoryList = article.categories.map((c: any) => c.name);
   }
 
@@ -88,7 +85,6 @@ export default async function DetailArtikel({
       <Navbar />
 
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
-        {/* Konten baca dikunci di max-w-7xl (1280px) dan ditaruh di tengah */}
         <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
             {/* ================= KOLOM KIRI (KONTEN UTAMA) ================= */}
@@ -96,7 +92,7 @@ export default async function DetailArtikel({
               <article>
                 {/* Header Artikel */}
                 <div className="mb-8 space-y-6">
-                  {/* Badge Kategori Dinamis */}
+                  {/* Badge Kategori */}
                   <div className="flex flex-wrap items-center gap-2">
                     {categoryList.length > 0 ? (
                       categoryList.map((cat, idx) => (
@@ -137,7 +133,7 @@ export default async function DetailArtikel({
                               day: "numeric",
                               month: "long",
                               year: "numeric",
-                            }
+                            },
                           )}
                         </span>
                       </div>
@@ -158,15 +154,16 @@ export default async function DetailArtikel({
                         article.image_url ||
                           article.image ||
                           article.thumbnail ||
-                          article.banner_image,
-                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
+                          article.banner_image ||
+                          article.image_full_url,
+                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
                       )}
                       alt={article.title}
                       className="w-full aspect-[16/9] object-cover"
                     />
                   </div>
 
-                  <p className="text-base sm:text-lg text-text-muted font-medium border-l-4 border-brand-crimson pl-4 bg-dark-card/30 p-4 rounded-r-lg">
+                  <p className="text-base sm:text-lg text-text-muted text-justify font-medium border-l-4 border-brand-crimson pl-4 bg-dark-card/30 p-4 rounded-r-lg">
                     {article.summary ||
                       "Simak berita selengkapnya di bawah ini."}
                   </p>
@@ -174,16 +171,16 @@ export default async function DetailArtikel({
 
                 {/* Body Artikel (Tiptap HTML) */}
                 <div
-                  className="rich-text-content prose prose-invert prose-brand-crimson max-w-none text-text-primary leading-relaxed space-y-4 mb-12"
+                  className="rich-text-content prose prose-invert prose-brand-crimson max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-12"
                   dangerouslySetInnerHTML={{
                     __html:
                       typeof article.content === "string"
                         ? article.content
                         : Array.isArray(article.content)
-                        ? article.content
-                            .map((b: any) => b.content ?? "")
-                            .join("")
-                        : "",
+                          ? article.content
+                              .map((b: any) => b.content ?? "")
+                              .join("")
+                          : "",
                   }}
                 />
               </article>
@@ -207,8 +204,10 @@ export default async function DetailArtikel({
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
                       <img
                         src={formatImageUrl(
-                          prevArticle.thumbnail || prevArticle.image,
-                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
+                          prevArticle.thumbnail ||
+                            prevArticle.image ||
+                            prevArticle.image_url,
+                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                         )}
                         alt={prevArticle.title}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -227,8 +226,10 @@ export default async function DetailArtikel({
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
                       <img
                         src={formatImageUrl(
-                          nextArticle.thumbnail || nextArticle.image,
-                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
+                          nextArticle.thumbnail ||
+                            nextArticle.image ||
+                            nextArticle.image_url,
+                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
                         )}
                         alt={nextArticle.title}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -253,10 +254,8 @@ export default async function DetailArtikel({
             {/* ================= KOLOM KANAN (SIDEBAR) ================= */}
             <aside className="lg:col-span-4 space-y-8">
               <div className="sticky top-24 space-y-6">
-                {/* SHARE WIDGET (DESKTOP SIDEBAR + FLOATING MOBILE) */}
                 <ShareWidget title={article.title} />
 
-                {/* Space Iklan Dinamis */}
                 {sidebarAd ? (
                   <a
                     href={sidebarAd.url_link}
@@ -287,7 +286,6 @@ export default async function DetailArtikel({
                   </div>
                 )}
 
-                {/* Widget Discord */}
                 <div className="w-full max-w-[320px] mx-auto">
                   <DiscordWidget />
                 </div>
@@ -306,14 +304,16 @@ export default async function DetailArtikel({
             font-size: 1.125rem;
             line-height: 1.75;
             color: #d1d5db;
+            text-align: justify;
           }
-          .rich-text-content p { margin-bottom: 1.5em; }
+          .rich-text-content p { margin-bottom: 1.5em; text-align: justify;}
           .rich-text-content h2,
           .rich-text-content h3 {
             color: white;
             font-weight: 900;
             margin-top: 2em;
             margin-bottom: 0.75em;
+            text-align: justify;
           }
           .rich-text-content img {
             width: 100%;

@@ -20,7 +20,7 @@ export async function getGameReviews() {
 
     // Bypass SSL rejection hanya saat environment development / self-signed
     const res = await fetch(`${apiUrl}/reviews`, {
-      cache: "no-store",
+      next: { revalidate: 3600},
       headers: {
         Accept: "application/json",
       },

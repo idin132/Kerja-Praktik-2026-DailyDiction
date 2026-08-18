@@ -3,18 +3,13 @@ import HeroSection from "@/components/HeroSection";
 import YoutubeHero from "@/components/YoutubeHero";
 import YoutubeShorts from "@/components/YoutubeShorts";
 import { NewsFeedCard, ReviewCard } from "@/components/Cards";
-import { DiscordWidget, ReleaseRadar } from "@/components/Sidebar";
+import { DiscordWidget } from "@/components/Sidebar";
 import Footer from "@/components/Footer";
 import { getArticles, getGameReviews, getAdvertisements } from "@/lib/api";
 import { getYouTubeVideos } from "@/lib/youtube";
 import { Flame, Star, ArrowRight } from "lucide-react";
 
-// ==========================================
-// JURUS NUKLIR ANTI-CACHE NEXT.JS
-// ==========================================
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
-export const revalidate = 0;
+export const revalidate = 3600;
 
 function formatImageUrl(
   imageUrl: string | null | undefined,
@@ -44,11 +39,43 @@ export default async function Home() {
       getYouTubeVideos(50).catch(() => []),
     ]);
 
-  const articles = articlesData?.data || [];
-  const reviews = Array.isArray(reviewsData)
+  const rawArticles = articlesData?.data || [];
+  let reviews = Array.isArray(reviewsData)
     ? reviewsData
     : reviewsData?.data || [];
   const sidebarAd = adsData?.data?.[0] || null;
+
+  // Helper pemeriksa apakah konten adalah Review / Ulasan
+  const isReviewItem = (item: any) => {
+    if (
+      item.type?.toLowerCase() === "review" ||
+      item.type?.toLowerCase() === "reviews"
+    ) {
+      return true;
+    }
+
+    const cats = [
+      ...(Array.isArray(item.category_input)
+        ? item.category_input
+        : [item.category_input]),
+      ...(Array.isArray(item.category) ? item.category : [item.category]),
+      ...(Array.isArray(item.categories)
+        ? item.categories.map((c: any) => c.name)
+        : []),
+    ]
+      .filter(Boolean)
+      .map((c) => String(c).toUpperCase());
+
+    return cats.some((cat) => cat.includes("REVIEW") || cat.includes("ULASAN"));
+  };
+
+  // 1. News Feed: HANYA artikel murni (bukan review)
+  const newsArticles = rawArticles.filter((item: any) => !isReviewItem(item));
+
+  // 2. Game Reviews: Jika API khusus review kosong, ambil dari rawArticles yang bertipe review
+  if (reviews.length === 0) {
+    reviews = rawArticles.filter((item: any) => isReviewItem(item));
+  }
 
   // --- FILTER YOUTUBE: SHORTS VS VIDEO PANJANG ---
   const getDurationInSeconds = (duration: string) => {
@@ -100,7 +127,6 @@ export default async function Home() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12 mt-4">
           <div className="lg:col-span-8 2xl:col-span-9 space-y-12">
-            
             {/* News Feed Section */}
             <section>
               <div className="flex items-center justify-between mb-6">
@@ -120,10 +146,8 @@ export default async function Home() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
-                {articles.map((item: any) => {
-                  // --- LOGIC KATEGORI SUPER AMAN ---
-                  // Cek semua kemungkinan (category_input, category lama, atau categories relasi)
-                  let finalCategory = ["Berita"]; // Fallback Default
+                {newsArticles.map((item: any) => {
+                  let finalCategory = ["Berita"];
 
                   if (item.category_input && item.category_input.length > 0) {
                     finalCategory = item.category_input;
@@ -136,7 +160,7 @@ export default async function Home() {
                   return (
                     <NewsFeedCard
                       key={item.id}
-                      category={finalCategory} 
+                      category={finalCategory}
                       categoryColor={item.category_color || "crimson"}
                       title={item.title}
                       summary={item.summary}
@@ -178,7 +202,7 @@ export default async function Home() {
                       key={review.id}
                       summary={review.summary}
                       title={review.title}
-                      platform={review.platform || ["PC"]}
+                      platform={review.platform || review.category || ["PC"]}
                       imageUrl={formatImageUrl(
                         review.image_url || review.image_full_url,
                         "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
