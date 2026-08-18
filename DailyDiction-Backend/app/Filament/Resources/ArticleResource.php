@@ -15,21 +15,33 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 use App\Models\Category;
-
-
 use Illuminate\Support\Str;
-
 
 class ArticleResource extends Resource
 {
     protected static ?string $model = Article::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-newspaper';
+    // Ganti nama menu di sidebar biar lebih general
+    protected static ?string $navigationLabel = 'Posts (News & Review)';
+    protected static ?string $pluralModelLabel = 'Posts';
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
+                // ================= 1. PILIH TIPE KONTEN =================
+                Forms\Components\Select::make('type')
+                    ->label('Tipe Konten')
+                    ->options([
+                        'article' => 'Berita / Artikel',
+                        'review'  => 'Game Review',
+                    ])
+                    ->default('article')
+                    ->required()
+                    ->live(), // Wajib live biar form di bawahnya bisa ngerespon
+
+                // ================= 2. INFO UMUM =================
                 Forms\Components\TextInput::make('title')
                     ->label('Title')
                     ->required()
@@ -42,6 +54,7 @@ class ArticleResource extends Resource
                     }),
 
                 Forms\Components\TextInput::make('author')
+                    ->label('Author')
                     ->required()
                     ->readonly()
                     ->default(auth()->user()->name)
@@ -54,11 +67,31 @@ class ArticleResource extends Resource
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
 
+                // ================= 3. FORM HYBRID (MUNCUL GANTIAN) =================
+
+                // KHUSUS ARTIKEL: Kategori
                 Forms\Components\TagsInput::make('category_input')
                     ->label('Category')
                     ->placeholder('Ketik kategori, tekan Enter...')
                     ->suggestions(fn() => Category::pluck('name')->toArray())
-                    ->required(),
+                    ->visible(fn (Get $get) => $get('type') === 'article')
+                    ->required(fn (Get $get) => $get('type') === 'article'),
+
+                // KHUSUS REVIEW: Platform (Bisa pilih lebih dari 1)
+                Forms\Components\Select::make('platform')
+                    ->label('Platform')
+                    ->multiple()
+                    ->options([
+                        'PC' => 'PC',
+                        'PS4' => 'PS4',
+                        'PS5' => 'PS5',
+                        'Xbox One' => 'Xbox One',
+                        'Xbox Series X/S' => 'Xbox Series X/S',
+                        'Switch' => 'Nintendo Switch',
+                        'Mobile' => 'Mobile',
+                    ])
+                    ->visible(fn (Get $get) => $get('type') === 'review')
+                    ->required(fn (Get $get) => $get('type') === 'review'),
 
                 Forms\Components\TextInput::make('category_color')
                     ->required()
@@ -66,6 +99,7 @@ class ArticleResource extends Resource
                     ->maxLength(255)
                     ->default('crimson'),
 
+                // ================= 4. KONTEN ARTIKEL (TETAP SAMA 100%) =================
                 Forms\Components\Textarea::make('summary')
                     ->required()
                     ->columnSpanFull(),
@@ -73,19 +107,8 @@ class ArticleResource extends Resource
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
                     ->tools([
-                        'heading',
-                        'blockquote',
-                        'bold',
-                        'italic',
-                        'strike',
-                        'link',
-                        'media',
-                        'oembed',
-                        'bullet-list',
-                        'ordered-list',
-                        'code-block',
-                        'undo',
-                        'redo',
+                        'heading', 'blockquote', 'bold', 'italic', 'strike', 'link', 'media',
+                        'oembed', 'bullet-list', 'ordered-list', 'code-block', 'undo', 'redo',
                     ])
                     ->mediaAction(CustomMediaAction::class)
                     ->columnSpanFull()
@@ -105,7 +128,7 @@ class ArticleResource extends Resource
                         $set('read_time', "{$minutes} MIN READ");
                     }),
 
-                // Thumbnail via Embed URL + Preview
+                // ================= 5. MEDIA & SETTINGS =================
                 Forms\Components\TextInput::make('image_url')
                     ->label('Thumbnail Artikel (URL Gambar)')
                     ->url()
@@ -128,40 +151,6 @@ class ArticleResource extends Resource
                     })
                     ->columnSpanFull(),
 
-                // // Video via Embed URL + Preview Persegi (1:1)
-                // Forms\Components\TextInput::make('video_url')
-                //     ->label('Link Embed Video / YouTube')
-                //     ->url()
-                //     ->placeholder('https://www.youtube.com/watch?v=... atau https://www.youtube.com/embed/...')
-                //     ->live(onBlur: true)
-                //     ->columnSpanFull(),
-
-                // Forms\Components\Placeholder::make('video_preview')
-                //     ->label('Preview Video')
-                //     ->content(function (Get $get) {
-                //         $url = $get('video_url');
-                //         if (! $url) {
-                //             return new HtmlString('<span class="text-xs text-gray-400">Belum ada preview (masukkan URL video di atas)</span>');
-                //         }
-
-                //         $embedUrl = $url;
-                //         if (str_contains($url, 'youtube.com/watch?v=')) {
-                //             parse_str(parse_url($url, PHP_URL_QUERY), $params);
-                //             $videoId = $params['v'] ?? '';
-                //             $embedUrl = "https://www.youtube.com/embed/{$videoId}";
-                //         } elseif (str_contains($url, 'youtu.be/')) {
-                //             $videoId = trim(parse_url($url, PHP_URL_PATH), '/');
-                //             $embedUrl = "https://www.youtube.com/embed/{$videoId}";
-                //         }
-
-                //         return new HtmlString('
-                //             <div class="mt-1 aspect-square max-w-sm rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                //                 <iframe class="w-full h-full" src="' . e($embedUrl) . '" frameborder="0" allowfullscreen></iframe>
-                //             </div>
-                //         ');
-                //     })
-                //     ->columnSpanFull(),
-
                 Forms\Components\TextInput::make('read_time')
                     ->required()
                     ->maxLength(255)
@@ -183,15 +172,35 @@ class ArticleResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')
                     ->label('Thumbnail')
-                    ->square(), // Tanpa ->disk('public') agar membaca format URL eksternal
+                    ->square(),
+
+                // Tambahan Badge biar di tabel kelihatan ini Berita atau Review
+                Tables\Columns\TextColumn::make('type')
+                    ->label('Tipe')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'article' => 'info',
+                        'review' => 'warning',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
+
                 Tables\Columns\TextColumn::make('title')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('slug')
-                    ->searchable(),
+                    ->searchable()
+                    ->limit(30),
+
                 Tables\Columns\TextColumn::make('categories.name')
                     ->label('Category')
                     ->badge()
                     ->separator(','),
+
+                // Tambahan kolom Platform buat di tabel
+                Tables\Columns\TextColumn::make('platform')
+                    ->label('Platform')
+                    ->badge()
+                    ->separator(','),
+
+                // Tambahan kolom dari Idin
                 Tables\Columns\TextColumn::make('category_color')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('read_time')
@@ -199,18 +208,24 @@ class ArticleResource extends Resource
                 Tables\Columns\IconColumn::make('is_featured')
                     ->boolean()
                     ->hidden(),
+
                 Tables\Columns\IconColumn::make('is_published')
                     ->boolean(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([])
+            ->filters([
+                // Filter berdasarkan Tipe Konten
+                Tables\Filters\SelectFilter::make('type')
+                    ->label('Filter Tipe Konten')
+                    ->options([
+                        'article' => 'Berita / Artikel',
+                        'review' => 'Game Review',
+                    ]),
+            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])

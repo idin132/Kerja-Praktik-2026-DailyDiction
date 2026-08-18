@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export interface ArticleItem {
   id: number;
   title: string;
@@ -64,10 +65,42 @@ export async function getAdvertisements(): Promise<{ data: AdvertisementItem[] }
       headers: { Accept: "application/json" },
       cache: "no-store",
     });
+=======
+const API_BASE_URL = "http://127.0.0.1:8000/api/v1";
+
+// 1. Fetch Berita / Artikel (Hanya yang type = article)
+export async function getArticles() {
+  try {
+    // Tambahkan query param ?type=article
+    const res = await fetch(`${API_BASE_URL}/articles?type=article`, { cache: 'no-store' });
+    if (!res.ok) return { data: [] };
+    return await res.json();
+  } catch (error) {
+    return { data: [] };
+  }
+}
+
+// 2. Fetch Game Reviews (Hanya yang type = review)
+export async function getGameReviews() {
+  try {
+    // Ubah URL dari /reviews menjadi /articles?type=review
+    const res = await fetch(`${API_BASE_URL}/articles?type=review`, { cache: "no-store" });
+    if (!res.ok) throw new Error("Gagal mengambil data review");
+    return await res.json();
+  } catch (error) {
+    console.error("Error fetching game reviews:", error);
+    return { data: [] }; // Samakan format return dengan article agar map() tidak error
+  }
+}
+>>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
 
     if (!res.ok) return { data: [] };
     const json = await res.json();
+<<<<<<< HEAD
     return { data: Array.isArray(json.data) ? json.data : Array.isArray(json) ? json : [] };
+=======
+    return json.data || json;
+>>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
   } catch (error) {
     console.warn("Gagal mengambil data iklan:", error);
     return { data: [] };
@@ -109,12 +142,21 @@ export async function getArticleBySlug(slug: string): Promise<ArticleItem | null
   }
 }
 
+<<<<<<< HEAD
 // 4. Ambil List Review Game (Type: Review) -> Langsung return Array
 export async function getGameReviews(): Promise<ArticleItem[]> {
   try {
     const res = await fetch(`${API_BASE_URL}/articles`, {
       headers: { Accept: "application/json" },
       cache: "no-store",
+=======
+// 6. Fetch Single Review by Slug
+export async function getGameReviewBySlug(slug: string) {
+  try {
+    // Karena tabelnya sudah gabung, single review juga nembak ke /articles/{slug}
+    const res = await fetch(`${API_BASE_URL}/articles/${slug}`, { 
+      next: { revalidate: 60 } 
+>>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
     });
 
     if (!res.ok) return [];
@@ -136,8 +178,13 @@ export async function getGameReviewBySlug(slug: string): Promise<ArticleItem | n
     });
 
     if (!res.ok) return null;
+    
     const json = await res.json();
+<<<<<<< HEAD
     return json.data || json || null;
+=======
+    return json.data || json;
+>>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
   } catch (error) {
     console.error("Gagal mengambil review detail:", error);
     return null;

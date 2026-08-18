@@ -29,7 +29,8 @@ export function DiscordWidget() {
       </p>
 
       <a
-        href="#"
+        href="https://discord.com/invite/DG6Nebkex9"
+        target="_blank"
         className="block bg-white text-indigo-900 font-bold text-sm py-3 px-6 rounded-xl hover:bg-slate-100 transition-colors shadow-md relative z-10"
       >
         Masuk Server (Gratis)

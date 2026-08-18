@@ -9,7 +9,11 @@ interface ArticleItem {
   id: number;
   title: string;
   slug: string;
+<<<<<<< HEAD
   category: string | string[];
+=======
+  categories?: { id: number; name: string }[];
+>>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
   summary: string;
   thumbnail?: string;
   thumbnail_url?: string;
@@ -182,9 +186,20 @@ export default function HeroSection() {
                     transition={{ duration: 0.4 }}
                   >
                     <div className="flex items-center gap-2 mb-2">
+<<<<<<< HEAD
                       <span className="rounded border border-brand-cyan/40 bg-dark-bg/80 px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-brand-cyan backdrop-blur-md">
                         {getFirstCategory(currentArticle.category)}
                       </span>
+=======
+                      {(currentArticle.categories ?? []).map((cat, idx) => (
+                        <span
+                          key={idx}
+                          className="rounded border border-brand-cyan/40 bg-dark-bg/80 px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-brand-cyan backdrop-blur-md"
+                        >
+                          {cat.name}
+                        </span>
+                      ))}
+>>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
                     </div>
 
                     <h1 className="text-base sm:text-2xl md:text-4xl lg:text-5xl font-black tracking-tight text-white leading-snug sm:leading-tight line-clamp-2 group-hover:text-brand-crimson transition-colors drop-shadow-md">

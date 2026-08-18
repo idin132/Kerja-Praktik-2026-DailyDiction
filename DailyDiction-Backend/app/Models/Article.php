@@ -10,7 +10,7 @@ class Article extends Model
 {
     protected $table = 'articles';
 
-    protected $fillable = [
+   protected $fillable = [
         'title',
         'author',
         'slug',
@@ -21,12 +21,17 @@ class Article extends Model
         'read_time',
         'is_featured',
         'is_published',
+        'type',    
+        'platform', 
+        'category_input',
     ];
 
     protected $casts = [
         'content' => 'array',
         'is_featured' => 'boolean',
         'is_published' => 'boolean',
+        'platform' => 'array', // <--- Tambahin ini biar ngebaca multiple select
+        'category_input' => 'array',
     ];
 
     // Menyertakan 'image_full_url' secara otomatis saat dipanggil sebagai JSON/API

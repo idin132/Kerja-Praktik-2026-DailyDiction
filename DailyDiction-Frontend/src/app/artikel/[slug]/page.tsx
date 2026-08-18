@@ -7,6 +7,7 @@ import { DiscordWidget } from "@/components/Sidebar";
 import ShareWidget from "@/components/ShareWidget";
 import { User, Clock, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 
+<<<<<<< HEAD
 export const revalidate = 0;
 
 interface NavItem {
@@ -38,6 +39,15 @@ interface ArticleItem {
   next?: NavItem | null;
 }
 
+=======
+// ==========================================
+// JURUS NUKLIR ANTI-CACHE NEXT.JS
+// ==========================================
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+
+>>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
 // Helper buat bersihin URL Gambar
 function formatImageUrl(
   imageUrl: string | null | undefined,
@@ -94,18 +104,30 @@ export default async function DetailArtikel({
   const prevArticle = article.prev || null;
   const nextArticle = article.next || null;
 
-  // Pengaman format kategori (bisa string tunggal atau array dari tags input)
+  // ==========================================
+  // LOGIC KATEGORI SUPER AMAN
+  // ==========================================
   let categoryList: string[] = [];
-  if (Array.isArray(article.category)) {
-    categoryList = article.category;
-  } else if (typeof article.category === "string") {
-    try {
-      categoryList = article.category.startsWith("[")
-        ? JSON.parse(article.category)
-        : [article.category];
-    } catch {
-      categoryList = [article.category];
+  
+  // 1. Coba ambil dari category_input (Hybrid baru) atau category (lama)
+  const rawCategory = article.category_input || article.category; 
+
+  if (rawCategory) {
+    if (Array.isArray(rawCategory)) {
+      categoryList = rawCategory;
+    } else if (typeof rawCategory === "string") {
+      try {
+        categoryList = rawCategory.startsWith("[")
+          ? JSON.parse(rawCategory)
+          : [rawCategory];
+      } catch {
+        categoryList = [rawCategory];
+      }
     }
+  } 
+  // 2. Kalau masih kosong, coba ambil dari relasi tabel categories (Lama banget)
+  else if (article.categories && article.categories.length > 0) {
+    categoryList = article.categories.map((c: any) => c.name);
   }
 
   return (
