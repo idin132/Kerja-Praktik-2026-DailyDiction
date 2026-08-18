@@ -13,6 +13,8 @@ import {
   Filter,
   Newspaper,
   ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 interface ArticleItem {
@@ -60,6 +62,10 @@ export default function NewsPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
+  // State Pagination
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 8;
+
   useEffect(() => {
     let isMounted = true;
 
@@ -85,6 +91,11 @@ export default function NewsPage() {
       isMounted = false;
     };
   }, []);
+
+  // Reset pagination ke halaman 1 saat filter atau pencarian berubah
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory]);
 
   const getCategoriesArray = (
     category: string | string[] | undefined,
@@ -149,6 +160,21 @@ export default function NewsPage() {
 
     return matchCategory && matchSearch;
   });
+
+  // ========================================================
+  // LOGIC PAGINATION
+  // ========================================================
+  const totalPages = Math.ceil(filteredArticles.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentArticles = filteredArticles.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white flex flex-col justify-between font-sans">
@@ -218,103 +244,151 @@ export default function NewsPage() {
                     />
                   ))}
                 </div>
-              ) : filteredArticles.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8">
-                  <AnimatePresence>
-                    {filteredArticles.map((item) => {
-                      const itemCategories = getCategoriesArray(item.category);
+              ) : currentArticles.length > 0 ? (
+                <>
+                  {/* Container Animasi Halaman Halus */}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`page-${currentPage}-${selectedCategory}`}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -16 }}
+                      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                      className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8"
+                    >
+                      {currentArticles.map((item) => {
+                        const itemCategories = getCategoriesArray(item.category);
 
-                      return (
-                        <motion.article
-                          key={item.id}
-                          layout
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          whileHover={{ y: -3 }}
-                          transition={{ duration: 0.2 }}
-                          className="group flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/60 shadow-lg h-full"
-                        >
-                          <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
-                            <img
-                              src={formatNewsImage(item)}
-                              alt={item.title}
-                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src =
-                                  "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
-                              }}
-                            />
+                        return (
+                          <article
+                            key={item.id}
+                            className="group flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/60 hover:-translate-y-1 shadow-lg h-full duration-300"
+                          >
+                            <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
+                              <img
+                                src={formatNewsImage(item)}
+                                alt={item.title}
+                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src =
+                                    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
+                                }}
+                              />
 
-                            {/* Looping Badge Kategori */}
-                            <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
-                              {itemCategories.map((cat, idx) => (
-                                <span
-                                  key={idx}
-                                  className="rounded-md border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md"
-                                >
-                                  {cat}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
-                            <div>
-                              <Link href={`/artikel/${item.slug}`}>
-                                <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
-                                  {item.title}
-                                </h2>
-                              </Link>
-                              <p className="mt-2.5 text-xs text-text-muted line-clamp-2 leading-relaxed">
-                                {item.summary}
-                              </p>
-                            </div>
-
-                            <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4">
-                              <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-1.5">
-                                  <User className="h-3.5 w-3.5 text-brand-crimson" />
-                                  <span className="truncate max-w-[90px] xl:max-w-[120px] font-semibold text-white">
-                                    {item.author || "Redaksi"}
+                              {/* Looping Badge Kategori */}
+                              <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                                {itemCategories.map((cat, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="rounded-md border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md"
+                                  >
+                                    {cat}
                                   </span>
-                                </div>
+                                ))}
+                              </div>
+                            </div>
 
-                                {item.created_at && (
-                                  <>
-                                    <span className="text-dark-border hidden sm:inline-block">
-                                      •
-                                    </span>
-                                    <div className="items-center gap-1.5 hidden sm:flex">
-                                      <Calendar className="h-3.5 w-3.5 text-text-muted" />
-                                      <span>
-                                        {new Date(
-                                          item.created_at,
-                                        ).toLocaleDateString("id-ID", {
-                                          day: "numeric",
-                                          month: "short",
-                                          year: "numeric",
-                                        })}
-                                      </span>
-                                    </div>
-                                  </>
-                                )}
+                            <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
+                              <div>
+                                <Link href={`/artikel/${item.slug}`}>
+                                  <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
+                                    {item.title}
+                                  </h2>
+                                </Link>
+                                <p className="mt-2.5 text-xs text-text-muted line-clamp-2 leading-relaxed">
+                                  {item.summary}
+                                </p>
                               </div>
 
-                              <Link
-                                href={`/artikel/${item.slug}`}
-                                className="flex items-center gap-1 font-bold text-brand-crimson hover:underline shrink-0 ml-1"
-                              >
-                                <span className="hidden sm:inline">BACA</span>
-                                <ArrowUpRight className="h-3.5 w-3.5" />
-                              </Link>
+                              <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-1.5">
+                                    <User className="h-3.5 w-3.5 text-brand-crimson" />
+                                    <span className="truncate max-w-[90px] xl:max-w-[120px] font-semibold text-white">
+                                      {item.author || "Redaksi"}
+                                    </span>
+                                  </div>
+
+                                  {item.created_at && (
+                                    <>
+                                      <span className="text-dark-border hidden sm:inline-block">
+                                        •
+                                      </span>
+                                      <div className="items-center gap-1.5 hidden sm:flex">
+                                        <Calendar className="h-3.5 w-3.5 text-text-muted" />
+                                        <span>
+                                          {new Date(
+                                            item.created_at,
+                                          ).toLocaleDateString("id-ID", {
+                                            day: "numeric",
+                                            month: "short",
+                                            year: "numeric",
+                                          })}
+                                        </span>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+
+                                <Link
+                                  href={`/artikel/${item.slug}`}
+                                  className="flex items-center gap-1 font-bold text-brand-crimson hover:underline shrink-0 ml-1"
+                                >
+                                  <span className="hidden sm:inline">BACA</span>
+                                  <ArrowUpRight className="h-3.5 w-3.5" />
+                                </Link>
+                              </div>
                             </div>
-                          </div>
-                        </motion.article>
-                      );
-                    })}
+                          </article>
+                        );
+                      })}
+                    </motion.div>
                   </AnimatePresence>
-                </div>
+
+                  {/* ========================================================
+                      KOMPONEN PAGINATION
+                      ======================================================== */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 pt-8 font-mono text-xs">
+                      {/* Prev Button */}
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-crimson hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                        aria-label="Previous Page"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+
+                      {/* Number Buttons */}
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (pageNum) => (
+                          <button
+                            key={pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`h-9 min-w-[36px] px-3 rounded-xl font-bold transition-all ${
+                              currentPage === pageNum
+                                ? "bg-brand-crimson text-white shadow-[0_0_15px_rgba(255,62,62,0.4)]"
+                                : "border border-dark-border bg-dark-card text-text-muted hover:border-brand-cyan hover:text-text-primary"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        ),
+                      )}
+
+                      {/* Next Button */}
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-crimson hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                        aria-label="Next Page"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="rounded-2xl border border-dark-border bg-dark-card p-12 text-center font-mono">
                   <Newspaper className="h-10 w-10 text-text-muted mx-auto mb-3" />

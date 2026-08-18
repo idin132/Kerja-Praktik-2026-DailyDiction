@@ -90,8 +90,8 @@ export default async function DetailArtikel({
             {/* ================= KOLOM KIRI (KONTEN UTAMA) ================= */}
             <div className="lg:col-span-8">
               <article>
-                {/* Header Artikel */}
-                <div className="mb-8 space-y-6">
+                {/* Header Artikel - Fade In Up Tahap 1 */}
+                <div className="animate-fade-up-1 mb-8 space-y-6">
                   {/* Badge Kategori */}
                   <div className="flex flex-wrap items-center gap-2">
                     {categoryList.length > 0 ? (
@@ -169,9 +169,9 @@ export default async function DetailArtikel({
                   </p>
                 </div>
 
-                {/* Body Artikel (Tiptap HTML) */}
+                {/* Body Artikel (Tiptap HTML) - Fade In Up Tahap 2 */}
                 <div
-                  className="rich-text-content prose prose-invert prose-brand-crimson max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-12"
+                  className="animate-fade-up-2 rich-text-content prose prose-invert prose-brand-crimson max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-12"
                   dangerouslySetInnerHTML={{
                     __html:
                       typeof article.content === "string"
@@ -186,7 +186,7 @@ export default async function DetailArtikel({
               </article>
 
               {/* ================= NAVIGASI NEXT / PREV ARTIKEL ================= */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-dark-border pt-8 mt-8">
+              <div className="animate-fade-up-3 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-dark-border pt-8 mt-8">
                 {prevArticle ? (
                   <Link
                     href={`/artikel/${prevArticle.slug}`}
@@ -252,41 +252,46 @@ export default async function DetailArtikel({
             </div>
 
             {/* ================= KOLOM KANAN (SIDEBAR) ================= */}
+            {/* Bebas transform agar button fixed di Android tidak tertahan */}
             <aside className="lg:col-span-4 space-y-8">
               <div className="sticky top-24 space-y-6">
+                {/* Posisi desktop tidak berubah */}
                 <ShareWidget title={article.title} />
 
-                {sidebarAd ? (
-                  <a
-                    href={sidebarAd.url_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="relative block w-full max-w-[320px] mx-auto overflow-hidden rounded-xl group border border-dark-border/30 shadow-xl"
-                  >
-                    <img
-                      src={formatImageUrl(sidebarAd.banner_image, "")}
-                      alt={sidebarAd.title}
-                      className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <span className="absolute top-2 right-3 text-[9px] font-black tracking-widest text-white bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded">
-                      AD
-                    </span>
-                  </a>
-                ) : (
-                  <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden aspect-[3/4] w-full max-w-[320px] mx-auto">
-                    <span className="absolute top-2 right-3 text-[9px] text-text-muted/50 font-mono border border-text-muted/20 px-1 rounded">
-                      Ad
-                    </span>
-                    <span className="text-xs font-mono text-text-muted">
-                      Space Iklan Dinamis
-                    </span>
-                    <span className="text-[10px] font-mono text-brand-crimson/50 mt-1">
-                      Tinggi menyesuaikan gambar
-                    </span>
-                  </div>
-                )}
+                {/* Animasi diberikan ke elemen individual di bawah share widget */}
+                <div className="animate-fade-up-2">
+                  {sidebarAd ? (
+                    <a
+                      href={sidebarAd.url_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative block w-full max-w-[320px] mx-auto overflow-hidden rounded-xl group border border-dark-border/30 shadow-xl"
+                    >
+                      <img
+                        src={formatImageUrl(sidebarAd.banner_image, "")}
+                        alt={sidebarAd.title}
+                        className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <span className="absolute top-2 right-3 text-[9px] font-black tracking-widest text-white bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded">
+                        AD
+                      </span>
+                    </a>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden aspect-[3/4] w-full max-w-[320px] mx-auto">
+                      <span className="absolute top-2 right-3 text-[9px] text-text-muted/50 font-mono border border-text-muted/20 px-1 rounded">
+                        Ad
+                      </span>
+                      <span className="text-xs font-mono text-text-muted">
+                        Space Iklan Dinamis
+                      </span>
+                      <span className="text-[10px] font-mono text-brand-crimson/50 mt-1">
+                        Tinggi menyesuaikan gambar
+                      </span>
+                    </div>
+                  )}
+                </div>
 
-                <div className="w-full max-w-[320px] mx-auto">
+                <div className="animate-fade-up-3 w-full max-w-[320px] mx-auto">
                   <DiscordWidget />
                 </div>
               </div>
@@ -300,6 +305,54 @@ export default async function DetailArtikel({
       <style
         dangerouslySetInnerHTML={{
           __html: `
+          @keyframes cinematicFadeUp {
+            0% {
+              opacity: 0;
+              transform: translateY(36px);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+
+          .animate-fade-up-1 {
+            animation: cinematicFadeUp 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+          }
+
+          .animate-fade-up-2 {
+            animation: cinematicFadeUp 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+          }
+
+          .animate-fade-up-3 {
+            animation: cinematicFadeUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
+          }
+
+          /* Scroll reveal khusus elemen gambar/video di isi artikel */
+          @keyframes scrollFadeUp {
+            from {
+              opacity: 0;
+              transform: translateY(40px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+
+          .rich-text-content img,
+          .rich-text-content iframe {
+            animation: scrollFadeUp linear both;
+            animation-timeline: view();
+            animation-range: entry 5% cover 30%;
+            width: 100%;
+            height: auto;
+            border-radius: 0.75rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+          }
+
           .rich-text-content {
             font-size: 1.125rem;
             line-height: 1.75;
@@ -315,14 +368,6 @@ export default async function DetailArtikel({
             margin-bottom: 0.75em;
             text-align: justify;
           }
-          .rich-text-content img {
-            width: 100%;
-            height: auto;
-            border-radius: 0.75rem;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(255,255,255,0.1);
-          }
           .rich-text-content a {
             color: #00e5ff;
             text-decoration: none;
@@ -330,9 +375,7 @@ export default async function DetailArtikel({
           .rich-text-content a:hover { text-decoration: underline; }
           .rich-text-content strong { color: white; }
           .rich-text-content iframe {
-            width: 100%;
             aspect-ratio: 16/9;
-            border-radius: 0.75rem;
             margin-top: 1.5rem;
             margin-bottom: 1.5rem;
           }

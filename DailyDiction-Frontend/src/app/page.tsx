@@ -13,7 +13,7 @@ export const revalidate = 3600;
 
 function formatImageUrl(
   imageUrl: string | null | undefined,
-  fallback: string,
+  fallback: string
 ): string {
   if (!imageUrl) return fallback;
 
@@ -21,7 +21,7 @@ function formatImageUrl(
     if (imageUrl.includes("127.0.0.1:8000/storage/http")) {
       return imageUrl.replace(
         /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
-        "$1",
+        "$1"
       );
     }
     return imageUrl;
@@ -146,7 +146,7 @@ export default async function Home() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
-                {newsArticles.map((item: any) => {
+                {newsArticles.slice(0, 6).map((item: any) => {
                   let finalCategory = ["Berita"];
 
                   if (item.category_input && item.category_input.length > 0) {
@@ -166,7 +166,7 @@ export default async function Home() {
                       summary={item.summary}
                       imageUrl={formatImageUrl(
                         item.image_url || item.image_full_url,
-                        "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
+                        "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
                       )}
                       slug={item.slug}
                       author={item.author}
@@ -205,7 +205,7 @@ export default async function Home() {
                       platform={review.platform || review.category || ["PC"]}
                       imageUrl={formatImageUrl(
                         review.image_url || review.image_full_url,
-                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
+                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
                       )}
                       slug={review.slug}
                     />

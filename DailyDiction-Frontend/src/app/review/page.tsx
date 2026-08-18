@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Search, Trophy, Gamepad2 } from "lucide-react";
+import { Search, Trophy, Gamepad2, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ReviewItem {
   id: number;
@@ -45,6 +46,10 @@ export default function ReviewPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedPlatform, setSelectedPlatform] = useState<string>("ALL");
+
+  // State Pagination (8 Items per Halaman)
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 8;
 
   useEffect(() => {
     let isMounted = true;
@@ -116,6 +121,11 @@ export default function ReviewPage() {
     };
   }, []);
 
+  // Reset pagination ke halaman 1 saat filter atau pencarian berubah
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedPlatform]);
+
   // Helper parser array platform super aman
   const getPlatformsArray = (review: ReviewItem): string[] => {
     const raw = review.platform || review.category || ["PC"];
@@ -147,10 +157,25 @@ export default function ReviewPage() {
     return matchPlatform && matchSearch;
   });
 
-  // Featured Review diambil dari data awal ketika belum difilter (atau dari item pertama)
+  // ========================================================
+  // LOGIC PAGINATION (8 ITEMS PER HALAMAN)
+  // ========================================================
+  const totalPages = Math.ceil(filteredReviews.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentReviews = filteredReviews.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Featured Review diambil dari data awal
   const featuredReview = reviews.length > 0 ? reviews[0] : null;
 
-  const filterButtons = ["ALL", "PC", "PS5", "SWITCH", "XBOX"];
+  const filterButtons = ["ALL", "PC", "PLAYSTATION", "NINTENDO", "XBOX", "MOBILE"];
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white flex flex-col justify-between font-sans">
@@ -263,74 +288,130 @@ export default function ReviewPage() {
           {/* ============ GRID REVIEW DI BAWAHNYA ============ */}
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map((n) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
                 <div
                   key={n}
                   className="h-64 rounded-xl border border-dark-border bg-dark-card/50 animate-pulse"
                 />
               ))}
             </div>
-          ) : filteredReviews.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredReviews.map((review) => {
-                const platforms = getPlatformsArray(review);
+          ) : currentReviews.length > 0 ? (
+            <>
+              {/* Container Animasi Halaman Halus */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`review-page-${currentPage}-${selectedPlatform}`}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -16 }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                >
+                  {currentReviews.map((review) => {
+                    const platforms = getPlatformsArray(review);
 
-                return (
-                  <Link
-                    key={review.id}
-                    href={`/artikel/${review.slug}`}
-                    className="group flex flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-brand-cyan/50 hover:shadow-lg"
+                    return (
+                      <Link
+                        key={review.id}
+                        href={`/artikel/${review.slug}`}
+                        className="group flex flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-brand-cyan/50 hover:-translate-y-1 hover:shadow-lg duration-300"
+                      >
+                        <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-dark-border/50 shrink-0">
+                          <img
+                            src={formatImageUrl(
+                              review.image_url || review.image_full_url,
+                              "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
+                            )}
+                            alt={review.title}
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute left-3 top-3 flex flex-wrap gap-1.5 font-mono">
+                            {platforms.map((plat, idx) => (
+                              <span
+                                key={idx}
+                                className="rounded bg-black/60 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-brand-cyan backdrop-blur-sm border border-brand-cyan/30"
+                              >
+                                {plat}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-1 flex-col justify-between p-5">
+                          <div>
+                            <h3 className="text-base font-bold text-white group-hover:text-brand-cyan transition-colors line-clamp-2">
+                              {review.title}
+                            </h3>
+                            <p className="mt-2 text-xs text-text-muted line-clamp-3 leading-relaxed">
+                              {review.summary}
+                            </p>
+                          </div>
+
+                          <div className="mt-4 flex items-center justify-between border-t border-dark-border/60 pt-4 font-mono">
+                            <span className="text-[10px] text-text-muted">
+                              {new Date(
+                                review.created_at || Date.now(),
+                              ).toLocaleDateString("id-ID", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-cyan">
+                              Baca Review &rarr;
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </motion.div>
+              </AnimatePresence>
+
+              {/* ========================================================
+                  KOMPONEN PAGINATION
+                  ======================================================== */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-12 font-mono text-xs">
+                  {/* Prev Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-crimson hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                    aria-label="Previous Page"
                   >
-                    <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-dark-border/50 shrink-0">
-                      <img
-                        src={formatImageUrl(
-                          review.image_url || review.image_full_url,
-                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
-                        )}
-                        alt={review.title}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute left-3 top-3 flex flex-wrap gap-1.5 font-mono">
-                        {platforms.map((plat, idx) => (
-                          <span
-                            key={idx}
-                            className="rounded bg-black/60 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-brand-cyan backdrop-blur-sm border border-brand-cyan/30"
-                          >
-                            {plat}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
 
-                    <div className="flex flex-1 flex-col justify-between p-5">
-                      <div>
-                        <h3 className="text-base font-bold text-white group-hover:text-brand-cyan transition-colors line-clamp-2">
-                          {review.title}
-                        </h3>
-                        <p className="mt-2 text-xs text-text-muted line-clamp-3 leading-relaxed">
-                          {review.summary}
-                        </p>
-                      </div>
+                  {/* Number Buttons */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (pageNum) => (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`h-9 min-w-[36px] px-3 rounded-xl font-bold transition-all ${
+                          currentPage === pageNum
+                            ? "bg-brand-crimson text-white shadow-[0_0_15px_rgba(255,62,62,0.4)]"
+                            : "border border-dark-border bg-dark-card text-text-muted hover:border-brand-cyan hover:text-text-primary"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    ),
+                  )}
 
-                      <div className="mt-4 flex items-center justify-between border-t border-dark-border/60 pt-4 font-mono">
-                        <span className="text-[10px] text-text-muted">
-                          {new Date(
-                            review.created_at || Date.now(),
-                          ).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </span>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-brand-cyan">
-                          Baca Review &rarr;
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+                  {/* Next Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-crimson hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                    aria-label="Next Page"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="rounded-2xl border border-dark-border bg-dark-card p-12 text-center font-mono">
               <p className="text-sm text-text-muted">

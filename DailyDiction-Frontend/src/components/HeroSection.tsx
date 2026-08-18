@@ -9,13 +9,15 @@ interface ArticleItem {
   id: number;
   title: string;
   slug: string;
-  category: string | string[];
+  category?: string | string[];
   summary: string;
   thumbnail?: string;
   thumbnail_url?: string;
   image?: string;
   image_full_url?: string;
   read_time?: string;
+  created_at?: string;
+  contentType?: "artikel" | "review";
 }
 
 function formatHeroImage(article: ArticleItem): string {
@@ -39,20 +41,23 @@ function formatHeroImage(article: ArticleItem): string {
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-function getFirstCategory(category: string | string[] | undefined): string {
-  if (!category) return "GAMING";
-  if (Array.isArray(category)) return category[0] || "GAMING";
+function getFirstCategory(
+  category: string | string[] | undefined,
+  fallback = "GAMING",
+): string {
+  if (!category) return fallback;
+  if (Array.isArray(category)) return category[0] || fallback;
   if (typeof category === "string") {
     try {
       const parsed = category.startsWith("[")
         ? JSON.parse(category)
         : [category];
-      return parsed[0] || "GAMING";
+      return parsed[0] || fallback;
     } catch {
       return category;
     }
   }
-  return "GAMING";
+  return fallback;
 }
 
 export default function HeroSection() {
@@ -63,31 +68,56 @@ export default function HeroSection() {
   useEffect(() => {
     let isMounted = true;
 
-    async function fetchHeroArticles() {
-      // Pastikan hanya berjalan di sisi browser client
+    async function fetchHeroContent() {
       if (typeof window === "undefined") return;
 
       try {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
-        const res = await fetch(`${apiUrl}/articles`, {
-          headers: {
-            Accept: "application/json",
-          },
-          cache: "no-store",
+        // Fetch berita dan review secara paralel
+        const [articlesRes, reviewsRes] = await Promise.all([
+          fetch(`${apiUrl}/articles`, {
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+          }).catch(() => null),
+          fetch(`${apiUrl}/reviews`, {
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+          }).catch(() => null),
+        ]);
+
+        const articlesJson = articlesRes?.ok ? await articlesRes.json() : null;
+        const reviewsJson = reviewsRes?.ok ? await reviewsRes.json() : null;
+
+        // Beri tanda tipe rute konten
+        const newsData: ArticleItem[] = (articlesJson?.data || []).map(
+          (item: any) => ({
+            ...item,
+            contentType: "artikel",
+          }),
+        );
+
+        const reviewsData: ArticleItem[] = (reviewsJson?.data || []).map(
+          (item: any) => ({
+            ...item,
+            contentType: "review",
+          }),
+        );
+
+        // Gabungkan dan urutkan berdasarkan created_at descending
+        const combined = [...newsData, ...reviewsData].sort((a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return dateB - dateA;
         });
 
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-
-        const json = await res.json();
+        // Ambil hanya 5 konten terbaru
         if (isMounted) {
-          setArticles(json.data || []);
+          setArticles(combined.slice(0, 5));
         }
       } catch (error) {
-        console.warn("API belum siap saat build atau koneksi terputus:", error);
+        console.warn("Gagal memuat konten Hero:", error);
         if (isMounted) {
           setArticles([]);
         }
@@ -98,7 +128,7 @@ export default function HeroSection() {
       }
     }
 
-    fetchHeroArticles();
+    fetchHeroContent();
 
     return () => {
       isMounted = false;
@@ -134,18 +164,17 @@ export default function HeroSection() {
   }
 
   const currentArticle = articles[currentIndex];
+  // Buat link dinamis mengarah ke /artikel/slug atau /review/slug
+  const targetLink = `/${currentArticle.contentType || "artikel"}/${currentArticle.slug}`;
 
   return (
     <section className="relative w-full overflow-hidden border-b border-dark-border bg-black">
       <div className="relative w-full aspect-[16/10] sm:aspect-video md:aspect-auto md:h-[75vh] md:min-h-[520px] overflow-hidden">
         {/* Background Image Slider */}
-        <Link
-          href={`/artikel/${currentArticle.slug}`}
-          className="absolute inset-0 block group"
-        >
+        <Link href={targetLink} className="absolute inset-0 block group">
           <AnimatePresence mode="wait">
             <motion.div
-              key={currentArticle.id}
+              key={`${currentArticle.contentType}-${currentArticle.id}`}
               initial={{ opacity: 0, scale: 1.05 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
@@ -169,13 +198,10 @@ export default function HeroSection() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             {/* Teks Artikel */}
             <div className="max-w-2xl pointer-events-auto">
-              <Link
-                href={`/artikel/${currentArticle.slug}`}
-                className="block group"
-              >
+              <Link href={targetLink} className="block group">
                 <AnimatePresence mode="wait">
                   <motion.div
-                    key={currentArticle.id}
+                    key={`${currentArticle.contentType}-${currentArticle.id}`}
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -15 }}
@@ -183,7 +209,9 @@ export default function HeroSection() {
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <span className="rounded border border-brand-cyan/40 bg-dark-bg/80 px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-brand-cyan backdrop-blur-md">
-                        {getFirstCategory(currentArticle.category)}
+                        {currentArticle.contentType === "review"
+                          ? "REVIEW"
+                          : getFirstCategory(currentArticle.category, "NEWS")}
                       </span>
                     </div>
 
@@ -200,7 +228,7 @@ export default function HeroSection() {
 
               <div className="mt-3 sm:mt-5 flex items-center gap-3">
                 <Link
-                  href={`/artikel/${currentArticle.slug}`}
+                  href={targetLink}
                   className="inline-flex items-center gap-1.5 rounded-lg sm:rounded-xl bg-brand-crimson px-3 py-1.5 sm:px-5 sm:py-2.5 font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white shadow-[0_0_15px_rgba(255,62,62,0.4)] transition-all hover:bg-brand-crimson/90 active:scale-95 pointer-events-auto"
                 >
                   <span>Baca</span>
@@ -209,12 +237,12 @@ export default function HeroSection() {
 
                 <div className="flex items-center gap-1 font-mono text-[10px] sm:text-xs text-text-muted">
                   <Clock className="h-3 w-3 text-brand-cyan" />
-                  <span>{currentArticle.read_time || "5 MIN"}</span>
+                  <span>{currentArticle.read_time || "5 MIN READ"}</span>
                 </div>
               </div>
             </div>
 
-            {/* Navigasi & Indikator */}
+            {/* Navigasi & Indikator (Tampil Maksimal 5 Garis) */}
             <div className="flex items-center justify-between sm:justify-end gap-3 font-mono z-20 pointer-events-auto mt-2 sm:mt-0">
               <div className="flex items-center gap-1.5">
                 {articles.map((_, idx) => (
