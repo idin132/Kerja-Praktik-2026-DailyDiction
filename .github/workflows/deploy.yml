@@ -48,9 +48,9 @@ jobs:
       - name: Sync Frontend to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_SERVER }} 
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
+          server: ftp.dailydiction.id
+          username: press@dailydiction.id
+          password: N1pp0nch@ch4ch@
           local-dir: "./DailyDiction-Frontend/"
           server-dir: "/daily-frontend/"
           exclude: |
