@@ -50,7 +50,7 @@ export default function YoutubeShorts({ videos = [] }: { videos?: any[] }) {
           rel="noopener noreferrer"
           className="text-xs font-bold text-brand-crimson hover:text-white transition-colors flex items-center gap-1"
         >
-          Likat Semua &rarr;
+          Lihat Semua &rarr;
         </a>
       </div>
 
