@@ -32,7 +32,7 @@ export default function ReelsPage() {
   useEffect(() => {
     async function fetchReels() {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/reels");
+        const res = await fetch("https://dailydiction.id/api/v1/reels");
         if (res.ok) {
           const json = await res.json();
           const data = json.data || [];
@@ -148,7 +148,7 @@ export default function ReelsPage() {
                           <div className="relative h-full w-full bg-dark-card flex items-center justify-center">
                             {item.thumbnail_url ? (
                               <img
-                                src={`http://127.0.0.1:8000/storage/${item.thumbnail_url}`}
+                                src={`https://dailydiction.id/storage/${item.thumbnail_url}`}
                                 alt={item.title}
                                 className="h-full w-full object-cover opacity-50"
                               />
@@ -160,7 +160,7 @@ export default function ReelsPage() {
                       ) : (
                         <video
                           src={item.video_url}
-                          poster={item.thumbnail_url ? `http://127.0.0.1:8000/storage/${item.thumbnail_url}` : undefined}
+                          poster={item.thumbnail_url ? `https://dailydiction.id/storage/${item.thumbnail_url}` : undefined}
                           autoPlay={isActive}
                           loop
                           playsInline
@@ -178,7 +178,7 @@ export default function ReelsPage() {
                         <img
                           src={
                             item.thumbnail_url
-                              ? `http://127.0.0.1:8000/storage/${item.thumbnail_url}`
+                              ? `https://dailydiction.id/storage/${item.thumbnail_url}`
                               : "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
                           }
                           alt={item.title}

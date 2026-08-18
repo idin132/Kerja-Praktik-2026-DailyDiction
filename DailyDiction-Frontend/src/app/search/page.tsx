@@ -13,15 +13,15 @@ function formatImageUrl(
 ): string {
   if (!imageUrl) return fallback;
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    if (imageUrl.includes("127.0.0.1:8000/storage/http")) {
+    if (imageUrl.includes("dailydiction.id/storage/http")) {
       return imageUrl.replace(
-        /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
+        /https:\/\/dailydiction\.id\/storage\/(https?:\/\/)/,
         "$1",
       );
     }
     return imageUrl;
   }
-  return `http://127.0.0.1:8000/storage/${imageUrl}`;
+  return `https://dailydiction.id/storage/${imageUrl}`;
 }
 
 export default async function SearchPage(props: {
@@ -32,8 +32,8 @@ export default async function SearchPage(props: {
   const lowerQuery = query.toLowerCase();
 
   const [articlesRes, reviewsRes] = await Promise.all([
-    fetch(`http://127.0.0.1:8000/api/v1/articles?type=article&t=${Date.now()}`, { cache: "no-store" }).catch(() => null),
-    fetch(`http://127.0.0.1:8000/api/v1/articles?type=review&t=${Date.now()}`, { cache: "no-store" }).catch(() => null),
+    fetch(`https://dailydiction.id/api/v1/articles?type=article&t=${Date.now()}`, { cache: "no-store" }).catch(() => null),
+    fetch(`https://dailydiction.id/api/v1/articles?type=review&t=${Date.now()}`, { cache: "no-store" }).catch(() => null),
   ]);
 
   const articlesJson = articlesRes?.ok ? await articlesRes.json() : { data: [] };

@@ -11,6 +11,12 @@ class CreateArticle extends CreateRecord
 {
     protected static string $resource = ArticleResource::class;
 
+    // 👇 REDIRECT KE LIST ARTIKEL SETELAH KLIK CREATE 👇
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         unset($data['category_input']);

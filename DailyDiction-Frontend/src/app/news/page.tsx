@@ -5,21 +5,23 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Calendar, 
-  User, 
+import {
+  Calendar,
+  User,
   Send,
   Search,
   Filter,
   Newspaper,
-  ArrowUpRight
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 interface ArticleItem {
   id: number;
   title: string;
   slug: string;
-  category_input?: string | string[]; 
+  category_input?: string | string[];
   category?: string | string[];
   categories?: any[];
   category_color?: string;
@@ -30,6 +32,28 @@ interface ArticleItem {
   read_time: string;
   created_at: string;
   author?: string;
+  type?: string;
+}
+
+// Helper untuk validasi URL Gambar
+function formatNewsImage(item: ArticleItem): string {
+  const imageUrl = item.image_url || item.image_full_url;
+  const fallback =
+    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
+
+  if (!imageUrl) return fallback;
+
+  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+    if (imageUrl.includes("127.0.0.1:8000/storage/http")) {
+      return imageUrl.replace(
+        /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
+        "$1",
+      );
+    }
+    return imageUrl;
+  }
+
+  return `https://dailydiction.id/storage/${imageUrl}`;
 }
 
 export default function NewsPage() {
@@ -38,12 +62,16 @@ export default function NewsPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
+  // State Pagination
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 8;
+
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchArticles() {
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/v1/articles?type=article&t=${new Date().getTime()}`, {
-          cache: 'no-store'
-        });
+        const res = await fetch("https://dailydiction.id/api/v1/articles");
         if (res.ok) {
           const json = await res.json();
           setArticles(json.data || []);
@@ -51,53 +79,102 @@ export default function NewsPage() {
       } catch (err) {
         console.error("Gagal mengambil data berita:", err);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
+
     fetchArticles();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const getCategoriesArray = (item: ArticleItem): string[] => {
-    let rawCategory: any = ["BERITA"]; 
+  // Reset pagination ke halaman 1 saat filter atau pencarian berubah
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory]);
 
-    if (item.category_input && item.category_input.length > 0) {
-      rawCategory = item.category_input;
-    } else if (item.category && item.category.length > 0) {
-      rawCategory = item.category;
-    } else if (item.categories && item.categories.length > 0) {
-      rawCategory = item.categories.map((c: any) => c.name);
-    }
-
-    if (Array.isArray(rawCategory)) return rawCategory;
-    
-    if (typeof rawCategory === 'string') {
+  const getCategoriesArray = (
+    category: string | string[] | undefined,
+  ): string[] => {
+    if (!category) return ["GAMING"];
+    if (Array.isArray(category)) return category;
+    if (typeof category === "string") {
       try {
-        return rawCategory.startsWith('[') ? JSON.parse(rawCategory) : [rawCategory];
+        return category.startsWith("[") ? JSON.parse(category) : [category];
       } catch {
-        return [rawCategory];
+        return [category];
       }
     }
     return ["BERITA"];
   };
 
-  const allCategories = articles.flatMap((item) => 
-    getCategoriesArray(item).map(cat => cat.toUpperCase())
+  // Helper penyaring: Cek apakah item adalah tipe Review
+  const isReviewItem = (item: ArticleItem) => {
+    if (
+      item.type?.toLowerCase() === "review" ||
+      item.type?.toLowerCase() === "reviews"
+    ) {
+      return true;
+    }
+
+    const cats = [
+      ...(Array.isArray(item.category_input)
+        ? item.category_input
+        : [item.category_input]),
+      ...(Array.isArray(item.category) ? item.category : [item.category]),
+      ...(Array.isArray(item.categories)
+        ? item.categories.map((c: any) => c.name)
+        : []),
+    ]
+      .filter(Boolean)
+      .map((c) => String(c).toUpperCase());
+
+    return cats.some((cat) => cat.includes("REVIEW") || cat.includes("ULASAN"));
+  };
+
+  // 1. Filter awal: Hanya ambil artikel murni (bukan review)
+  const pureNewsArticles = articles.filter((item) => !isReviewItem(item));
+
+  // 2. Kategori diambil dari artikel murni
+  const allCategories = pureNewsArticles.flatMap((item) =>
+    getCategoriesArray(item.category).map((cat) => cat.toUpperCase()),
   );
   const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
 
-  const filteredArticles = articles.filter((item) => {
-    const itemCats = getCategoriesArray(item).map(c => c.toUpperCase());
-    
+  // 3. Filter berdasarkan kategori & kata kunci pencarian
+  const filteredArticles = pureNewsArticles.filter((item) => {
+    const itemCats = getCategoriesArray(item.category).map((c) =>
+      c.toUpperCase(),
+    );
+
     const matchCategory =
-      selectedCategory === "ALL" ||
-      itemCats.includes(selectedCategory);
-      
+      selectedCategory === "ALL" || itemCats.includes(selectedCategory);
+
     const matchSearch =
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.summary.toLowerCase().includes(searchQuery.toLowerCase());
-      
+      (item.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (item.summary?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+
     return matchCategory && matchSearch;
   });
+
+  // ========================================================
+  // LOGIC PAGINATION
+  // ========================================================
+  const totalPages = Math.ceil(filteredArticles.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentArticles = filteredArticles.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white flex flex-col justify-between font-sans">
@@ -105,7 +182,7 @@ export default function NewsPage() {
         <Navbar />
 
         <main className="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-8">
-          
+          {/* Header Section */}
           <div className="mb-8 border-b border-dark-border pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -115,7 +192,8 @@ export default function NewsPage() {
                 </h1>
               </div>
               <p className="text-xs sm:text-sm text-text-muted font-mono">
-                Pusat informasi berita game, rilisan konsol, hardware PC, dan tren pop-culture terbaru.
+                Pusat informasi berita game, rilisan konsol, hardware PC, dan
+                tren pop-culture terbaru.
               </p>
             </div>
 
@@ -132,9 +210,9 @@ export default function NewsPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12">
-            
-            <div className="lg:col-span-9 space-y-6">
-              
+            {/* Left Column: News List */}
+            <div className="lg:col-span-8 2xl:col-span-9 space-y-6">
+              {/* Category Filter Pills */}
               {categoriesList.length > 1 && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none font-mono text-xs">
                   <span className="flex items-center gap-1 text-text-muted mr-2 shrink-0">
@@ -166,109 +244,165 @@ export default function NewsPage() {
                     />
                   ))}
                 </div>
-              ) : filteredArticles.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8">
-                  <AnimatePresence>
-                    {filteredArticles.map((item) => {
-                      const itemCategories = getCategoriesArray(item);
+              ) : currentArticles.length > 0 ? (
+                <>
+                  {/* Container Animasi Halaman Halus */}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`page-${currentPage}-${selectedCategory}`}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -16 }}
+                      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                      className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8"
+                    >
+                      {currentArticles.map((item) => {
+                        const itemCategories = getCategoriesArray(item.category);
 
-                      return (
-                        <motion.article
-                          key={item.id}
-                          layout
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          whileHover={{ y: -3 }}
-                          transition={{ duration: 0.2 }}
-                          className="group flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/60 shadow-lg h-full"
-                        >
-                          <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
-                            <img
-                              src={
-                                item.image_url ||
-                                item.image_full_url ||
-                                "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
-                              }
-                              alt={item.title}
-                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
-                            
-                            <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
-                              {itemCategories.map((cat, idx) => (
-                                <span key={idx} className="rounded-md border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md">
-                                  {cat}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
+                        return (
+                          <article
+                            key={item.id}
+                            className="group flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/60 hover:-translate-y-1 shadow-lg h-full duration-300"
+                          >
+                            <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
+                              <img
+                                src={formatNewsImage(item)}
+                                alt={item.title}
+                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src =
+                                    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
+                                }}
+                              />
 
-                          <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
-                            <div>
-                              <Link href={`/artikel/${item.slug}`}>
-                                <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
-                                  {item.title}
-                                </h2>
-                              </Link>
-                              <p className="mt-2.5 text-xs text-text-muted line-clamp-2 leading-relaxed">
-                                {item.summary}
-                              </p>
-                            </div>
-
-                            <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4">
-                              <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
-                                
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                  <User className="h-3.5 w-3.5 text-brand-crimson" />
-                                  <span className="truncate max-w-[90px] xl:max-w-[120px] font-semibold text-white">
-                                    {item.author || "Redaksi"}
+                              {/* Looping Badge Kategori */}
+                              <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                                {itemCategories.map((cat, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="rounded-md border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md"
+                                  >
+                                    {cat}
                                   </span>
-                                </div>
-                                
-                                <span className="text-dark-border shrink-0">•</span>
-                                
-                                {item.created_at && (
-                                  <div className="flex items-center gap-1.5 shrink-0 min-w-0">
-                                    <Calendar className="h-3.5 w-3.5 text-text-muted shrink-0 hidden sm:block" />
-                                    <span className="truncate whitespace-nowrap">
-                                      {new Date(item.created_at).toLocaleDateString("id-ID", {
-                                        day: "numeric",
-                                        month: "short",
-                                        year: "numeric",
-                                      })}
-                                    </span>
-                                  </div>
-                                )}
-                                
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
+                              <div>
+                                <Link href={`/artikel/${item.slug}`}>
+                                  <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
+                                    {item.title}
+                                  </h2>
+                                </Link>
+                                <p className="mt-2.5 text-xs text-text-muted line-clamp-2 leading-relaxed">
+                                  {item.summary}
+                                </p>
                               </div>
 
-                              <Link
-                                href={`/artikel/${item.slug}`}
-                                className="flex items-center gap-1 font-bold text-brand-crimson hover:underline shrink-0 ml-1"
-                              >
-                                <span className="hidden sm:inline">BACA</span>
-                                <ArrowUpRight className="h-3.5 w-3.5" />
-                              </Link>
+                              <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-1.5">
+                                    <User className="h-3.5 w-3.5 text-brand-crimson" />
+                                    <span className="truncate max-w-[90px] xl:max-w-[120px] font-semibold text-white">
+                                      {item.author || "Redaksi"}
+                                    </span>
+                                  </div>
+
+                                  {item.created_at && (
+                                    <>
+                                      <span className="text-dark-border hidden sm:inline-block">
+                                        •
+                                      </span>
+                                      <div className="items-center gap-1.5 hidden sm:flex">
+                                        <Calendar className="h-3.5 w-3.5 text-text-muted" />
+                                        <span>
+                                          {new Date(
+                                            item.created_at,
+                                          ).toLocaleDateString("id-ID", {
+                                            day: "numeric",
+                                            month: "short",
+                                            year: "numeric",
+                                          })}
+                                        </span>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+
+                                <Link
+                                  href={`/artikel/${item.slug}`}
+                                  className="flex items-center gap-1 font-bold text-brand-crimson hover:underline shrink-0 ml-1"
+                                >
+                                  <span className="hidden sm:inline">BACA</span>
+                                  <ArrowUpRight className="h-3.5 w-3.5" />
+                                </Link>
+                              </div>
                             </div>
-                          </div>
-                        </motion.article>
-                      );
-                    })}
+                          </article>
+                        );
+                      })}
+                    </motion.div>
                   </AnimatePresence>
-                </div>
+
+                  {/* ========================================================
+                      KOMPONEN PAGINATION
+                      ======================================================== */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 pt-8 font-mono text-xs">
+                      {/* Prev Button */}
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-crimson hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                        aria-label="Previous Page"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+
+                      {/* Number Buttons */}
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (pageNum) => (
+                          <button
+                            key={pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`h-9 min-w-[36px] px-3 rounded-xl font-bold transition-all ${
+                              currentPage === pageNum
+                                ? "bg-brand-crimson text-white shadow-[0_0_15px_rgba(255,62,62,0.4)]"
+                                : "border border-dark-border bg-dark-card text-text-muted hover:border-brand-cyan hover:text-text-primary"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        ),
+                      )}
+
+                      {/* Next Button */}
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-crimson hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                        aria-label="Next Page"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="rounded-2xl border border-dark-border bg-dark-card p-12 text-center font-mono">
                   <Newspaper className="h-10 w-10 text-text-muted mx-auto mb-3" />
                   <p className="text-sm text-text-muted">
-                    Tidak ada berita yang ditemukan untuk kata kunci atau kategori ini.
+                    Tidak ada berita yang ditemukan untuk kata kunci atau
+                    kategori ini.
                   </p>
                 </div>
               )}
             </div>
 
-            <aside className="lg:col-span-3 space-y-6">
-              
-              <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-5 lg:p-6 text-center shadow-xl">
+            {/* Right Sidebar Column */}
+            <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
+              <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
                 <svg
                   viewBox="0 0 24 24"
                   className="w-10 h-10 fill-indigo-400 mx-auto mb-3 animate-bounce"
@@ -281,8 +415,10 @@ export default function NewsPage() {
                   TEMPAT NONGKRONG
                 </h3>
 
-                <p className="text-text-muted text-[11px] lg:text-xs mt-2 mb-5 leading-relaxed">
-                  Join server Discord Daily Diction buat mabar, berbagi info gacha, atau gibahin industri pop culture!
+                <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
+                  Join server Discord Daily Diction buat mabar, berbagi info
+                  gacha, pamer spek PC, atau sekadar gibahin industri pop
+                  culture!
                 </p>
 
                 <a
@@ -295,9 +431,7 @@ export default function NewsPage() {
                   <span>Join Server</span>
                 </a>
               </div>
-
             </aside>
-
           </div>
         </main>
       </div>

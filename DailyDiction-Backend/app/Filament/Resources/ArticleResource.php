@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ArticleResource\Pages;
 use App\Models\Article;
+use App\Models\User;
 use FilamentTiptapEditor\TiptapEditor;
 use App\Filament\Actions\CustomMediaAction;
 use Filament\Forms\Set;
@@ -53,11 +54,19 @@ class ArticleResource extends Resource
                         }
                     }),
 
-                Forms\Components\TextInput::make('author')
-                    ->label('Author')
+                (auth()->user()?->role === 'superadmin' || (auth()->user() && method_exists(auth()->user(), 'isSuperAdmin') && auth()->user()->isSuperAdmin()))
+                    ? Forms\Components\Select::make('author')
+                    ->label('Author (Penulis)')
+                    ->options(fn() => User::pluck('name', 'name')->toArray()) // Mengambil semua nama author dari database
+                    ->searchable()
+                    ->preload()
+                    ->default(fn() => auth()->user()?->name)
                     ->required()
-                    ->readonly()
-                    ->default(auth()->user()->name)
+                    : Forms\Components\TextInput::make('author')
+                    ->label('Author (Penulis)')
+                    ->required()
+                    ->readOnly()
+                    ->default(fn() => auth()->user()?->name)
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('slug')
@@ -68,14 +77,13 @@ class ArticleResource extends Resource
                     ->maxLength(255),
 
                 // ================= 3. FORM HYBRID (MUNCUL GANTIAN) =================
-
                 // KHUSUS ARTIKEL: Kategori
                 Forms\Components\TagsInput::make('category_input')
                     ->label('Category')
                     ->placeholder('Ketik kategori, tekan Enter...')
                     ->suggestions(fn() => Category::pluck('name')->toArray())
-                    ->visible(fn (Get $get) => $get('type') === 'article')
-                    ->required(fn (Get $get) => $get('type') === 'article'),
+                    ->visible(fn(Get $get) => $get('type') === 'article')
+                    ->required(fn(Get $get) => $get('type') === 'article'),
 
                 // KHUSUS REVIEW: Platform (Bisa pilih lebih dari 1)
                 Forms\Components\Select::make('platform')
@@ -90,8 +98,8 @@ class ArticleResource extends Resource
                         'Switch' => 'Nintendo Switch',
                         'Mobile' => 'Mobile',
                     ])
-                    ->visible(fn (Get $get) => $get('type') === 'review')
-                    ->required(fn (Get $get) => $get('type') === 'review'),
+                    ->visible(fn(Get $get) => $get('type') === 'review')
+                    ->required(fn(Get $get) => $get('type') === 'review'),
 
                 Forms\Components\TextInput::make('category_color')
                     ->required()
@@ -100,6 +108,31 @@ class ArticleResource extends Resource
                     ->default('crimson'),
 
                 // ================= 4. KONTEN ARTIKEL (TETAP SAMA 100%) =================
+                Forms\Components\TextInput::make('image_url')
+                    ->label('Thumbnail Artikel (URL Gambar)')
+                    ->url()
+                    ->placeholder('https://example.com/image.jpg')
+                    ->live(onBlur: true)
+                    ->columnSpanFull()
+                    ->maxLength(2000)
+                    ->required(),
+
+                // ================= 5. MEDIA & SETTINGS =================
+                Forms\Components\Placeholder::make('image_preview')
+                    ->label('Preview Thumbnail')
+                    ->content(function (Get $get) {
+                        $url = $get('image_url');
+                        if (!$url) {
+                            return new HtmlString('<span class="text-xs text-gray-400">Belum ada preview (masukkan URL gambar di atas)</span>');
+                        }
+                        return new HtmlString('
+                            <div class="mt-1">
+                                <img src="' . e($url) . '" alt="Thumbnail Preview" class="max-h-48 rounded-lg object-cover border border-gray-200 shadow-sm" onerror="this.src=\'https://placehold.co/600x400?text=Gambar+Tidak+Valid\'"/>
+                            </div>
+                        ');
+                    })
+                    ->columnSpanFull(),
+
                 Forms\Components\Textarea::make('summary')
                     ->required()
                     ->columnSpanFull(),
@@ -107,8 +140,49 @@ class ArticleResource extends Resource
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
                     ->tools([
-                        'heading', 'blockquote', 'bold', 'italic', 'strike', 'link', 'media',
-                        'oembed', 'bullet-list', 'ordered-list', 'code-block', 'undo', 'redo',
+                        'heading',
+                        'blockquote',
+                        'bold',
+                        'italic',
+                        'strike',
+                        'link',
+                        'media',
+                        'oembed',
+                        'bullet-list',
+                        'ordered-list',
+                        'code-block',
+                        'undo',
+                        'redo',
+                    ])
+                    ->bubbleMenuTools([
+                        'heading',
+                        'blockquote',
+                        'bold',
+                        'italic',
+                        'strike',
+                        'link',
+                        'media',
+                        'oembed',
+                        'bullet-list',
+                        'ordered-list',
+                        'code-block',
+                        'undo',
+                        'redo',
+                    ])
+                    ->floatingMenuTools([
+                        'heading',
+                        'blockquote',
+                        'bold',
+                        'italic',
+                        'strike',
+                        'link',
+                        'media',
+                        'oembed',
+                        'bullet-list',
+                        'ordered-list',
+                        'code-block',
+                        'undo',
+                        'redo',
                     ])
                     ->mediaAction(CustomMediaAction::class)
                     ->columnSpanFull()
@@ -127,29 +201,6 @@ class ArticleResource extends Resource
 
                         $set('read_time', "{$minutes} MIN READ");
                     }),
-
-                // ================= 5. MEDIA & SETTINGS =================
-                Forms\Components\TextInput::make('image_url')
-                    ->label('Thumbnail Artikel (URL Gambar)')
-                    ->url()
-                    ->placeholder('https://example.com/image.jpg')
-                    ->live(onBlur: true)
-                    ->columnSpanFull(),
-
-                Forms\Components\Placeholder::make('image_preview')
-                    ->label('Preview Thumbnail')
-                    ->content(function (Get $get) {
-                        $url = $get('image_url');
-                        if (!$url) {
-                            return new HtmlString('<span class="text-xs text-gray-400">Belum ada preview (masukkan URL gambar di atas)</span>');
-                        }
-                        return new HtmlString('
-                            <div class="mt-1">
-                                <img src="' . e($url) . '" alt="Thumbnail Preview" class="max-h-48 rounded-lg object-cover border border-gray-200 shadow-sm" onerror="this.src=\'https://placehold.co/600x400?text=Gambar+Tidak+Valid\'"/>
-                            </div>
-                        ');
-                    })
-                    ->columnSpanFull(),
 
                 Forms\Components\TextInput::make('read_time')
                     ->required()
@@ -174,16 +225,16 @@ class ArticleResource extends Resource
                     ->label('Thumbnail')
                     ->square(),
 
-                // Tambahan Badge biar di tabel kelihatan ini Berita atau Review
+                // Kolom lainnya...
                 Tables\Columns\TextColumn::make('type')
                     ->label('Tipe')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'article' => 'info',
                         'review' => 'warning',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
+                    ->formatStateUsing(fn(string $state): string => ucfirst($state)),
 
                 Tables\Columns\TextColumn::make('title')
                     ->searchable()
@@ -194,13 +245,11 @@ class ArticleResource extends Resource
                     ->badge()
                     ->separator(','),
 
-                // Tambahan kolom Platform buat di tabel
                 Tables\Columns\TextColumn::make('platform')
                     ->label('Platform')
                     ->badge()
                     ->separator(','),
 
-                // Tambahan kolom dari Idin
                 Tables\Columns\TextColumn::make('category_color')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('read_time')
@@ -217,8 +266,9 @@ class ArticleResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            // 👇 DEFAULT URUTAN TERBARU (DESCENDING) 👇
+            ->defaultSort('created_at', 'desc')
             ->filters([
-                // Filter berdasarkan Tipe Konten
                 Tables\Filters\SelectFilter::make('type')
                     ->label('Filter Tipe Konten')
                     ->options([
