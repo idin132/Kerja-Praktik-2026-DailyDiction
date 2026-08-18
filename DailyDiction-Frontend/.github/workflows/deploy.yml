@@ -52,7 +52,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           # Path lokal yang di-upload HANYA isi folder frontend
-          local-dir: ./DailyDiction-Frontend/
+          local-dir: ./daily-Frontend/
           # Path tujuan di server hosting cPanel
           server-dir: /
           exclude: |
