@@ -1,7 +1,6 @@
 name: Deploy Frontend to cPanel
 
 on:
-  workflow_dispatch: # Mengaktifkan tombol Run manual di GitHub Actions
   push:
     branches:
       - master
@@ -11,6 +10,9 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./DailyDiction-Frontend
 
     steps:
       - name: Checkout Repository
@@ -19,40 +21,39 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: "npm"
           cache-dependency-path: DailyDiction-Frontend/package-lock.json
 
       - name: Install Dependencies
-        working-directory: ./DailyDiction-Frontend
         run: npm ci
 
       - name: Build Next.js
-        working-directory: ./DailyDiction-Frontend
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: "https://dailydiction.id/api/v1"
 
       - name: Copy Static Files to Public
-        working-directory: ./DailyDiction-Frontend
         run: |
           mkdir -p public/_next
           cp -r .next/static public/_next/
 
       - name: Create Restart Trigger
-        working-directory: ./DailyDiction-Frontend
         run: |
           mkdir -p tmp
           touch tmp/restart.txt
 
-      - name: Deploy to cPanel via LFTP
-        run: |
-          sudo apt-get update && sudo apt-get install -y lftp
-          lftp -c "
-            set ftp:ssl-allow no;
-            set ftp:passive-mode yes;
-            set net:timeout 15;
-            set net:max-retries 3;
-            open -u 'press@dailydiction.id','N1pp0nch@ch4ch@' ftp.dailydiction.id;
-            mirror -R --delete --parallel=5 --exclude .git/ --exclude node_modules/ --exclude src/ DailyDiction-Frontend/ /daily-frontend/;
-          "
+      - name: Sync Frontend to cPanel via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: "./DailyDiction-Frontend/"
+          server-dir: "/daily-frontend/"
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            src/**
+            README.md
