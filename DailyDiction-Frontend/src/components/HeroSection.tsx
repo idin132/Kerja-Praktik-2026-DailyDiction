@@ -9,7 +9,7 @@ interface ArticleItem {
   id: number;
   title: string;
   slug: string;
-  categories?: { id: number; name: string }[];
+  category: string | string[];
   summary: string;
   thumbnail?: string;
   thumbnail_url?: string;
@@ -34,9 +34,25 @@ function formatHeroImage(article: ArticleItem): string {
   }
   const cleanPath = clean.startsWith("/") ? clean.slice(1) : clean;
   if (cleanPath.startsWith("storage/")) {
-    return `http://127.0.0.1:8000/${cleanPath}`;
+    return `https://dailydiction.id/${cleanPath}`;
   }
-  return `http://127.0.0.1:8000/storage/${cleanPath}`;
+  return `https://dailydiction.id/storage/${cleanPath}`;
+}
+
+function getFirstCategory(category: string | string[] | undefined): string {
+  if (!category) return "GAMING";
+  if (Array.isArray(category)) return category[0] || "GAMING";
+  if (typeof category === "string") {
+    try {
+      const parsed = category.startsWith("[")
+        ? JSON.parse(category)
+        : [category];
+      return parsed[0] || "GAMING";
+    } catch {
+      return category;
+    }
+  }
+  return "GAMING";
 }
 
 export default function HeroSection() {
@@ -45,21 +61,48 @@ export default function HeroSection() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchHeroArticles() {
+      // Pastikan hanya berjalan di sisi browser client
+      if (typeof window === "undefined") return;
+
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/articles");
-        if (res.ok) {
-          const json = await res.json();
-          const data = json.data || [];
-          setArticles(data.slice(0, 3));
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
+
+        const res = await fetch(`${apiUrl}/articles`, {
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const json = await res.json();
+        if (isMounted) {
+          setArticles(json.data || []);
         }
       } catch (error) {
-        console.error("Gagal memuat berita slider hero:", error);
+        console.warn("API belum siap saat build atau koneksi terputus:", error);
+        if (isMounted) {
+          setArticles([]);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
+
     fetchHeroArticles();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -139,14 +182,9 @@ export default function HeroSection() {
                     transition={{ duration: 0.4 }}
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      {(currentArticle.categories ?? []).map((cat, idx) => (
-                        <span
-                          key={idx}
-                          className="rounded border border-brand-cyan/40 bg-dark-bg/80 px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-brand-cyan backdrop-blur-md"
-                        >
-                          {cat.name}
-                        </span>
-                      ))}
+                      <span className="rounded border border-brand-cyan/40 bg-dark-bg/80 px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-brand-cyan backdrop-blur-md">
+                        {getFirstCategory(currentArticle.category)}
+                      </span>
                     </div>
 
                     <h1 className="text-base sm:text-2xl md:text-4xl lg:text-5xl font-black tracking-tight text-white leading-snug sm:leading-tight line-clamp-2 group-hover:text-brand-crimson transition-colors drop-shadow-md">

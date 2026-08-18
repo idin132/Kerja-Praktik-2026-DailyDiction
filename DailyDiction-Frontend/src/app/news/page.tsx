@@ -39,11 +39,11 @@ export default function NewsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchArticles() {
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/v1/articles?type=article&t=${new Date().getTime()}`, {
-          cache: 'no-store'
-        });
+        const res = await fetch("https://dailydiction.id/api/v1/articles");
         if (res.ok) {
           const json = await res.json();
           setArticles(json.data || []);
@@ -51,28 +51,27 @@ export default function NewsPage() {
       } catch (err) {
         console.error("Gagal mengambil data berita:", err);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
+
     fetchArticles();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const getCategoriesArray = (item: ArticleItem): string[] => {
-    let rawCategory: any = ["BERITA"]; 
-
-    if (item.category_input && item.category_input.length > 0) {
-      rawCategory = item.category_input;
-    } else if (item.category && item.category.length > 0) {
-      rawCategory = item.category;
-    } else if (item.categories && item.categories.length > 0) {
-      rawCategory = item.categories.map((c: any) => c.name);
-    }
-
-    if (Array.isArray(rawCategory)) return rawCategory;
-    
-    if (typeof rawCategory === 'string') {
+  const getCategoriesArray = (
+    category: string | string[] | undefined
+  ): string[] => {
+    if (!category) return ["GAMING"];
+    if (Array.isArray(category)) return category;
+    if (typeof category === "string") {
       try {
-        return rawCategory.startsWith('[') ? JSON.parse(rawCategory) : [rawCategory];
+        return category.startsWith("[") ? JSON.parse(category) : [category];
       } catch {
         return [rawCategory];
       }
@@ -80,22 +79,23 @@ export default function NewsPage() {
     return ["BERITA"];
   };
 
-  const allCategories = articles.flatMap((item) => 
-    getCategoriesArray(item).map(cat => cat.toUpperCase())
+  const allCategories = articles.flatMap((item) =>
+    getCategoriesArray(item.category).map((cat) => cat.toUpperCase())
   );
   const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
 
   const filteredArticles = articles.filter((item) => {
-    const itemCats = getCategoriesArray(item).map(c => c.toUpperCase());
-    
+    const itemCats = getCategoriesArray(item.category).map((c) =>
+      c.toUpperCase()
+    );
+
     const matchCategory =
-      selectedCategory === "ALL" ||
-      itemCats.includes(selectedCategory);
-      
+      selectedCategory === "ALL" || itemCats.includes(selectedCategory);
+
     const matchSearch =
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.summary.toLowerCase().includes(searchQuery.toLowerCase());
-      
+      (item.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (item.summary?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+
     return matchCategory && matchSearch;
   });
 
@@ -105,7 +105,7 @@ export default function NewsPage() {
         <Navbar />
 
         <main className="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-8">
-          
+          {/* Header Section */}
           <div className="mb-8 border-b border-dark-border pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -115,7 +115,8 @@ export default function NewsPage() {
                 </h1>
               </div>
               <p className="text-xs sm:text-sm text-text-muted font-mono">
-                Pusat informasi berita game, rilisan konsol, hardware PC, dan tren pop-culture terbaru.
+                Pusat informasi berita game, rilisan konsol, hardware PC, dan
+                tren pop-culture terbaru.
               </p>
             </div>
 
@@ -132,9 +133,9 @@ export default function NewsPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12">
-            
-            <div className="lg:col-span-9 space-y-6">
-              
+            {/* Left Column: News List */}
+            <div className="lg:col-span-8 2xl:col-span-9 space-y-6">
+              {/* Category Filter Pills */}
               {categoriesList.length > 1 && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none font-mono text-xs">
                   <span className="flex items-center gap-1 text-text-muted mr-2 shrink-0">
@@ -185,18 +186,18 @@ export default function NewsPage() {
                         >
                           <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
                             <img
-                              src={
-                                item.image_url ||
-                                item.image_full_url ||
-                                "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
-                              }
+                              // src={formatNewsImage(item)}
                               alt={item.title}
                               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
-                            
+
+                            {/* Looping Badge Kategori */}
                             <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
                               {itemCategories.map((cat, idx) => (
-                                <span key={idx} className="rounded-md border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md">
+                                <span
+                                  key={idx}
+                                  className="rounded-md border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md"
+                                >
                                   {cat}
                                 </span>
                               ))}
@@ -216,30 +217,33 @@ export default function NewsPage() {
                             </div>
 
                             <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4">
-                              <div className="flex items-center gap-2 flex-1 min-w-0 pr-2">
-                                
-                                <div className="flex items-center gap-1.5 shrink-0">
+                              <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-1.5">
                                   <User className="h-3.5 w-3.5 text-brand-crimson" />
                                   <span className="truncate max-w-[90px] xl:max-w-[120px] font-semibold text-white">
                                     {item.author || "Redaksi"}
                                   </span>
                                 </div>
-                                
-                                <span className="text-dark-border shrink-0">•</span>
-                                
+
                                 {item.created_at && (
-                                  <div className="flex items-center gap-1.5 shrink-0 min-w-0">
-                                    <Calendar className="h-3.5 w-3.5 text-text-muted shrink-0 hidden sm:block" />
-                                    <span className="truncate whitespace-nowrap">
-                                      {new Date(item.created_at).toLocaleDateString("id-ID", {
-                                        day: "numeric",
-                                        month: "short",
-                                        year: "numeric",
-                                      })}
+                                  <>
+                                    <span className="text-dark-border hidden sm:inline-block">
+                                      •
                                     </span>
-                                  </div>
+                                    <div className="items-center gap-1.5 hidden sm:flex">
+                                      <Calendar className="h-3.5 w-3.5 text-text-muted" />
+                                      <span>
+                                        {new Date(
+                                          item.created_at
+                                        ).toLocaleDateString("id-ID", {
+                                          day: "numeric",
+                                          month: "short",
+                                          year: "numeric",
+                                        })}
+                                      </span>
+                                    </div>
+                                  </>
                                 )}
-                                
                               </div>
 
                               <Link
@@ -260,15 +264,16 @@ export default function NewsPage() {
                 <div className="rounded-2xl border border-dark-border bg-dark-card p-12 text-center font-mono">
                   <Newspaper className="h-10 w-10 text-text-muted mx-auto mb-3" />
                   <p className="text-sm text-text-muted">
-                    Tidak ada berita yang ditemukan untuk kata kunci atau kategori ini.
+                    Tidak ada berita yang ditemukan untuk kata kunci atau
+                    kategori ini.
                   </p>
                 </div>
               )}
             </div>
 
-            <aside className="lg:col-span-3 space-y-6">
-              
-              <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-5 lg:p-6 text-center shadow-xl">
+            {/* Right Sidebar Column */}
+            <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
+              <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
                 <svg
                   viewBox="0 0 24 24"
                   className="w-10 h-10 fill-indigo-400 mx-auto mb-3 animate-bounce"
@@ -281,8 +286,10 @@ export default function NewsPage() {
                   TEMPAT NONGKRONG
                 </h3>
 
-                <p className="text-text-muted text-[11px] lg:text-xs mt-2 mb-5 leading-relaxed">
-                  Join server Discord Daily Diction buat mabar, berbagi info gacha, atau gibahin industri pop culture!
+                <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
+                  Join server Discord Daily Diction buat mabar, berbagi info
+                  gacha, pamer spek PC, atau sekadar gibahin industri pop
+                  culture!
                 </p>
 
                 <a
@@ -295,9 +302,7 @@ export default function NewsPage() {
                   <span>Join Server</span>
                 </a>
               </div>
-
             </aside>
-
           </div>
         </main>
       </div>
