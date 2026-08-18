@@ -45,7 +45,7 @@ export default function YoutubeShorts({ videos = [] }: { videos?: any[] }) {
           Daily Diction Shorts
         </h2>
         <a
-          href="https://www.youtube.com/@WORGameID/shorts"
+          href="https://www.youtube.com/@DailyDictionID/shorts"
           target="_blank"
           rel="noopener noreferrer"
           className="text-xs font-bold text-brand-crimson hover:text-white transition-colors flex items-center gap-1"

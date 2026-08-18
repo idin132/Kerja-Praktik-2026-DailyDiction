@@ -101,7 +101,7 @@ export default function Footer() {
             </h4>
             <div className="flex items-center gap-3">
               <a
-                href="https://www.youtube.com/@WORGameID"
+                href="https://www.youtube.com/@DailyDictionID/featured"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="YouTube Daily Diction"
@@ -110,7 +110,7 @@ export default function Footer() {
                 <FaYoutube size={20} />
               </a>
               <a
-                href="https://www.instagram.com/anaktua_"
+                href="https://www.instagram.com/dailydictionid/"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Instagram"
@@ -119,22 +119,13 @@ export default function Footer() {
                 <InstagramIcon className="h-5 w-5" />
               </a>
               <a
-                href="https://www.tiktok.com/@sianaktua"
+                href="https://www.tiktok.com/@dailydictionid?lang=id-ID"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="TikTok"
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-crimson hover:text-brand-crimson"
               >
                 <TiktokIcon className="h-4 w-4" />
-              </a>
-              <a
-                href="#"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="X (Twitter)"
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-crimson hover:text-brand-crimson"
-              >
-                <FaTwitter size={20} />
               </a>
             </div>
           </div>
