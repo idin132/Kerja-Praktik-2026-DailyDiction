@@ -14,7 +14,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   // 1. Ambil semua data artikel dari API Laravel
   const articlesData = await getArticles();
-  const allArticles = articlesData?.data || [];
+  const allArticles = (articlesData as any)?.data || articlesData;  
 
   // 2. Saring (Filter) artikel yang judul atau isinya mengandung kata kunci pencarian
   // .toLowerCase() dipakai biar huruf besar/kecil nggak ngaruh (misal "GTA" tetep ketemu biarpun nyari "gta")

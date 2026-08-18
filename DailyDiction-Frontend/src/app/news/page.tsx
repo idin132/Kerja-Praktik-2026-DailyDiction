@@ -20,14 +20,48 @@ interface ArticleItem {
   id: number;
   title: string;
   slug: string;
-  category: string | string[]; // Mendukung array kategori
+  type?: string;
+  category: string | string[];
   category_color?: string;
   summary: string;
-  content: string;
+  content?: string;
+  image_url?: string;
+  thumbnail?: string;
+  thumbnail_url?: string;
+  image?: string;
   image_full_url?: string;
-  read_time: string;
-  created_at: string;
+  read_time?: string;
+  created_at?: string;
   author?: string;
+}
+
+// Helper untuk format URL gambar (Mendukung image_url, Embed URL, Storage Laravel, dan Placeholder)
+function formatNewsImage(item: ArticleItem): string {
+  const rawUrl =
+    item.image_url ||
+    item.thumbnail_url ||
+    item.thumbnail ||
+    item.image_full_url ||
+    item.image;
+
+  if (!rawUrl) {
+    return "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
+  }
+
+  const clean = rawUrl.trim();
+
+  // Jika berupa Embed Link langsung (http / https)
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    return clean;
+  }
+
+  // Jika berupa relative path file upload dari Laravel Storage
+  const cleanPath = clean.startsWith("/") ? clean.slice(1) : clean;
+  if (cleanPath.startsWith("storage/")) {
+    return `https://dailydiction.id/${cleanPath}`;
+  }
+
+  return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
 export default function NewsPage() {
@@ -41,13 +75,34 @@ export default function NewsPage() {
 
     async function fetchArticles() {
       try {
-        const res = await fetch("https://dailydiction.id/api/v1/articles");
-        if (res.ok) {
-          const json = await res.json();
-          setArticles(json.data || []);
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
+
+        const res = await fetch(`${apiUrl}/articles`, {
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          throw new Error(`Fetch failed with status: ${res.status}`);
+        }
+
+        const json = await res.json();
+        if (isMounted) {
+          const rawData: ArticleItem[] = json.data || [];
+          // Filter hanya artikel dengan type "article"
+          const filteredData = rawData.filter(
+            (item) => item.type === "article"
+          );
+          setArticles(filteredData);
         }
       } catch (err) {
-        console.error("Gagal mengambil data berita:", err);
+        console.warn("Gagal mengambil data berita:", err);
+        if (isMounted) {
+          setArticles([]);
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -186,9 +241,9 @@ export default function NewsPage() {
                           className="group flex flex-col md:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/60 shadow-lg"
                         >
                           {/* Thumbnail Image */}
-                          <div className="relative h-52 md:h-auto md:w-64 lg:w-72 flex-shrink-0 overflow-hidden">
+                          <div className="relative h-52 md:h-auto md:w-64 lg:w-72 flex-shrink-0 overflow-hidden bg-black/40">
                             <img
-                              // src={formatNewsImage(item)}
+                              src={formatNewsImage(item)}
                               alt={item.title}
                               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
@@ -209,7 +264,7 @@ export default function NewsPage() {
                           {/* Article Info */}
                           <div className="flex flex-1 flex-col justify-between p-5 sm:p-6">
                             <div>
-                              <Link href={`/artikel/${item.slug}`}>
+                              <Link href={`/artikel/${item.slug}`} prefetch={false}>
                                 <h2 className="text-base sm:text-xl font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
                                   {item.title}
                                 </h2>

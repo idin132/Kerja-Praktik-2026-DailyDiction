@@ -7,20 +7,58 @@ import { DiscordWidget } from "@/components/Sidebar";
 import ShareWidget from "@/components/ShareWidget";
 import { User, Clock, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 
+export const revalidate = 0;
+
+interface NavItem {
+  title: string;
+  slug: string;
+  thumbnail?: string;
+  image?: string;
+  image_url?: string;
+}
+
+interface ArticleItem {
+  id?: number;
+  title: string;
+  slug: string;
+  type?: string;
+  category?: string | string[];
+  category_color?: string;
+  summary?: string;
+  content?: string | any[];
+  image_url?: string;
+  image?: string;
+  thumbnail?: string;
+  thumbnail_url?: string;
+  banner_image?: string;
+  read_time?: string;
+  created_at?: string;
+  author?: string;
+  prev?: NavItem | null;
+  next?: NavItem | null;
+}
+
 // Helper buat bersihin URL Gambar
 function formatImageUrl(
   imageUrl: string | null | undefined,
-  fallback: string
+  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
 ): string {
-  if (!imageUrl) return fallback;
+  if (!imageUrl || typeof imageUrl !== "string") return fallback;
+
+  const clean = imageUrl.trim();
+
+  // Tangani URL embed yang tertumpuk di dalam path storage
+  if (clean.includes("/storage/http://") || clean.includes("/storage/https://")) {
+    return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
+  }
 
   // Jika sudah berupa URL lengkap (http/https), langsung return
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    return imageUrl;
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    return clean;
   }
 
   // Jika path diawali 'storage/', hilangkan slash depan jika ada
-  const cleanPath = imageUrl.startsWith("/") ? imageUrl.slice(1) : imageUrl;
+  const cleanPath = clean.replace(/^\/+/, "");
 
   if (cleanPath.startsWith("storage/")) {
     return `https://dailydiction.id/${cleanPath}`;
@@ -37,16 +75,22 @@ export default async function DetailArtikel({
   const resolvedParams = await params;
   const slug = resolvedParams.slug;
 
-  const [article, adsData] = await Promise.all([
-    getArticleBySlug(slug),
+  const [articleRes, adsData] = await Promise.all([
+    getArticleBySlug(slug).catch(() => null),
     getAdvertisements().catch(() => null),
   ]);
 
-  if (!article) {
+  // Ekstrak data jika dibungkus { data: ... } oleh Laravel Resource
+  const rawArticle = (articleRes as any)?.data || articleRes;
+
+  if (!rawArticle || !rawArticle.title) {
     notFound();
   }
 
-  const sidebarAd = adsData?.data?.[0] || null;
+  const article = rawArticle;
+  const sidebarAd = (adsData?.data && Array.isArray(adsData.data))
+  ? adsData.data[0]
+  : (Array.isArray(adsData) ? adsData[0] : null);
   const prevArticle = article.prev || null;
   const nextArticle = article.next || null;
 
@@ -69,7 +113,6 @@ export default async function DetailArtikel({
       <Navbar />
 
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
-        {/* Konten baca dikunci di max-w-7xl (1280px) dan ditaruh di tengah */}
         <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
             {/* ================= KOLOM KIRI (KONTEN UTAMA) ================= */}
@@ -139,6 +182,7 @@ export default async function DetailArtikel({
                         article.image_url ||
                           article.image ||
                           article.thumbnail ||
+                          article.thumbnail_url ||
                           article.banner_image,
                         "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
                       )}
@@ -188,7 +232,7 @@ export default async function DetailArtikel({
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
                       <img
                         src={formatImageUrl(
-                          prevArticle.thumbnail || prevArticle.image,
+                          prevArticle.thumbnail || prevArticle.image || prevArticle.image_url,
                           "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
                         )}
                         alt={prevArticle.title}
@@ -208,7 +252,7 @@ export default async function DetailArtikel({
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
                       <img
                         src={formatImageUrl(
-                          nextArticle.thumbnail || nextArticle.image,
+                          nextArticle.thumbnail || nextArticle.image || nextArticle.image_url,
                           "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
                         )}
                         alt={nextArticle.title}
@@ -234,10 +278,8 @@ export default async function DetailArtikel({
             {/* ================= KOLOM KANAN (SIDEBAR) ================= */}
             <aside className="lg:col-span-4 space-y-8">
               <div className="sticky top-24 space-y-6">
-                {/* SHARE WIDGET (DESKTOP SIDEBAR + FLOATING MOBILE) */}
                 <ShareWidget title={article.title} />
 
-                {/* Space Iklan Dinamis */}
                 {sidebarAd ? (
                   <a
                     href={sidebarAd.url_link}
@@ -262,13 +304,9 @@ export default async function DetailArtikel({
                     <span className="text-xs font-mono text-text-muted">
                       Space Iklan Dinamis
                     </span>
-                    <span className="text-[10px] font-mono text-brand-crimson/50 mt-1">
-                      Tinggi menyesuaikan gambar
-                    </span>
                   </div>
                 )}
 
-                {/* Widget Discord */}
                 <div className="w-full max-w-[320px] mx-auto">
                   <DiscordWidget />
                 </div>
