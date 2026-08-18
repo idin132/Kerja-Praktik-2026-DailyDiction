@@ -4,7 +4,7 @@ on:
     branches:
       - master
     paths:
-      - 'DailyDiction-Frontend/**'
+      - 'Kerja-Praktik-2026-DailyDiction/DailyDiction-Frontend/**'
 
 env:
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./DailyDiction-Frontend
+        working-directory: Kerja-Praktik-2026-DailyDiction/DailyDiction-Frontend
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -27,10 +27,10 @@ jobs:
         env:
           ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
       - name: Install Dependencies
-        working-directory: ./DailyDiction-Frontend
+        working-directory: Kerja-Praktik-2026-DailyDiction/DailyDiction-Frontend
         run: npm ci
       - name: Build Next.js
-        working-directory: ./DailyDiction-Frontend
+        working-directory: Kerja-Praktik-2026-DailyDiction/DailyDiction-Frontend
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: "https://dailydiction.id/api/v1"
@@ -51,7 +51,7 @@ jobs:
           server: ftp.dailydiction.id
           username: press@dailydiction.id
           password: N1pp0nch@ch4ch@
-          local-dir: "./DailyDiction-Frontend/"
+          local-dir: "Kerja-Praktik-2026-DailyDiction/DailyDiction-Frontend/"
           server-dir: "/daily-frontend/"
           exclude: |
             **/.git*
