@@ -57,7 +57,7 @@ export default function YoutubeHero({ videos = [] }: { videos?: any[] }) {
           Latest Video
         </h2>
         <a
-          href="https://www.youtube.com/@WORGameID/videos"
+          href="https://www.youtube.com/@DailyDictionID/videos"
           target="_blank"
           rel="noopener noreferrer"
           className="text-xs font-bold text-brand-crimson hover:text-white transition-colors flex items-center gap-1"
