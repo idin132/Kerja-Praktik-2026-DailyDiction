@@ -53,3 +53,9 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           localDir: './DailyDiction-Frontend'
           remoteDir: '/home/dailydic/daily-frontend'
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            src/**
+            README.md
