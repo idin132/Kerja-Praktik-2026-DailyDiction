@@ -44,19 +44,12 @@ jobs:
           mkdir -p tmp
           touch tmp/restart.txt
 
-      - name: JALUR AMAN FTPS KE CPANEL
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: UPLOAD SFTP ANTI TILANG FIREWALL
+        uses: wangyucode/sftp-upload-action@v2.0.2
         with:
-          server: ${{ secrets.FTP_SERVER }}
+          host: ${{ secrets.FTP_SERVER }}
+          port: 2121
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          port: 21
-          local-dir: "./DailyDiction-Frontend/"
-          server-dir: "./"
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            src/**
-            README.md
+          localDir: './DailyDiction-Frontend'
+          remoteDir: '/home/dailydic/daily-frontend'
