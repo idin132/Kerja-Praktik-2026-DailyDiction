@@ -44,15 +44,16 @@ jobs:
           mkdir -p tmp
           touch tmp/restart.txt
 
-      - name: BRUTAL CLEANUP (Hapus File Gajah Biar Enteng)
+      - name: BRUTAL CLEANUP (Hapus File Gajah)
         run: rm -rf node_modules .git src README.md
 
-      - name: UPLOAD SFTP ANTI TILANG FIREWALL
-        uses: wangyucode/sftp-upload-action@v2.0.2
+      - name: JALUR FTP ENTENG ANTI TILANG
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          host: ${{ secrets.FTP_SERVER }}
-          port: 2158
+          server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          localDir: './DailyDiction-Frontend'
-          remoteDir: '/home/dailydic/daily-frontend'
+          protocol: ftp
+          port: 21
+          local-dir: "./DailyDiction-Frontend/"
+          server-dir: "./"
