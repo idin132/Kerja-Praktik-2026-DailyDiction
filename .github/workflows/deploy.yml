@@ -19,7 +19,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js (Fix Teori Farhan)
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -47,13 +47,18 @@ jobs:
       - name: BRUTAL CLEANUP (Hapus File Gajah)
         run: rm -rf node_modules .git src README.md
 
-      - name: Install LFTP (Kendaraan Tempur)
-        run: sudo apt-get install -y lftp
-
-      - name: UPLOAD LEWAT LFTP (Anti Timeout Dewaweb)
-        env:
-          FTP_HOST: ${{ secrets.FTP_SERVER }}
-          FTP_USER: ${{ secrets.FTP_USERNAME }}
-          FTP_PASS: ${{ secrets.FTP_PASSWORD }}
-        run: |
-          lftp -d -u "${FTP_USER}","${FTP_PASS}" -e "set ftp:ssl-allow true; set ftp:ssl-force true; set ftp:ssl-protect-data true; set ssl:verify-certificate no; set ftp:passive-mode false; set net:timeout 10; set net:max-retries 2; mirror -R -v ./ ./; quit" ${FTP_HOST}
+      - name: UPLOAD SFTP (Saran Dewaweb Port 22)
+        uses: wangyucode/sftp-upload-action@v2.0.2
+        with:
+          host: ${{ secrets.FTP_SERVER }}
+          port: 22
+          username: ${{ secrets.FTP_USERNAME }}
+          privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
+          localDir: './DailyDiction-Frontend'
+          remoteDir: '/home/dailydic/daily-frontend'
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            src/**
+            README.md
