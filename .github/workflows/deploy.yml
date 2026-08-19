@@ -53,7 +53,7 @@ jobs:
           protocol: ftps
           port: 21
           local-dir: "./DailyDiction-Frontend/"
-          server-dir: "./daily-frontend/"
+          server-dir: "./"
           exclude: |
             **/.git*
             **/.git*/**
