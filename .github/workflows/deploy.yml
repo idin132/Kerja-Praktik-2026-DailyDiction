@@ -44,15 +44,16 @@ jobs:
           mkdir -p tmp
           touch tmp/restart.txt
 
-      - name: BRUTAL CLEANUP (Hapus File Gajah)
+      - name: BRUTAL CLEANUP
         run: rm -rf node_modules .git src README.md
 
-      - name: SETUP KUNCI SSH NATIVE
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-      - name: UPLOAD RSYNC (Jalur Kuli Linux)
-        run: |
-          rsync -avz -e "ssh -p 22 -o StrictHostKeyChecking=no" ./ ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }}:/home/dailydic/daily-frontend/
+      - name: UPLOAD SCP (Jalur VIP + Kunci Passphrase)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          port: 22
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          source: "./"
+          target: "/home/dailydic/daily-frontend/"
