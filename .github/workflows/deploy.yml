@@ -47,18 +47,13 @@ jobs:
       - name: BRUTAL CLEANUP (Hapus File Gajah)
         run: rm -rf node_modules .git src README.md
 
-      - name: UPLOAD SFTP (Port 22 Dewaweb)
-        uses: wangyucode/sftp-upload-action@v2.0.2
-        with:
-          host: ${{ secrets.FTP_SERVER }}
-          port: 22
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          localDir: './DailyDiction-Frontend'
-          remoteDir: '/home/dailydic/daily-frontend'
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            src/**
-            README.md
+      - name: SETUP KUNCI SSH NATIVE
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 22 -H ${{ secrets.FTP_SERVER }} >> ~/.ssh/known_hosts
+
+      - name: UPLOAD RSYNC (Jalur Kuli Linux Anti Bug)
+        run: |
+          rsync -avz -e "ssh -p 22" ./DailyDiction-Frontend/ ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }}:/home/dailydic/daily-frontend/
