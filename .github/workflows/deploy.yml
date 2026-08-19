@@ -51,15 +51,16 @@ jobs:
           if [ -z "${{ secrets.FTP_USERNAME }}" ]; then echo "FTP_USERNAME is EMPTY"; else echo "FTP_USERNAME is SET"; fi
           if [ -z "${{ secrets.FTP_PASSWORD }}" ]; then echo "FTP_PASSWORD is EMPTY"; else echo "FTP_PASSWORD is SET"; fi
 
-      - name: Sync Frontend to cPanel via FTP
+      - name: Sync Frontend to cPanel via SFTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
+          protocol: sftp
+          port: 2121 # Dewaweb biasanya pakai port 2121 untuk SSH/SFTP
           local-dir: "./DailyDiction-Frontend/"
-          server-dir: "./"
+          server-dir: "./daily-frontend/"
           exclude: |
             **/.git*
             **/.git*/**
