@@ -11,7 +11,6 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    # Baris 'environment: production' HARUS DIHAPUS DARI SINI
     defaults:
       run:
         working-directory: ./DailyDiction-Frontend
