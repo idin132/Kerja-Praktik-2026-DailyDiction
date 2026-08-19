@@ -47,13 +47,13 @@ jobs:
       - name: BRUTAL CLEANUP (Hapus File Gajah)
         run: rm -rf node_modules .git src README.md
 
-      - name: UPLOAD SFTP (Saran Dewaweb Port 22)
+      - name: UPLOAD SFTP (Port 22 Dewaweb)
         uses: wangyucode/sftp-upload-action@v2.0.2
         with:
           host: ${{ secrets.FTP_SERVER }}
           port: 22
           username: ${{ secrets.FTP_USERNAME }}
-          privateKey: ${{ secrets.SSH_PRIVATE_KEY }}
+          password: ${{ secrets.FTP_PASSWORD }}
           localDir: './DailyDiction-Frontend'
           remoteDir: '/home/dailydic/daily-frontend'
           exclude: |
