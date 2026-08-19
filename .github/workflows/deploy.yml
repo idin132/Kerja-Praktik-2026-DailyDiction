@@ -44,18 +44,15 @@ jobs:
           mkdir -p tmp
           touch tmp/restart.txt
 
+      - name: BRUTAL CLEANUP (Hapus File Gajah Biar Enteng)
+        run: rm -rf node_modules .git src README.md
+
       - name: UPLOAD SFTP ANTI TILANG FIREWALL
         uses: wangyucode/sftp-upload-action@v2.0.2
         with:
           host: ${{ secrets.FTP_SERVER }}
-          port: 2121
+          port: 2158
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           localDir: './DailyDiction-Frontend'
           remoteDir: '/home/dailydic/daily-frontend'
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            src/**
-            README.md
