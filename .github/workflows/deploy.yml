@@ -47,12 +47,13 @@ jobs:
       - name: BRUTAL CLEANUP
         run: rm -rf node_modules .git src README.md
 
-      - name: UPLOAD SCP (Jalur VIP Bebas Sandi)
+      - name: UPLOAD SCP (Jalur VIP + Bawa Sandi)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           port: 22
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           source: "./"
           target: "/home/dailydic/daily-frontend/"
