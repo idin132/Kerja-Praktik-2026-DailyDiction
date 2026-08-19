@@ -47,13 +47,13 @@ jobs:
       - name: BRUTAL CLEANUP (Hapus File Gajah)
         run: rm -rf node_modules .git src README.md
 
-      - name: JALUR FTP ENTENG ANTI TILANG
+      - name: JALUR FTPS (ENKRIPSI DEWAWEB)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
+          protocol: ftps
           port: 21
           local-dir: "./DailyDiction-Frontend/"
           server-dir: "./"
