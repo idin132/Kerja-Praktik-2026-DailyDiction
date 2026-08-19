@@ -44,7 +44,7 @@ jobs:
           mkdir -p tmp
           touch tmp/restart.txt
 
-      - name: Sync Frontend to cPanel via SFTP
+      - name: JALUR VIP SFTP KE CPANEL
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
