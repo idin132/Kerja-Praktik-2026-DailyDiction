@@ -44,14 +44,14 @@ jobs:
           mkdir -p tmp
           touch tmp/restart.txt
 
-      - name: JALUR VIP SFTP KE CPANEL
+      - name: JALUR AMAN FTPS KE CPANEL
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: sftp
-          port: 2121
+          protocol: ftps
+          port: 21
           local-dir: "./DailyDiction-Frontend/"
           server-dir: "./daily-frontend/"
           exclude: |
