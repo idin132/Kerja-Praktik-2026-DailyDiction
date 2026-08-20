@@ -102,72 +102,26 @@ export default function NewsPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [currentPage]);
 
-  // Reset pagination ke halaman 1 saat filter atau pencarian berubah
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedCategory]);
-
-  const getCategoriesArray = (item: ArticleItem): string[] => {
-    let rawCats: any[] = [];
-    
-    if (item.categories && item.categories.length > 0) {
-      rawCats = item.categories.map((c: any) => c.name);
-    } else if (item.category_input) {
-      rawCats = Array.isArray(item.category_input) ? item.category_input : [item.category_input];
-    } else if (item.category) {
-      if (typeof item.category === "string" && item.category.startsWith("[")) {
-        try { 
-          rawCats = JSON.parse(item.category); 
-        } catch { 
-          rawCats = [item.category]; 
-        }
-      } else {
-        rawCats = Array.isArray(item.category) ? item.category : [item.category];
+  const getCategoriesArray = (
+    category: string | string[] | undefined,
+  ): string[] => {
+    if (!category) return ["GAMING"];
+    if (Array.isArray(category)) return category;
+    if (typeof category === "string") {
+      try {
+        return category.startsWith("[") ? JSON.parse(category) : [category];
+      } catch {
+        return [category];
       }
     }
-
-    const validCats = rawCats.filter(Boolean).map(String);
-    return validCats.length > 0 ? validCats : ["NEWS"];
+    return ["BERITA"];
   };
 
-  // Helper penyaring: Cek apakah item adalah tipe Review
-  const isReviewItem = (item: ArticleItem) => {
-    if (
-      item.type?.toLowerCase() === "review" ||
-      item.type?.toLowerCase() === "reviews"
-    ) {
-      return true;
-    }
-
-    const cats = [
-      ...(Array.isArray(item.category_input)
-        ? item.category_input
-        : [item.category_input]),
-      ...(Array.isArray(item.category) ? item.category : [item.category]),
-      ...(Array.isArray(item.categories)
-        ? item.categories.map((c: any) => c.name)
-        : []),
-    ]
-      .filter(Boolean)
-      .map((c) => String(c).toUpperCase());
-
-    return cats.some((cat) => cat.includes("REVIEW") || cat.includes("ULASAN"));
-  };
-
-  // 1. Filter awal: Hanya ambil artikel murni (bukan review)
-  const pureNewsArticles = articles.filter((item) => !isReviewItem(item));
-
-  // 2. Kategori diambil dari artikel murni
-  const allCategories = pureNewsArticles.flatMap((item) =>
-    getCategoriesArray(item).map((cat) => cat.toUpperCase()),
-  );
-  const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
-
-  // 3. Filter berdasarkan kategori & kata kunci pencarian
-  const filteredArticles = pureNewsArticles.filter((item) => {
-    const itemCats = getCategoriesArray(item).map((c) =>
+  // Filter Klien untuk Search & Kategori pada data aktif
+  const filteredArticles = articles.filter((item) => {
+    const itemCats = getCategoriesArray(item.category).map((c) =>
       c.toUpperCase(),
     );
 
@@ -270,7 +224,7 @@ export default function NewsPage() {
                       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                       className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8"
                     >
-                      {currentArticles.map((item) => {
+                      {filteredArticles.map((item) => {
                         const itemCategories = getCategoriesArray(item.category);
 
                         return (
@@ -293,7 +247,7 @@ export default function NewsPage() {
                                 {itemCategories.map((cat, idx) => (
                                   <span
                                     key={idx}
-                                    className="rounded bg-brand-crimson px-2 py-0.5 text-[10px] font-bold uppercase text-white shadow-sm"
+                                    className="rounded-md border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md"
                                   >
                                     {cat}
                                   </span>
@@ -304,8 +258,7 @@ export default function NewsPage() {
                             <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
                               <div>
                                 <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
-                                  {/* 3. Link disuntik 'before:absolute' biar areanya selebar ukuran parent */}
-                                  <Link 
+                                  <Link
                                     href={`/artikel/${item.slug}`}
                                     className="before:absolute before:inset-0 before:z-10 focus:outline-none"
                                   >
