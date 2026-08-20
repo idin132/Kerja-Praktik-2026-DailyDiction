@@ -271,7 +271,7 @@ export default function NewsPage() {
                       className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8"
                     >
                       {currentArticles.map((item) => {
-                        const itemCategories = getCategoriesArray(item);
+                        const itemCategories = getCategoriesArray(item.category);
 
                         return (
                           <article
@@ -304,6 +304,7 @@ export default function NewsPage() {
                             <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
                               <div>
                                 <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
+                                  {/* 3. Link disuntik 'before:absolute' biar areanya selebar ukuran parent */}
                                   <Link 
                                     href={`/artikel/${item.slug}`}
                                     className="before:absolute before:inset-0 before:z-10 focus:outline-none"
