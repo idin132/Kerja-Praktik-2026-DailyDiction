@@ -9,7 +9,9 @@ interface ArticleItem {
   id: number;
   title: string;
   slug: string;
+  category_input?: string | string[];
   category?: string | string[];
+  categories?: any[];
   summary: string;
   thumbnail?: string;
   thumbnail_url?: string;
@@ -41,23 +43,30 @@ function formatHeroImage(article: ArticleItem): string {
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-function getFirstCategory(
-  category: string | string[] | undefined,
-  fallback = "GAMING",
-): string {
-  if (!category) return fallback;
-  if (Array.isArray(category)) return category[0] || fallback;
-  if (typeof category === "string") {
-    try {
-      const parsed = category.startsWith("[")
-        ? JSON.parse(category)
-        : [category];
-      return parsed[0] || fallback;
-    } catch {
-      return category;
+// Fungsi getFirstCategory dirombak total biar persis kayak di NewsPage
+function getFirstCategory(item: ArticleItem, fallback = "NEWS"): string {
+  if (item.contentType === "review") return "REVIEW";
+
+  let rawCats: any[] = [];
+  
+  if (item.categories && item.categories.length > 0) {
+    rawCats = item.categories.map((c: any) => c.name);
+  } else if (item.category_input) {
+    rawCats = Array.isArray(item.category_input) ? item.category_input : [item.category_input];
+  } else if (item.category) {
+    if (typeof item.category === "string" && item.category.startsWith("[")) {
+      try { 
+        rawCats = JSON.parse(item.category); 
+      } catch { 
+        rawCats = [item.category]; 
+      }
+    } else {
+      rawCats = Array.isArray(item.category) ? item.category : [item.category];
     }
   }
-  return fallback;
+
+  const validCats = rawCats.filter(Boolean).map(String);
+  return validCats.length > 0 ? validCats[0].toUpperCase() : fallback;
 }
 
 export default function HeroSection() {
@@ -208,10 +217,9 @@ export default function HeroSection() {
                     transition={{ duration: 0.4 }}
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="rounded border border-brand-cyan/40 bg-dark-bg/80 px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-brand-cyan backdrop-blur-md">
-                        {currentArticle.contentType === "review"
-                          ? "REVIEW"
-                          : getFirstCategory(currentArticle.category, "NEWS")}
+                      {/* Styling Badge Kategori Diubah Ke Merah */}
+                      <span className="rounded bg-brand-crimson px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-white shadow-sm">
+                        {getFirstCategory(currentArticle)}
                       </span>
                     </div>
 
@@ -242,7 +250,7 @@ export default function HeroSection() {
               </div>
             </div>
 
-            {/* Navigasi & Indikator (Tampil Maksimal 5 Garis) */}
+            {/* Navigasi & Indikator */}
             <div className="flex items-center justify-between sm:justify-end gap-3 font-mono z-20 pointer-events-auto mt-2 sm:mt-0">
               <div className="flex items-center gap-1.5">
                 {articles.map((_, idx) => (
