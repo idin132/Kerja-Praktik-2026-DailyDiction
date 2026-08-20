@@ -97,19 +97,27 @@ export default function NewsPage() {
     setCurrentPage(1);
   }, [searchQuery, selectedCategory]);
 
-  const getCategoriesArray = (
-    category: string | string[] | undefined,
-  ): string[] => {
-    if (!category) return ["GAMING"];
-    if (Array.isArray(category)) return category;
-    if (typeof category === "string") {
-      try {
-        return category.startsWith("[") ? JSON.parse(category) : [category];
-      } catch {
-        return [category];
+  const getCategoriesArray = (item: ArticleItem): string[] => {
+    let rawCats: any[] = [];
+    
+    if (item.categories && item.categories.length > 0) {
+      rawCats = item.categories.map((c: any) => c.name);
+    } else if (item.category_input) {
+      rawCats = Array.isArray(item.category_input) ? item.category_input : [item.category_input];
+    } else if (item.category) {
+      if (typeof item.category === "string" && item.category.startsWith("[")) {
+        try { 
+          rawCats = JSON.parse(item.category); 
+        } catch { 
+          rawCats = [item.category]; 
+        }
+      } else {
+        rawCats = Array.isArray(item.category) ? item.category : [item.category];
       }
     }
-    return ["BERITA"];
+
+    const validCats = rawCats.filter(Boolean).map(String);
+    return validCats.length > 0 ? validCats : ["NEWS"];
   };
 
   // Helper penyaring: Cek apakah item adalah tipe Review
@@ -141,13 +149,13 @@ export default function NewsPage() {
 
   // 2. Kategori diambil dari artikel murni
   const allCategories = pureNewsArticles.flatMap((item) =>
-    getCategoriesArray(item.category).map((cat) => cat.toUpperCase()),
+    getCategoriesArray(item).map((cat) => cat.toUpperCase()),
   );
   const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
 
   // 3. Filter berdasarkan kategori & kata kunci pencarian
   const filteredArticles = pureNewsArticles.filter((item) => {
-    const itemCats = getCategoriesArray(item.category).map((c) =>
+    const itemCats = getCategoriesArray(item).map((c) =>
       c.toUpperCase(),
     );
 
@@ -188,7 +196,7 @@ export default function NewsPage() {
               <div className="flex items-center gap-2 mb-2">
                 <span className="h-6 w-2 rounded-full bg-brand-crimson" />
                 <h1 className="text-2xl sm:text-4xl font-black font-mono tracking-tight text-text-primary uppercase">
-                  ARSIP BERIT & KABAR GAMING
+                  ARSIP BERITA & KABAR GAMING
                 </h1>
               </div>
               <p className="text-xs sm:text-sm text-text-muted font-mono">
@@ -257,12 +265,11 @@ export default function NewsPage() {
                       className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8"
                     >
                       {currentArticles.map((item) => {
-                        const itemCategories = getCategoriesArray(item.category);
+                        const itemCategories = getCategoriesArray(item);
 
                         return (
                           <article
                             key={item.id}
-                            // 1. Tambahin 'relative' dan 'cursor-pointer' di sini
                             className="group relative flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/60 hover:-translate-y-1 shadow-lg h-full duration-300 cursor-pointer"
                           >
                             <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
@@ -276,12 +283,11 @@ export default function NewsPage() {
                                 }}
                               />
 
-                              {/* 2. Tambahin z-20 di badge kategori biar tetep nyala */}
                               <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-20">
                                 {itemCategories.map((cat, idx) => (
                                   <span
                                     key={idx}
-                                    className="rounded-md border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md"
+                                    className="rounded bg-brand-crimson px-2 py-0.5 text-[10px] font-bold uppercase text-white shadow-sm"
                                   >
                                     {cat}
                                   </span>
@@ -292,7 +298,6 @@ export default function NewsPage() {
                             <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
                               <div>
                                 <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
-                                  {/* 3. Link disuntik 'before:absolute' biar areanya selebar ukuran parent */}
                                   <Link 
                                     href={`/artikel/${item.slug}`}
                                     className="before:absolute before:inset-0 before:z-10 focus:outline-none"
@@ -300,13 +305,11 @@ export default function NewsPage() {
                                     {item.title}
                                   </Link>
                                 </h2>
-                                {/* 4. Tambahin z-20 dan pointer-events-none di teks summary */}
                                 <p className="mt-2.5 text-xs text-text-muted line-clamp-2 leading-relaxed relative z-20 pointer-events-none">
                                   {item.summary}
                                 </p>
                               </div>
 
-                              {/* 5. Footer card dikasih relative z-20 */}
                               <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4 relative z-20">
                                 <div className="flex items-center gap-3">
                                   <div className="flex items-center gap-1.5">
@@ -337,7 +340,6 @@ export default function NewsPage() {
                                   )}
                                 </div>
 
-                                {/* 6. Tombol BACA ini diubah dari <Link> jadi <div> biasa */}
                                 <div className="flex items-center gap-1 font-bold text-brand-crimson group-hover:underline shrink-0 ml-1">
                                   <span className="hidden sm:inline">BACA</span>
                                   <ArrowUpRight className="h-3.5 w-3.5" />
