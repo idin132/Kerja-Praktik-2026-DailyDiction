@@ -43,9 +43,9 @@ function formatHeroImage(article: ArticleItem): string {
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-// Fungsi getFirstCategory dirombak total biar persis kayak di NewsPage
-function getFirstCategory(item: ArticleItem, fallback = "NEWS"): string {
-  if (item.contentType === "review") return "REVIEW";
+// FUNGSI DIUBAH: Sekarang return Array of String persis kayak di NewsPage
+function getCategoriesArray(item: ArticleItem, fallback = "NEWS"): string[] {
+  if (item.contentType === "review") return ["REVIEW"];
 
   let rawCats: any[] = [];
   
@@ -66,7 +66,8 @@ function getFirstCategory(item: ArticleItem, fallback = "NEWS"): string {
   }
 
   const validCats = rawCats.filter(Boolean).map(String);
-  return validCats.length > 0 ? validCats[0].toUpperCase() : fallback;
+  // Kalau ada isinya, return semuanya (jangan cuma index 0)
+  return validCats.length > 0 ? validCats.map(c => c.toUpperCase()) : [fallback];
 }
 
 export default function HeroSection() {
@@ -175,6 +176,8 @@ export default function HeroSection() {
   const currentArticle = articles[currentIndex];
   // Buat link dinamis mengarah ke /artikel/slug atau /review/slug
   const targetLink = `/${currentArticle.contentType || "artikel"}/${currentArticle.slug}`;
+  // Ambil semua array kategori buat artikel yang lagi aktif
+  const currentCategories = getCategoriesArray(currentArticle);
 
   return (
     <section className="relative w-full overflow-hidden border-b border-dark-border bg-black">
@@ -216,11 +219,16 @@ export default function HeroSection() {
                     exit={{ opacity: 0, y: -15 }}
                     transition={{ duration: 0.4 }}
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      {/* Styling Badge Kategori Diubah Ke Merah */}
-                      <span className="rounded bg-brand-crimson px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-white shadow-sm">
-                        {getFirstCategory(currentArticle)}
-                      </span>
+                    {/* BAGIAN DIUBAH: Looping semua kategori pake map */}
+                    <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                      {currentCategories.map((cat, idx) => (
+                        <span 
+                          key={idx}
+                          className="rounded bg-brand-crimson px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-white shadow-sm"
+                        >
+                          {cat}
+                        </span>
+                      ))}
                     </div>
 
                     <h1 className="text-base sm:text-2xl md:text-4xl lg:text-5xl font-black tracking-tight text-white leading-snug sm:leading-tight line-clamp-2 group-hover:text-brand-crimson transition-colors drop-shadow-md">
