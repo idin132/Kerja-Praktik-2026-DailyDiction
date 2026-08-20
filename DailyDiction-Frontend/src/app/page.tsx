@@ -1,44 +1,21 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import HeroSection from "@/components/HeroSection";
+import YoutubeHero from "@/components/YoutubeHero";
+import YoutubeShorts from "@/components/YoutubeShorts";
+import TechSection from "@/components/TechSection";
+import { NewsFeedCard, ReviewCard } from "@/components/Cards";
+import { DiscordWidget } from "@/components/Sidebar";
 import Footer from "@/components/Footer";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Calendar,
-  User,
-  Search,
-  Filter,
-  Cpu,
-  ArrowUpRight,
-  ChevronLeft,
-  ChevronRight,
-  Send,
-} from "lucide-react";
+import { getArticles, getGameReviews, getAdvertisements } from "@/lib/api";
+import { getYouTubeVideos } from "@/lib/youtube";
+import { Flame, Star, ArrowRight } from "lucide-react";
 
-interface TechItem {
-  id: number;
-  title: string;
-  slug: string;
-  category_input?: string | string[];
-  category?: string | string[];
-  categories?: any[];
-  summary: string;
-  content: string;
-  image_url?: string;
-  image_full_url?: string;
-  read_time: string;
-  created_at: string;
-  author?: string;
-  type?: string;
-}
+export const revalidate = 3600;
 
-function formatTechImage(item: TechItem): string {
-  const imageUrl = item.image_url || item.image_full_url;
-  const fallback =
-    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
-
+function formatImageUrl(
+  imageUrl: string | null | undefined,
+  fallback: string
+): string {
   if (!imageUrl) return fallback;
 
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
@@ -54,357 +31,239 @@ function formatTechImage(item: TechItem): string {
   return `https://dailydiction.id/storage/${imageUrl}`;
 }
 
-export default function TechnologyPage() {
-  const [techList, setTechList] = useState<TechItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+export default async function Home() {
+  const [articlesData, reviewsData, adsData, allYouTubeVideos] =
+    await Promise.all([
+      getArticles().catch(() => ({ data: [] })),
+      getGameReviews().catch(() => ({ data: [] })),
+      getAdvertisements().catch(() => ({ data: [] })),
+      getYouTubeVideos(50).catch(() => []),
+    ]);
 
-  // State Pagination Server-Side
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const itemsPerPage = 8;
+  const rawArticles = articlesData?.data || [];
+  let reviews = Array.isArray(reviewsData)
+    ? reviewsData
+    : reviewsData?.data || [];
+  const sidebarAd = adsData?.data?.[0] || null;
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function fetchTechArticles() {
-      setIsLoading(true);
-      try {
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
-
-        const res = await fetch(
-          `${apiUrl}/technologies?page=${currentPage}&per_page=${itemsPerPage}`,
-          { cache: "no-store" }
-        );
-
-        if (res.ok) {
-          const json = await res.json();
-          if (isMounted) {
-            setTechList(json.data || []);
-            setTotalPages(
-              json.last_page || Math.ceil((json.total || 0) / itemsPerPage) || 1
-            );
-          }
-        }
-      } catch (err) {
-        console.error("Gagal mengambil data teknologi:", err);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+  // Helper pemeriksa apakah konten adalah Review / Ulasan
+  const isReviewItem = (item: any) => {
+    if (
+      item.type?.toLowerCase() === "review" ||
+      item.type?.toLowerCase() === "reviews"
+    ) {
+      return true;
     }
 
-    fetchTechArticles();
+    const cats = [
+      ...(Array.isArray(item.category_input)
+        ? item.category_input
+        : [item.category_input]),
+      ...(Array.isArray(item.category) ? item.category : [item.category]),
+      ...(Array.isArray(item.categories)
+        ? item.categories.map((c: any) => c.name)
+        : []),
+    ]
+      .filter(Boolean)
+      .map((c) => String(c).toUpperCase());
 
-    return () => {
-      isMounted = false;
-    };
-  }, [currentPage]);
-
-  const getCategoriesArray = (item: TechItem): string[] => {
-    let rawCats: any[] = [];
-    
-    if (item.categories && item.categories.length > 0) {
-      rawCats = item.categories.map((c: any) => c.name);
-    } else if (item.category_input) {
-      rawCats = Array.isArray(item.category_input) ? item.category_input : [item.category_input];
-    } else if (item.category) {
-      if (typeof item.category === "string" && item.category.startsWith("[")) {
-        try { 
-          rawCats = JSON.parse(item.category); 
-        } catch { 
-          rawCats = [item.category]; 
-        }
-      } else {
-        rawCats = Array.isArray(item.category) ? item.category : [item.category];
-      }
-    }
-
-    const validCats = rawCats.filter(Boolean).map(String);
-    return validCats.length > 0 ? validCats : ["HARDWARE"];
+    return cats.some((cat) => cat.includes("REVIEW") || cat.includes("ULASAN"));
   };
 
-  const filteredList = techList.filter((item) => {
-    const itemCats = getCategoriesArray(item).map((c) =>
-      c.toUpperCase()
+  // 1. News Feed: HANYA artikel murni (bukan review)
+  const newsArticles = rawArticles.filter((item: any) => !isReviewItem(item));
+
+  // 2. Game Reviews: Jika API khusus review kosong, ambil dari rawArticles yang bertipe review
+  if (reviews.length === 0) {
+    reviews = rawArticles.filter((item: any) => isReviewItem(item));
+  }
+
+  // --- FILTER YOUTUBE: SHORTS VS VIDEO PANJANG ---
+  const getDurationInSeconds = (duration: string) => {
+    let hours = 0,
+      minutes = 0,
+      seconds = 0;
+    const hMatch = duration.match(/(\d+)H/);
+    const mMatch = duration.match(/(\d+)M/);
+    const sMatch = duration.match(/(\d+)S/);
+
+    if (hMatch) hours = parseInt(hMatch[1]);
+    if (mMatch) minutes = parseInt(mMatch[1]);
+    if (sMatch) seconds = parseInt(sMatch[1]);
+
+    return hours * 3600 + minutes * 60 + seconds;
+  };
+
+  const shortsList = allYouTubeVideos.filter((vid: any) => {
+    const durationStr = vid.contentDetails?.duration || "";
+    const durationSec = getDurationInSeconds(durationStr);
+    const title = vid.snippet?.title?.toLowerCase() || "";
+    const desc = vid.snippet?.description?.toLowerCase() || "";
+
+    return (
+      durationSec <= 180 || title.includes("#short") || desc.includes("#short")
     );
-
-    const matchCategory =
-      selectedCategory === "ALL" || itemCats.includes(selectedCategory);
-
-    const matchSearch =
-      (item.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (item.summary?.toLowerCase() || "").includes(searchQuery.toLowerCase());
-
-    return matchCategory && matchSearch;
   });
 
-  const allCategories = techList.flatMap((item) =>
-    getCategoriesArray(item).map((cat) => cat.toUpperCase())
-  );
-  const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
+  const longVideosList = allYouTubeVideos.filter((vid: any) => {
+    const durationStr = vid.contentDetails?.duration || "";
+    const durationSec = getDurationInSeconds(durationStr);
+    const title = vid.snippet?.title?.toLowerCase() || "";
+    const desc = vid.snippet?.description?.toLowerCase() || "";
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+    const isShort =
+      durationSec <= 180 || title.includes("#short") || desc.includes("#short");
+
+    return !isShort;
+  });
 
   return (
-    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-cyan selection:text-black flex flex-col justify-between font-sans">
-      <div>
-        <Navbar />
+    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
+      <Navbar />
 
-        <main className="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-8">
-          {/* Header Section */}
-          <div className="mb-8 border-b border-dark-border pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="h-6 w-2 rounded-full bg-brand-cyan" />
-                <h1 className="text-2xl sm:text-4xl font-black font-mono tracking-tight text-text-primary uppercase">
-                  ARSIP TEKNOLOGI & HARDWARE
-                </h1>
-              </div>
-              <p className="text-xs sm:text-sm text-text-muted font-mono">
-                Eksplorasi periferal gaming, rakitan PC, inovasi gadget, review gear, dan tren teknologi mutakhir.
-              </p>
-            </div>
+      <HeroSection />
 
-            <div className="relative w-full md:w-80 shrink-0">
-              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-              <input
-                type="text"
-                placeholder="Cari periferal, hardware, gadget..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-dark-border bg-dark-card pl-10 pr-4 py-2.5 text-xs text-text-primary placeholder:text-text-muted focus:border-brand-cyan focus:outline-none transition-colors shadow-inner"
-              />
-            </div>
-          </div>
+      <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
+        <YoutubeHero videos={longVideosList} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12">
-            {/* Left Column: Tech Post List */}
-            <div className="lg:col-span-8 2xl:col-span-9 space-y-6">
-              {/* Category Filter Pills */}
-              {categoriesList.length > 1 && (
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none font-mono text-xs">
-                  <span className="flex items-center gap-1 text-text-muted mr-2 shrink-0">
-                    <Filter className="h-3.5 w-3.5 text-brand-cyan" />
-                    <span>PERANGKAT:</span>
-                  </span>
-                  {categoriesList.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => setSelectedCategory(cat)}
-                      className={`shrink-0 rounded-lg px-3.5 py-1.5 font-bold uppercase transition-all ${
-                        selectedCategory === cat
-                          ? "bg-brand-cyan text-black shadow-[0_0_15px_rgba(0,240,255,0.4)]"
-                          : "border border-dark-border bg-dark-card text-text-muted hover:border-brand-cyan hover:text-text-primary"
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12 mt-4">
+          <div className="lg:col-span-8 2xl:col-span-9 space-y-12">
+            {/* News Feed Section */}
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <Flame className="h-5 w-5 text-brand-crimson" />
+                  <h2 className="text-lg font-black uppercase tracking-wider text-text-primary">
+                    News Feed
+                  </h2>
                 </div>
-              )}
-
-              {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {[1, 2, 3, 4].map((n) => (
-                    <div
-                      key={n}
-                      className="h-44 rounded-xl border border-dark-border bg-dark-card/50 animate-pulse"
-                    />
-                  ))}
-                </div>
-              ) : filteredList.length > 0 ? (
-                <>
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={`page-${currentPage}-${selectedCategory}`}
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -16 }}
-                      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                      className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8"
-                    >
-                      {filteredList.map((item) => {
-                        const itemCategories = getCategoriesArray(item);
-
-                        return (
-                          <article
-                            key={item.id}
-                            className="group relative flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-cyan/60 hover:-translate-y-1 shadow-lg h-full duration-300 cursor-pointer"
-                          >
-                            <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
-                              <img
-                                src={formatTechImage(item)}
-                                alt={item.title}
-                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src =
-                                    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
-                                }}
-                              />
-
-                              <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-20">
-                                {itemCategories.map((cat, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="rounded-md border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md"
-                                  >
-                                    {cat}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
-                              <div>
-                                <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
-                                  <Link
-                                    href={`/artikel/${item.slug}`}
-                                    className="before:absolute before:inset-0 before:z-10 focus:outline-none"
-                                  >
-                                    {item.title}
-                                  </Link>
-                                </h2>
-                                <p className="mt-2.5 text-xs text-text-muted line-clamp-2 leading-relaxed relative z-20 pointer-events-none">
-                                  {item.summary}
-                                </p>
-                              </div>
-
-                              <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4 relative z-20">
-                                <div className="flex items-center gap-3">
-                                  <div className="flex items-center gap-1.5">
-                                    <User className="h-3.5 w-3.5 text-brand-cyan" />
-                                    <span className="truncate max-w-[90px] xl:max-w-[120px] font-semibold text-white">
-                                      {item.author || "Redaksi"}
-                                    </span>
-                                  </div>
-
-                                  {item.created_at && (
-                                    <>
-                                      <span className="text-dark-border hidden sm:inline-block">
-                                        •
-                                      </span>
-                                      <div className="items-center gap-1.5 hidden sm:flex">
-                                        <Calendar className="h-3.5 w-3.5 text-text-muted" />
-                                        <span>
-                                          {new Date(
-                                            item.created_at
-                                          ).toLocaleDateString("id-ID", {
-                                            day: "numeric",
-                                            month: "short",
-                                            year: "numeric",
-                                          })}
-                                        </span>
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
-
-                                <div className="flex items-center gap-1 font-bold text-brand-cyan group-hover:underline shrink-0 ml-1">
-                                  <span className="hidden sm:inline">
-                                    DETAIL
-                                  </span>
-                                  <ArrowUpRight className="h-3.5 w-3.5" />
-                                </div>
-                              </div>
-                            </div>
-                          </article>
-                        );
-                      })}
-                    </motion.div>
-                  </AnimatePresence>
-
-                  {/* Pagination Controls */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 pt-8 font-mono text-xs">
-                      <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-cyan hover:text-white disabled:opacity-30 disabled:pointer-events-none"
-                        aria-label="Previous Page"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                        (pageNum) => (
-                          <button
-                            key={pageNum}
-                            onClick={() => handlePageChange(pageNum)}
-                            className={`h-9 min-w-[36px] px-3 rounded-xl font-bold transition-all ${
-                              currentPage === pageNum
-                                ? "bg-brand-cyan text-black shadow-[0_0_15px_rgba(0,240,255,0.4)]"
-                                : "border border-dark-border bg-dark-card text-text-muted hover:border-brand-cyan hover:text-text-primary"
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        )
-                      )}
-
-                      <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-cyan hover:text-white disabled:opacity-30 disabled:pointer-events-none"
-                        aria-label="Next Page"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="rounded-2xl border border-dark-border bg-dark-card p-12 text-center font-mono">
-                  <Cpu className="h-10 w-10 text-text-muted mx-auto mb-3" />
-                  <p className="text-sm text-text-muted">
-                    Belum ada artikel hardware atau teknologi yang
-                    dipublikasikan.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Right Sidebar Column */}
-            <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
-              <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="w-10 h-10 fill-indigo-400 mx-auto mb-3 animate-bounce"
-                  aria-hidden="true"
-                >
-                  <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515c-.213.385-.444.905-.608 1.315a18.27 18.27 0 0 0-5.648 0c-.164-.41-.4-.93-.615-1.315A19.736 19.736 0 0 0 3.67 4.37C.533 9.046-.319 13.608.106 18.11a19.98 19.98 0 0 0 6.002 3.03c.49-.67.924-1.38 1.293-2.13-.71-.27-1.39-.61-2.04-1.01.17-.125.337-.255.5-.39 3.93 1.84 8.18 1.84 12.06 0 .164.135.33.265.5.39-.65.4-1.33.74-2.04 1.01.37.75.8 1.46 1.29 2.13a19.98 19.98 0 0 0 6.006-3.03c.5-5.22-.85-9.74-3.36-13.74ZM8.02 15.33c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Zm7.96 0c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Z" />
-                </svg>
-
-                <h3 className="text-base lg:text-lg font-mono font-black text-white uppercase tracking-wide">
-                  TEMPAT NONGKRONG
-                </h3>
-
-                <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
-                  Join server Discord Daily Diction buat mabar, berbagi info
-                  gacha, pamer spek PC, atau sekadar gibahin industri pop
-                  culture!
-                </p>
-
                 <a
-                  href="https://discord.com/invite/DG6Nebkex9"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex w-full items-center justify-center gap-2 bg-white text-indigo-950 font-mono font-bold text-[10px] lg:text-xs uppercase py-3 px-4 rounded-xl hover:bg-slate-100 transition-all shadow-md relative z-10"
+                  href="/news"
+                  className="flex items-center gap-1 text-xs font-mono font-bold text-brand-cyan hover:underline"
                 >
-                  <Send className="h-3.5 w-3.5 fill-current" />
-                  <span>Join Server</span>
+                  <span>ALL NEWS</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </a>
               </div>
-            </aside>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+                {newsArticles.slice(0, 6).map((item: any) => {
+                  let finalCategory = ["Berita"];
+
+                  if (item.category_input && item.category_input.length > 0) {
+                    finalCategory = item.category_input;
+                  } else if (item.category && item.category.length > 0) {
+                    finalCategory = item.category;
+                  } else if (item.categories && item.categories.length > 0) {
+                    finalCategory = item.categories.map((c: any) => c.name);
+                  }
+
+                  return (
+                    <NewsFeedCard
+                      key={item.id}
+                      category={finalCategory}
+                      categoryColor={item.category_color || "crimson"}
+                      title={item.title}
+                      summary={item.summary}
+                      imageUrl={formatImageUrl(
+                        item.image_url || item.image_full_url,
+                        "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
+                      )}
+                      slug={item.slug}
+                      author={item.author}
+                      createdAt={item.created_at}
+                    />
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Game Reviews Section */}
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                  <h2 className="text-lg font-black uppercase tracking-wider text-text-primary">
+                    Ulasan Game Terbaru
+                  </h2>
+                </div>
+                <a
+                  href="/review"
+                  className="flex items-center gap-1 text-xs font-mono font-bold text-brand-cyan hover:underline"
+                >
+                  <span>SEMUA REVIEW</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+                {reviews.length > 0 ? (
+                  reviews.map((review: any) => (
+                    <ReviewCard
+                      key={review.id}
+                      summary={review.summary}
+                      title={review.title}
+                      platform={review.platform || review.category || ["PC"]}
+                      imageUrl={formatImageUrl(
+                        review.image_url || review.image_full_url,
+                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
+                      )}
+                      slug={review.slug}
+                    />
+                  ))
+                ) : (
+                  <p className="text-xs font-mono text-text-muted col-span-2 2xl:col-span-3">
+                    Belum ada ulasan game yang dipublikasikan dari Admin Panel.
+                  </p>
+                )}
+              </div>
+            </section>
+
+            {/* Info Teknologi Section */}
+            <TechSection />
+
+            {/* Youtube Shorts */}
+            <YoutubeShorts videos={shortsList} />
           </div>
-        </main>
-      </div>
+
+          {/* Sidebar (Kanan) */}
+          <aside className="lg:col-span-4 2xl:col-span-3 space-y-8">
+            <div className="flex h-[250px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
+              {sidebarAd ? (
+                <a
+                  href={sidebarAd.url_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full h-full block"
+                >
+                  <img
+                    src={formatImageUrl(sidebarAd.banner_image, "")}
+                    alt={sidebarAd.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <span className="absolute top-2 right-3 text-[9px] text-white bg-black/50 px-1 rounded">
+                    Ad
+                  </span>
+                </a>
+              ) : (
+                <>
+                  <span className="absolute top-2 right-3 text-[9px] text-text-muted/50 font-mono border border-text-muted/20 px-1 rounded">
+                    Ad
+                  </span>
+                  <span className="text-xs font-mono text-text-muted">
+                    Space Iklan Google Ads
+                  </span>
+                  <span className="text-[10px] font-mono text-brand-crimson/50 mt-1">
+                    300 x 250 px
+                  </span>
+                </>
+              )}
+            </div>
+
+            <DiscordWidget />
+          </aside>
+        </div>
+      </main>
 
       <Footer />
     </div>
