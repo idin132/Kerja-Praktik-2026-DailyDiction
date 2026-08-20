@@ -75,7 +75,6 @@ export default function NewsPage() {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
-        // Mengambil data spesifik tipe article dan sesuai halaman aktif
         const res = await fetch(
           `${apiUrl}/articles?type=article&page=${currentPage}&per_page=${itemsPerPage}`,
           { cache: "no-store" }
@@ -85,7 +84,9 @@ export default function NewsPage() {
           const json = await res.json();
           if (isMounted) {
             setArticles(json.data || []);
-            setTotalPages(json.last_page || Math.ceil((json.total || 0) / itemsPerPage) || 1);
+            setTotalPages(
+              json.last_page || Math.ceil((json.total || 0) / itemsPerPage) || 1
+            );
           }
         }
       } catch (err) {
@@ -104,26 +105,70 @@ export default function NewsPage() {
     };
   }, [currentPage]);
 
-  const getCategoriesArray = (
-    category: string | string[] | undefined,
-  ): string[] => {
-    if (!category) return ["GAMING"];
-    if (Array.isArray(category)) return category;
-    if (typeof category === "string") {
-      try {
-        return category.startsWith("[") ? JSON.parse(category) : [category];
-      } catch {
-        return [category];
+  // Helper parser kategori lengkap dari kode kedua
+  const getCategoriesArray = (item: ArticleItem): string[] => {
+    let rawCats: any[] = [];
+
+    if (item.categories && item.categories.length > 0) {
+      rawCats = item.categories.map((c: any) => c.name);
+    } else if (item.category_input) {
+      rawCats = Array.isArray(item.category_input)
+        ? item.category_input
+        : [item.category_input];
+    } else if (item.category) {
+      if (typeof item.category === "string" && item.category.startsWith("[")) {
+        try {
+          rawCats = JSON.parse(item.category);
+        } catch {
+          rawCats = [item.category];
+        }
+      } else {
+        rawCats = Array.isArray(item.category)
+          ? item.category
+          : [item.category];
       }
     }
-    return ["BERITA"];
+
+    const validCats = rawCats.filter(Boolean).map(String);
+    return validCats.length > 0 ? validCats : ["NEWS"];
   };
 
+  // Helper penyaring: Cek apakah item adalah tipe Review
+  const isReviewItem = (item: ArticleItem) => {
+    if (
+      item.type?.toLowerCase() === "review" ||
+      item.type?.toLowerCase() === "reviews"
+    ) {
+      return true;
+    }
+
+    const cats = [
+      ...(Array.isArray(item.category_input)
+        ? item.category_input
+        : [item.category_input]),
+      ...(Array.isArray(item.category) ? item.category : [item.category]),
+      ...(Array.isArray(item.categories)
+        ? item.categories.map((c: any) => c.name)
+        : []),
+    ]
+      .filter(Boolean)
+      .map((c) => String(c).toUpperCase());
+
+    return cats.some((cat) => cat.includes("REVIEW") || cat.includes("ULASAN"));
+  };
+
+  // Filter awal untuk artikel murni (bukan review)
+  const pureNewsArticles = articles.filter((item) => !isReviewItem(item));
+
+  // Daftar kategori untuk pills
+  const allCategories = pureNewsArticles.flatMap((item) =>
+    getCategoriesArray(item).map((cat) => cat.toUpperCase())
+  );
+  const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
+
   // Filter Klien untuk Search & Kategori pada data aktif
-  const filteredArticles = articles.filter((item) => {
-    const itemCats = getCategoriesArray(item.category).map((c) =>
-      c.toUpperCase(),
-    );
+  const filteredArticles = pureNewsArticles.filter((item) => {
+    const itemCats = getCategoriesArray(item).map((c) => c.toUpperCase());
 
     const matchCategory =
       selectedCategory === "ALL" || itemCats.includes(selectedCategory);
@@ -134,11 +179,6 @@ export default function NewsPage() {
 
     return matchCategory && matchSearch;
   });
-
-  const allCategories = articles.flatMap((item) =>
-    getCategoriesArray(item.category).map((cat) => cat.toUpperCase()),
-  );
-  const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -225,7 +265,7 @@ export default function NewsPage() {
                       className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8"
                     >
                       {filteredArticles.map((item) => {
-                        const itemCategories = getCategoriesArray(item.category);
+                        const itemCategories = getCategoriesArray(item);
 
                         return (
                           <article
@@ -247,7 +287,7 @@ export default function NewsPage() {
                                 {itemCategories.map((cat, idx) => (
                                   <span
                                     key={idx}
-                                    className="rounded-md border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md"
+                                    className="rounded bg-brand-crimson px-2 py-0.5 text-[10px] font-bold uppercase text-white shadow-sm"
                                   >
                                     {cat}
                                   </span>
@@ -288,7 +328,7 @@ export default function NewsPage() {
                                         <Calendar className="h-3.5 w-3.5 text-text-muted" />
                                         <span>
                                           {new Date(
-                                            item.created_at,
+                                            item.created_at
                                           ).toLocaleDateString("id-ID", {
                                             day: "numeric",
                                             month: "short",
@@ -337,7 +377,7 @@ export default function NewsPage() {
                           >
                             {pageNum}
                           </button>
-                        ),
+                        )
                       )}
 
                       <button
