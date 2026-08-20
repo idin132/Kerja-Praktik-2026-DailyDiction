@@ -17,7 +17,6 @@ interface TechItem {
   created_at: string;
 }
 
-// Helper Gambar
 function formatTechImage(item: TechItem): string {
   const imageUrl = item.image_url || item.image_full_url;
   const fallback = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
@@ -31,7 +30,6 @@ function formatTechImage(item: TechItem): string {
   return `https://dailydiction.id/storage/${imageUrl}`;
 }
 
-// Helper Kategori (Sama persis kayak yang barusan kita benerin)
 function getCategoriesArray(item: TechItem): string[] {
   let rawCats: any[] = [];
   if (item.categories && item.categories.length > 0) {
@@ -80,40 +78,40 @@ export default function TechSection() {
 
   if (isLoading) {
     return (
-      <div className="mt-12 animate-pulse max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="animate-pulse">
         <div className="h-8 w-48 bg-dark-card rounded mb-6"></div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((n) => (
             <div key={n} className="h-28 bg-dark-card rounded-2xl border border-dark-border"></div>
           ))}
         </div>
-      </div>
+      </section>
     );
   }
 
   if (techArticles.length === 0) return null;
 
   return (
-    <section className="mt-12 mb-12 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-      {/* Header Section */}
-      <div className="mb-6 flex items-center justify-between">
+    <section>
+      {/* Header Section (Ukurannya disamakan persis dengan Ulasan Game) */}
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <Cpu className="h-5 w-5 sm:h-6 sm:w-6 text-brand-cyan" />
-          <h2 className="text-xl sm:text-2xl font-black font-mono tracking-tight text-white uppercase drop-shadow-md">
-            INFO TEKNOLOGI
+          <Cpu className="h-5 w-5 text-brand-cyan" />
+          <h2 className="text-lg font-black uppercase tracking-wider text-text-primary">
+            TECHNOLOGY
           </h2>
         </div>
         <Link
           href="/technology"
-          className="group flex items-center gap-1.5 font-mono text-[10px] sm:text-xs font-bold text-brand-cyan hover:text-white transition-colors"
+          className="flex items-center gap-1 text-xs font-mono font-bold text-brand-cyan hover:underline"
         >
           <span>SEMUA TECH</span>
-          <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
+          <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
-      {/* Grid Card List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+      {/* Grid Card List (Gap disamakan persis dengan Ulasan Game) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {techArticles.map((item) => {
           const categories = getCategoriesArray(item);
 
