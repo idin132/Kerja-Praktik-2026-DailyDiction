@@ -55,5 +55,6 @@ jobs:
           port: 22
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          source: "./"
+          source: "DailyDiction-Frontend"
           target: "/home/dailydic/daily-frontend/"
+          strip_components: 1
