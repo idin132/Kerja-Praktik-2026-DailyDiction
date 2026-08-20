@@ -105,24 +105,33 @@ export default function TechnologyPage() {
     };
   }, [currentPage]);
 
-  const getCategoriesArray = (
-    category: string | string[] | undefined
-  ): string[] => {
-    if (!category) return ["HARDWARE"];
-    if (Array.isArray(category)) return category;
-    if (typeof category === "string") {
-      try {
-        return category.startsWith("[") ? JSON.parse(category) : [category];
-      } catch {
-        return [category];
+  // FUNGSI DIUBAH: Mengambil seluruh array kategori dari berbagai sumber API
+  const getCategoriesArray = (item: TechItem): string[] => {
+    let rawCats: any[] = [];
+    
+    if (item.categories && item.categories.length > 0) {
+      rawCats = item.categories.map((c: any) => c.name);
+    } else if (item.category_input) {
+      rawCats = Array.isArray(item.category_input) ? item.category_input : [item.category_input];
+    } else if (item.category) {
+      if (typeof item.category === "string" && item.category.startsWith("[")) {
+        try { 
+          rawCats = JSON.parse(item.category); 
+        } catch { 
+          rawCats = [item.category]; 
+        }
+      } else {
+        rawCats = Array.isArray(item.category) ? item.category : [item.category];
       }
     }
-    return ["TECH"];
+
+    const validCats = rawCats.filter(Boolean).map(String);
+    return validCats.length > 0 ? validCats : ["HARDWARE"];
   };
 
   // Filter Kategori & Pencarian
   const filteredList = techList.filter((item) => {
-    const itemCats = getCategoriesArray(item.category).map((c) =>
+    const itemCats = getCategoriesArray(item).map((c) =>
       c.toUpperCase()
     );
 
@@ -137,7 +146,7 @@ export default function TechnologyPage() {
   });
 
   const allCategories = techList.flatMap((item) =>
-    getCategoriesArray(item.category).map((cat) => cat.toUpperCase())
+    getCategoriesArray(item).map((cat) => cat.toUpperCase())
   );
   const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
 
@@ -158,7 +167,7 @@ export default function TechnologyPage() {
               <div className="flex items-center gap-2 mb-2">
                 <span className="h-6 w-2 rounded-full bg-brand-cyan" />
                 <h1 className="text-2xl sm:text-4xl font-black font-mono tracking-tight text-text-primary uppercase">
-                  TEKNOLOGI
+                  TECHNOLOGI
                 </h1>
               </div>
               <p className="text-xs sm:text-sm text-text-muted font-mono">
@@ -226,9 +235,7 @@ export default function TechnologyPage() {
                       className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8"
                     >
                       {filteredList.map((item) => {
-                        const itemCategories = getCategoriesArray(
-                          item.category
-                        );
+                        const itemCategories = getCategoriesArray(item);
 
                         return (
                           <article
