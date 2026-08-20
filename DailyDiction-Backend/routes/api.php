@@ -21,6 +21,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/reels', [ArticleController::class, 'reels']);
     Route::get('/youtube-videos', [YoutubeController::class, 'getVideos']);
     Route::get('/youtube-shorts', [YoutubeController::class, 'getShorts']);
+    Route::get('/technologies', [ArticleController::class, 'technologies']);
     Route::get('/proxy-image', function (\Illuminate\Http\Request $request) {
         $url = $request->query('url');
 

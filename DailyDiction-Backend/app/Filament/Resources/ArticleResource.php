@@ -22,8 +22,7 @@ class ArticleResource extends Resource
 {
     protected static ?string $model = Article::class;
 
-    // Ganti nama menu di sidebar biar lebih general
-    protected static ?string $navigationLabel = 'Posts (News & Review)';
+    protected static ?string $navigationLabel = 'Posts (News, Tech & Review)';
     protected static ?string $pluralModelLabel = 'Posts';
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
@@ -35,12 +34,13 @@ class ArticleResource extends Resource
                 Forms\Components\Select::make('type')
                     ->label('Tipe Konten')
                     ->options([
-                        'article' => 'Berita / Artikel',
-                        'review'  => 'Game Review',
+                        'article'    => 'Berita / Artikel',
+                        'technology' => 'Teknologi & Hardware',
+                        'review'     => 'Game Review',
                     ])
                     ->default('article')
                     ->required()
-                    ->live(), // Wajib live biar form di bawahnya bisa ngerespon
+                    ->live(),
 
                 // ================= 2. INFO UMUM =================
                 Forms\Components\TextInput::make('title')
@@ -57,7 +57,7 @@ class ArticleResource extends Resource
                 (auth()->user()?->role === 'superadmin' || (auth()->user() && method_exists(auth()->user(), 'isSuperAdmin') && auth()->user()->isSuperAdmin()))
                     ? Forms\Components\Select::make('author')
                     ->label('Author (Penulis)')
-                    ->options(fn() => User::pluck('name', 'name')->toArray()) // Mengambil semua nama author dari database
+                    ->options(fn() => User::pluck('name', 'name')->toArray())
                     ->searchable()
                     ->preload()
                     ->default(fn() => auth()->user()?->name)
@@ -76,8 +76,9 @@ class ArticleResource extends Resource
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
 
-                // ================= 3. FORM HYBRID (MUNCUL GANTIAN) =================
-                // KHUSUS ARTIKEL: Kategori
+                // ================= 3. FORM HYBRID (KONDISIONAL SESUAI TIPE) =================
+
+                // A. KHUSUS ARTIKEL BIASA
                 Forms\Components\TagsInput::make('category_input')
                     ->label('Category')
                     ->placeholder('Ketik kategori, tekan Enter...')
@@ -85,7 +86,25 @@ class ArticleResource extends Resource
                     ->visible(fn(Get $get) => $get('type') === 'article')
                     ->required(fn(Get $get) => $get('type') === 'article'),
 
-                // KHUSUS REVIEW: Platform (Bisa pilih lebih dari 1)
+                // B. KHUSUS TEKNOLOGI & HARDWARE
+                Forms\Components\TagsInput::make('category_input')
+                    ->label('Kategori Tech / Perangkat')
+                    ->placeholder('Contoh: Keyboard, Mouse, GPU, Monitor...')
+                    ->suggestions([
+                        'Keyboard',
+                        'Mouse',
+                        'Headset',
+                        'Monitor',
+                        'VGA / GPU',
+                        'Processor',
+                        'Laptop Gaming',
+                        'Console / Handheld',
+                        'Accessories',
+                    ])
+                    ->visible(fn(Get $get) => $get('type') === 'technology')
+                    ->required(fn(Get $get) => $get('type') === 'technology'),
+
+                // C. KHUSUS REVIEW: Platform Game
                 Forms\Components\Select::make('platform')
                     ->label('Platform')
                     ->multiple()
@@ -107,7 +126,7 @@ class ArticleResource extends Resource
                     ->maxLength(255)
                     ->default('crimson'),
 
-                // ================= 4. KONTEN ARTIKEL (TETAP SAMA 100%) =================
+                // ================= 4. KONTEN ARTIKEL =================
                 Forms\Components\TextInput::make('image_url')
                     ->label('Thumbnail Artikel (URL Gambar)')
                     ->url()
@@ -225,14 +244,14 @@ class ArticleResource extends Resource
                     ->label('Thumbnail')
                     ->square(),
 
-                // Kolom lainnya...
                 Tables\Columns\TextColumn::make('type')
                     ->label('Tipe')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
-                        'article' => 'info',
-                        'review' => 'warning',
-                        default => 'gray',
+                        'article'    => 'info',
+                        'technology' => 'success',
+                        'review'     => 'warning',
+                        default      => 'gray',
                     })
                     ->formatStateUsing(fn(string $state): string => ucfirst($state)),
 
@@ -266,14 +285,14 @@ class ArticleResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            // 👇 DEFAULT URUTAN TERBARU (DESCENDING) 👇
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('type')
                     ->label('Filter Tipe Konten')
                     ->options([
-                        'article' => 'Berita / Artikel',
-                        'review' => 'Game Review',
+                        'article'    => 'Berita / Artikel',
+                        'technology' => 'Teknologi & Hardware',
+                        'review'     => 'Game Review',
                     ]),
             ])
             ->actions([
@@ -294,9 +313,9 @@ class ArticleResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListArticles::route('/'),
+            'index'  => Pages\ListArticles::route('/'),
             'create' => Pages\CreateArticle::route('/create'),
-            'edit' => Pages\EditArticle::route('/{record}/edit'),
+            'edit'   => Pages\EditArticle::route('/{record}/edit'),
         ];
     }
 }

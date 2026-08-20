@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Search, User, Flame, Newspaper, Star } from "lucide-react";
+import { Menu, X, Search, User, Flame, Newspaper, Star, Cpu } from "lucide-react";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +18,7 @@ export default function Navbar() {
     { name: "NEWS", href: "/news", icon: Newspaper },
     // { name: "REELS", href: "/reels", icon: Clapperboard, isReels: true },
     { name: "REVIEW", href: "/review", icon: Star },
+    { name: "TECHNOLOGY", href: "/technology", icon: Cpu },
     // { name: "KOMUNITAS", href: "/komunitas", icon: Users },
   ];
 

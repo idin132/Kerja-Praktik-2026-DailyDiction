@@ -94,6 +94,18 @@ class ArticleController extends Controller
         ]);
     }
 
+    // Get list of Technology & Hardware
+    public function technologies(Request $request)
+    {
+        $technologies = Article::with('categories')
+            ->where('is_published', true)
+            ->where('type', 'technology')
+            ->latest()
+            ->paginate($request->get('per_page', 8));
+
+        return response()->json($technologies);
+    }
+
     // Get list of Reels
     public function reels()
     {
