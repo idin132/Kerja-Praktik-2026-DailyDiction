@@ -35,7 +35,6 @@ interface ArticleItem {
   type?: string;
 }
 
-// Helper untuk validasi URL Gambar
 function formatNewsImage(item: ArticleItem): string {
   const imageUrl = item.image_url || item.image_full_url;
   const fallback =
@@ -62,19 +61,32 @@ export default function NewsPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
-  // State Pagination
+  // State Pagination Backend
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
   const itemsPerPage = 8;
 
   useEffect(() => {
     let isMounted = true;
 
     async function fetchArticles() {
+      setIsLoading(true);
       try {
-        const res = await fetch("https://dailydiction.id/api/v1/articles");
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
+
+        // Mengambil data spesifik tipe article dan sesuai halaman aktif
+        const res = await fetch(
+          `${apiUrl}/articles?type=article&page=${currentPage}&per_page=${itemsPerPage}`,
+          { cache: "no-store" }
+        );
+
         if (res.ok) {
           const json = await res.json();
-          setArticles(json.data || []);
+          if (isMounted) {
+            setArticles(json.data || []);
+            setTotalPages(json.last_page || Math.ceil((json.total || 0) / itemsPerPage) || 1);
+          }
         }
       } catch (err) {
         console.error("Gagal mengambil data berita:", err);
@@ -90,12 +102,7 @@ export default function NewsPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
-
-  // Reset pagination ke halaman 1 saat filter atau pencarian berubah
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedCategory]);
+  }, [currentPage]);
 
   const getCategoriesArray = (
     category: string | string[] | undefined,
@@ -112,41 +119,8 @@ export default function NewsPage() {
     return ["BERITA"];
   };
 
-  // Helper penyaring: Cek apakah item adalah tipe Review
-  const isReviewItem = (item: ArticleItem) => {
-    if (
-      item.type?.toLowerCase() === "review" ||
-      item.type?.toLowerCase() === "reviews"
-    ) {
-      return true;
-    }
-
-    const cats = [
-      ...(Array.isArray(item.category_input)
-        ? item.category_input
-        : [item.category_input]),
-      ...(Array.isArray(item.category) ? item.category : [item.category]),
-      ...(Array.isArray(item.categories)
-        ? item.categories.map((c: any) => c.name)
-        : []),
-    ]
-      .filter(Boolean)
-      .map((c) => String(c).toUpperCase());
-
-    return cats.some((cat) => cat.includes("REVIEW") || cat.includes("ULASAN"));
-  };
-
-  // 1. Filter awal: Hanya ambil artikel murni (bukan review)
-  const pureNewsArticles = articles.filter((item) => !isReviewItem(item));
-
-  // 2. Kategori diambil dari artikel murni
-  const allCategories = pureNewsArticles.flatMap((item) =>
-    getCategoriesArray(item.category).map((cat) => cat.toUpperCase()),
-  );
-  const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
-
-  // 3. Filter berdasarkan kategori & kata kunci pencarian
-  const filteredArticles = pureNewsArticles.filter((item) => {
+  // Filter Klien untuk Search & Kategori pada data aktif
+  const filteredArticles = articles.filter((item) => {
     const itemCats = getCategoriesArray(item.category).map((c) =>
       c.toUpperCase(),
     );
@@ -161,15 +135,10 @@ export default function NewsPage() {
     return matchCategory && matchSearch;
   });
 
-  // ========================================================
-  // LOGIC PAGINATION
-  // ========================================================
-  const totalPages = Math.ceil(filteredArticles.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentArticles = filteredArticles.slice(
-    startIndex,
-    startIndex + itemsPerPage,
+  const allCategories = articles.flatMap((item) =>
+    getCategoriesArray(item.category).map((cat) => cat.toUpperCase()),
   );
+  const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -188,7 +157,7 @@ export default function NewsPage() {
               <div className="flex items-center gap-2 mb-2">
                 <span className="h-6 w-2 rounded-full bg-brand-crimson" />
                 <h1 className="text-2xl sm:text-4xl font-black font-mono tracking-tight text-text-primary uppercase">
-                  ARSIP BERIT & KABAR GAMING
+                  ARSIP BERITA & KABAR GAMING
                 </h1>
               </div>
               <p className="text-xs sm:text-sm text-text-muted font-mono">
@@ -244,9 +213,8 @@ export default function NewsPage() {
                     />
                   ))}
                 </div>
-              ) : currentArticles.length > 0 ? (
+              ) : filteredArticles.length > 0 ? (
                 <>
-                  {/* Container Animasi Halaman Halus */}
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={`page-${currentPage}-${selectedCategory}`}
@@ -256,13 +224,12 @@ export default function NewsPage() {
                       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                       className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8"
                     >
-                      {currentArticles.map((item) => {
+                      {filteredArticles.map((item) => {
                         const itemCategories = getCategoriesArray(item.category);
 
                         return (
                           <article
                             key={item.id}
-                            // 1. Tambahin 'relative' dan 'cursor-pointer' di sini
                             className="group relative flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/60 hover:-translate-y-1 shadow-lg h-full duration-300 cursor-pointer"
                           >
                             <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
@@ -276,7 +243,6 @@ export default function NewsPage() {
                                 }}
                               />
 
-                              {/* 2. Tambahin z-20 di badge kategori biar tetep nyala */}
                               <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-20">
                                 {itemCategories.map((cat, idx) => (
                                   <span
@@ -292,21 +258,18 @@ export default function NewsPage() {
                             <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
                               <div>
                                 <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
-                                  {/* 3. Link disuntik 'before:absolute' biar areanya selebar ukuran parent */}
-                                  <Link 
+                                  <Link
                                     href={`/artikel/${item.slug}`}
                                     className="before:absolute before:inset-0 before:z-10 focus:outline-none"
                                   >
                                     {item.title}
                                   </Link>
                                 </h2>
-                                {/* 4. Tambahin z-20 dan pointer-events-none di teks summary */}
                                 <p className="mt-2.5 text-xs text-text-muted line-clamp-2 leading-relaxed relative z-20 pointer-events-none">
                                   {item.summary}
                                 </p>
                               </div>
 
-                              {/* 5. Footer card dikasih relative z-20 */}
                               <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4 relative z-20">
                                 <div className="flex items-center gap-3">
                                   <div className="flex items-center gap-1.5">
@@ -337,7 +300,6 @@ export default function NewsPage() {
                                   )}
                                 </div>
 
-                                {/* 6. Tombol BACA ini diubah dari <Link> jadi <div> biasa */}
                                 <div className="flex items-center gap-1 font-bold text-brand-crimson group-hover:underline shrink-0 ml-1">
                                   <span className="hidden sm:inline">BACA</span>
                                   <ArrowUpRight className="h-3.5 w-3.5" />
@@ -350,12 +312,9 @@ export default function NewsPage() {
                     </motion.div>
                   </AnimatePresence>
 
-                  {/* ========================================================
-                      KOMPONEN PAGINATION
-                      ======================================================== */}
+                  {/* Kontrol Navigasi Pagination */}
                   {totalPages > 1 && (
                     <div className="flex items-center justify-center gap-2 pt-8 font-mono text-xs">
-                      {/* Prev Button */}
                       <button
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
@@ -365,7 +324,6 @@ export default function NewsPage() {
                         <ChevronLeft className="h-4 w-4" />
                       </button>
 
-                      {/* Number Buttons */}
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                         (pageNum) => (
                           <button
@@ -382,7 +340,6 @@ export default function NewsPage() {
                         ),
                       )}
 
-                      {/* Next Button */}
                       <button
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
