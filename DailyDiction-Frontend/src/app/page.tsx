@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import YoutubeHero from "@/components/YoutubeHero";
 import YoutubeShorts from "@/components/YoutubeShorts";
+import TechSection from "@/components/TechSection";
 import { NewsFeedCard, ReviewCard } from "@/components/Cards";
 import { DiscordWidget } from "@/components/Sidebar";
 import Footer from "@/components/Footer";
@@ -217,6 +218,9 @@ export default async function Home() {
                 )}
               </div>
             </section>
+
+            {/* Info Teknologi Section */}
+            <TechSection />
 
             {/* Youtube Shorts */}
             <YoutubeShorts videos={shortsList} />
