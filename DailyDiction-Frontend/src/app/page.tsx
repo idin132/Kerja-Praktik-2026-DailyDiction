@@ -158,13 +158,13 @@ export default function TechnologyPage() {
         <Navbar />
 
         <main className="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-8">
-          {/* Header Section (SUDAH DIUBAH KE md:items-center BIAR SEJAJAR) */}
+          {/* Header Section */}
           <div className="mb-8 border-b border-dark-border pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="h-6 w-2 rounded-full bg-brand-cyan" />
                 <h1 className="text-2xl sm:text-4xl font-black font-mono tracking-tight text-text-primary uppercase">
-                  TECHNOLOGY
+                  ARSIP TEKNOLOGI & HARDWARE
                 </h1>
               </div>
               <p className="text-xs sm:text-sm text-text-muted font-mono">
