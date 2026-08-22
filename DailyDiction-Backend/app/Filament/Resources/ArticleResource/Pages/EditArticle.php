@@ -21,14 +21,22 @@ class EditArticle extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        // Isi TagsInput dengan nama kategori yang sudah ada
         $data['category_input'] = $this->record->categories->pluck('name')->toArray();
+        $data['image_source'] = !empty($data['image_path']) ? 'file' : 'url'; // ← tambah ini
         return $data;
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
         unset($data['category_input']);
+        unset($data['image_source']); // ← tambah ini
+
+        if (!empty($data['image_url'])) {
+            $data['image_path'] = null;
+        } else {
+            $data['image_url'] = null;
+        }
+
         return $data;
     }
 

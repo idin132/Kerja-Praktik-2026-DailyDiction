@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Filament\Models\Contracts\FilamentUser; // 1. IMPORT INI
+use Filament\Panel; // 2. IMPORT INI
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Filament\Models\Contracts\HasName; // <--- 1. TAMBAHAN: Import HasName
 
-class User extends Authenticatable implements HasName // <--- 2. TAMBAHAN: implements HasName
+class User extends Authenticatable implements HasName, FilamentUser // <--- 2. TAMBAHAN: implements HasName
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -37,6 +39,16 @@ class User extends Authenticatable implements HasName // <--- 2. TAMBAHAN: imple
      *
      * @var list<string>
      */
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        // Izinkan role 'superadmin' atau 'admin' masuk panel
+        return $this->role === 'superadmin' || $this->role === 'admin';
+
+        // Atau jika semua user di tabel boleh akses admin:
+        // return true;
+    }
+
     protected $hidden = [
         'password',
         'remember_token',
