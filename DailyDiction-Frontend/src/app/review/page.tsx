@@ -175,7 +175,18 @@ export default function ReviewPage() {
   // Featured Review diambil dari data awal
   const featuredReview = reviews.length > 0 ? reviews[0] : null;
 
-  const filterButtons = ["ALL", "PC", "PLAYSTATION", "NINTENDO", "XBOX", "MOBILE"];
+  const parsePlatforms = (platform: string | string[] | undefined): string[] => {
+    if (!platform) return ["PC"];
+    if (Array.isArray(platform)) return platform;
+    if (typeof platform === "string") {
+      try {
+        return platform.startsWith("[") ? JSON.parse(platform) : [platform];
+      } catch {
+        return [platform];
+      }
+    }
+    return ["PC"];
+  };
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white flex flex-col justify-between font-sans">

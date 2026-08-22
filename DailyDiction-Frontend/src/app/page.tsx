@@ -28,7 +28,7 @@ function formatImageUrl(
     return imageUrl;
   }
 
-  return `https://dailydiction.id/storage/${imageUrl}`;
+  return `http://127.0.0.1:8000/storage/${imageUrl}`;
 }
 
 export default async function Home() {
@@ -40,8 +40,10 @@ export default async function Home() {
       getYouTubeVideos(50).catch(() => []),
     ]);
 
-  const rawArticles = articlesData?.data || [];
-  let reviews = Array.isArray(reviewsData)
+  const articles = Array.isArray(articlesData)
+    ? articlesData
+    : articlesData?.data || [];
+  const reviews = Array.isArray(reviewsData)
     ? reviewsData
     : reviewsData?.data || [];
   const sidebarAd = adsData?.data?.[0] || null;

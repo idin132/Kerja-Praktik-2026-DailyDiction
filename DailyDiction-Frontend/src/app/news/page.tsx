@@ -21,38 +21,29 @@ interface ArticleItem {
   id: number;
   title: string;
   slug: string;
-  category_input?: string | string[];
+<<<<<<< HEAD
+  type?: string;
+  category: string | string[];
+  category_color?: string;
+  summary: string;
+  content?: string;
+  image_url?: string;
+  thumbnail?: string;
+  thumbnail_url?: string;
+  image?: string;
+=======
+  category_input?: string | string[]; 
   category?: string | string[];
   categories?: any[];
   category_color?: string;
   summary: string;
   content: string;
   image_url?: string;
+>>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
   image_full_url?: string;
-  read_time: string;
-  created_at: string;
+  read_time?: string;
+  created_at?: string;
   author?: string;
-  type?: string;
-}
-
-function formatNewsImage(item: ArticleItem): string {
-  const imageUrl = item.image_url || item.image_full_url;
-  const fallback =
-    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
-
-  if (!imageUrl) return fallback;
-
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    if (imageUrl.includes("127.0.0.1:8000/storage/http")) {
-      return imageUrl.replace(
-        /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
-        "$1",
-      );
-    }
-    return imageUrl;
-  }
-
-  return `https://dailydiction.id/storage/${imageUrl}`;
 }
 
 export default function NewsPage() {
@@ -90,7 +81,10 @@ export default function NewsPage() {
           }
         }
       } catch (err) {
-        console.error("Gagal mengambil data berita:", err);
+        console.warn("Gagal mengambil data berita:", err);
+        if (isMounted) {
+          setArticles([]);
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -106,6 +100,16 @@ export default function NewsPage() {
   }, [currentPage]);
 
   // Helper parser kategori lengkap dari kode kedua
+<<<<<<< HEAD
+  const getCategoriesArray = (
+    category: string | string[] | undefined
+  ): string[] => {
+    if (!category) return ["GAMING"];
+    if (Array.isArray(category)) return category;
+    if (typeof category === "string") {
+      try {
+        return category.startsWith("[") ? JSON.parse(category) : [category];
+=======
   const getCategoriesArray = (item: ArticleItem): string[] => {
     let rawCats: any[] = [];
 
@@ -170,6 +174,10 @@ export default function NewsPage() {
   const filteredArticles = pureNewsArticles.filter((item) => {
     const itemCats = getCategoriesArray(item).map((c) => c.toUpperCase());
 
+=======
+    const itemCats = getCategoriesArray(item).map(c => c.toUpperCase());
+    
+>>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
     const matchCategory =
       selectedCategory === "ALL" || itemCats.includes(selectedCategory);
 
@@ -219,9 +227,15 @@ export default function NewsPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12">
+<<<<<<< HEAD
             {/* Left Column: News List */}
             <div className="lg:col-span-8 2xl:col-span-9 space-y-6">
               {/* Category Filter Pills */}
+=======
+            
+            <div className="lg:col-span-9 space-y-6">
+              
+>>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
               {categoriesList.length > 1 && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none font-mono text-xs">
                   <span className="flex items-center gap-1 text-text-muted mr-2 shrink-0">
@@ -267,36 +281,59 @@ export default function NewsPage() {
                       {filteredArticles.map((item) => {
                         const itemCategories = getCategoriesArray(item);
 
-                        return (
-                          <article
-                            key={item.id}
-                            className="group relative flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/60 hover:-translate-y-1 shadow-lg h-full duration-300 cursor-pointer"
-                          >
-                            <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
-                              <img
-                                src={formatNewsImage(item)}
-                                alt={item.title}
-                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src =
-                                    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
-                                }}
-                              />
+                      return (
+                        <motion.article
+                          key={item.id}
+                          layout
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          whileHover={{ y: -3 }}
+                          transition={{ duration: 0.2 }}
+                          className="group flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/60 shadow-lg h-full"
+                        >
+<<<<<<< HEAD
+                          {/* Thumbnail Image */}
+                          <div className="relative h-52 md:h-auto md:w-64 lg:w-72 flex-shrink-0 overflow-hidden bg-black/40">
+                            <img
+                              src={formatNewsImage(item)}
+                              alt={item.title}
+                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
 
-                              <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-20">
-                                {itemCategories.map((cat, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="rounded bg-brand-crimson px-2 py-0.5 text-[10px] font-bold uppercase text-white shadow-sm"
-                                  >
-                                    {cat}
-                                  </span>
-                                ))}
-                              </div>
+                            {/* Looping Badge Kategori */}
+=======
+                          <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
+                            <img
+                              src={
+                                item.image_url ||
+                                item.image_full_url ||
+                                "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
+                              }
+                              alt={item.title}
+                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                            
+>>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
+                            <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                              {itemCategories.map((cat, idx) => (
+                                <span
+                                  key={idx}
+                                  className="rounded-md border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md"
+                                >
+                                  {cat}
+                                </span>
+                              ))}
                             </div>
+                          </div>
 
-                            <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
-                              <div>
+                          <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
+                            <div>
+<<<<<<< HEAD
+                              <Link href={`/artikel/${item.slug}`} prefetch={false}>
+                                <h2 className="text-base sm:text-xl font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
+=======
+                              <Link href={`/artikel/${item.slug}`}>
                                 <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
                                   <Link
                                     href={`/artikel/${item.slug}`}
@@ -402,9 +439,15 @@ export default function NewsPage() {
               )}
             </div>
 
+<<<<<<< HEAD
             {/* Right Sidebar Column */}
             <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
               <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
+=======
+            <aside className="lg:col-span-3 space-y-6">
+              
+              <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-5 lg:p-6 text-center shadow-xl">
+>>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
                 <svg
                   viewBox="0 0 24 24"
                   className="w-10 h-10 fill-indigo-400 mx-auto mb-3 animate-bounce"
@@ -417,10 +460,15 @@ export default function NewsPage() {
                   TEMPAT NONGKRONG
                 </h3>
 
+<<<<<<< HEAD
                 <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
                   Join server Discord Daily Diction buat mabar, berbagi info
                   gacha, pamer spek PC, atau sekadar gibahin industri pop
                   culture!
+=======
+                <p className="text-text-muted text-[11px] lg:text-xs mt-2 mb-5 leading-relaxed">
+                  Join server Discord Daily Diction buat mabar, berbagi info gacha, atau gibahin industri pop culture!
+>>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
                 </p>
 
                 <a
