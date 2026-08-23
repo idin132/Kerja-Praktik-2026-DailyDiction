@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { NewsFeedCard } from "@/components/Cards";
 import { Search, AlertCircle } from "lucide-react";
+import { getArticles, getGameReviews } from "@/lib/api"; // Jangan lupa import ini
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -31,22 +32,14 @@ export default async function SearchPage(props: {
   const query = searchParams.q || "";
   const lowerQuery = query.toLowerCase();
 
-<<<<<<< HEAD
-  // 1. Ambil semua data artikel dari API Laravel
-  const articlesData = await getArticles();
-  const allArticles = (articlesData as any)?.data || articlesData;  
-=======
-  const [articlesRes, reviewsRes] = await Promise.all([
-    fetch(`https://dailydiction.id/api/v1/articles?type=article&t=${Date.now()}`, { cache: "no-store" }).catch(() => null),
-    fetch(`https://dailydiction.id/api/v1/articles?type=review&t=${Date.now()}`, { cache: "no-store" }).catch(() => null),
+  // Gabungkan fetch artikel dan review menggunakan helper terpusat
+  const [articlesData, reviewsData] = await Promise.all([
+    getArticles().catch(() => ({ data: [] })),
+    getGameReviews().catch(() => []),
   ]);
->>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
 
-  const articlesJson = articlesRes?.ok ? await articlesRes.json() : { data: [] };
-  const reviewsJson = reviewsRes?.ok ? await reviewsRes.json() : { data: [] };
-
-  const articles = articlesJson.data || [];
-  const reviews = Array.isArray(reviewsJson) ? reviewsJson : (reviewsJson.data || []);
+  const articles = (articlesData as any)?.data || articlesData || [];
+  const reviews = Array.isArray(reviewsData) ? reviewsData : ((reviewsData as any)?.data || []);
 
   const allPosts = [...articles, ...reviews];
 
@@ -94,7 +87,7 @@ export default async function SearchPage(props: {
                   } else if (item.category && item.category.length > 0) {
                     rawCategory = item.category;
                   } else if (item.categories && item.categories.length > 0) {
-                    rawCategory = item.categories.map((c: any) => c.name);
+                    rawCategory = item.categories.map((c: any) => typeof c === 'string' ? c : c.name);
                   }
                 }
 
@@ -114,13 +107,13 @@ export default async function SearchPage(props: {
 
                 return (
                   <NewsFeedCard
-                    key={item.id}
+                    key={`${item.type}-${item.id}`}
                     category={finalCategory}
                     categoryColor={item.type === "review" ? "cyan" : (item.category_color || "crimson")}
                     title={item.title}
                     summary={item.summary}
                     imageUrl={formatImageUrl(
-                      item.image_url || item.image_full_url,
+                      item.image_url || item.image_full_url || item.thumbnail || item.thumbnail_url,
                       "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
                     )}
                     slug={item.slug}
