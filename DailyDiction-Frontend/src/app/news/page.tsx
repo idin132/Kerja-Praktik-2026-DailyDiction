@@ -211,7 +211,7 @@ export default function NewsPage() {
               <div className="flex items-center gap-2 mb-2">
                 <span className="h-6 w-2 rounded-full bg-brand-crimson" />
                 <h1 className="text-2xl sm:text-4xl font-black font-mono tracking-tight text-text-primary uppercase">
-                  ARSIP BERITA & KABAR GAMING
+                  GAMING NEWS
                 </h1>
               </div>
               <p className="text-xs sm:text-sm text-text-muted font-mono">
