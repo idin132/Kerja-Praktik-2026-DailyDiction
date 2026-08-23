@@ -25,6 +25,20 @@ class Article extends Model
         'platform', 
         'category_input',
     ];
+    protected static function booted()
+    {
+        static::saving(function ($article) {
+            // Hitung read_time otomatis saat akan disave (insert atau update)
+            if (!empty($article->content)) {
+                $rawText = is_array($article->content) ? json_encode($article->content) : (string) $article->content;
+                $cleanText = strip_tags($rawText);
+                $wordCount = str_word_count($cleanText);
+                $minutes = max(1, ceil($wordCount / 200));
+
+                $article->read_time = "{$minutes} MIN READ";
+            }
+        });
+    }
 
     protected $casts = [
         'content' => 'array',
