@@ -20,6 +20,15 @@ class CreateArticle extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         unset($data['category_input']);
+        unset($data['image_source']); // ← tambah ini
+
+        // Kalau pakai URL, kosongkan image_path (dan sebaliknya)
+        if (!empty($data['image_url'])) {
+            $data['image_path'] = null;
+        } else {
+            $data['image_url'] = null;
+        }
+
         return $data;
     }
 

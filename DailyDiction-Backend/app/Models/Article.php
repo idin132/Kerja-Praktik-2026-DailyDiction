@@ -10,7 +10,7 @@ class Article extends Model
 {
     protected $table = 'articles';
 
-   protected $fillable = [
+    protected $fillable = [
         'title',
         'author',
         'slug',
@@ -18,11 +18,13 @@ class Article extends Model
         'summary',
         'content',
         'image_url',
+        'image_path',
+        'image_source',
         'read_time',
         'is_featured',
         'is_published',
-        'type',    
-        'platform', 
+        'type',
+        'platform',
         'category_input',
     ];
 
@@ -50,6 +52,14 @@ class Article extends Model
 
         // Jika file lokal dari storage
         return asset('storage/' . $this->image_url);
+    }
+
+    public function getThumbnailAttribute(): ?string
+    {
+        if ($this->image_path) {
+            return asset('storage/' . $this->image_path);
+        }
+        return $this->image_url ?: null;
     }
 
     public function categories(): \Illuminate\Database\Eloquent\Relations\BelongsToMany

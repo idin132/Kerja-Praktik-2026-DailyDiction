@@ -127,6 +127,16 @@ class ArticleResource extends Resource
                     ->default('crimson'),
 
                 // ================= 4. KONTEN ARTIKEL =================
+                Forms\Components\Radio::make('image_source')
+                    ->label('Sumber Thumbnail')
+                    ->options([
+                        'url'  => 'URL Gambar (eksternal)',
+                        'file' => 'Upload File',
+                    ])
+                    ->default('url')
+                    ->live()
+                    ->columnSpanFull(),
+
                 Forms\Components\TextInput::make('image_url')
                     ->label('Thumbnail Artikel (URL Gambar)')
                     ->url()
@@ -134,11 +144,27 @@ class ArticleResource extends Resource
                     ->live(onBlur: true)
                     ->columnSpanFull()
                     ->maxLength(2000)
-                    ->required(),
+                    ->visible(fn(Get $get) => $get('image_source') === 'url')
+                    ->required(fn(Get $get) => $get('image_source') === 'url'),
+
+                Forms\Components\FileUpload::make('image_path')
+                    ->label('Upload Thumbnail')
+                    ->image()
+                    ->disk('public')
+                    ->directory('thumbnails')
+                    ->imageResizeMode('cover')
+                    ->imageCropAspectRatio('16:9')
+                    ->imageResizeTargetWidth('1280')
+                    ->imageResizeTargetHeight('720')
+                    ->maxSize(2048) // 2MB
+                    ->columnSpanFull()
+                    ->visible(fn(Get $get) => $get('image_source') === 'file')
+                    ->required(fn(Get $get) => $get('image_source') === 'file'),
 
                 // ================= 5. MEDIA & SETTINGS =================
                 Forms\Components\Placeholder::make('image_preview')
                     ->label('Preview Thumbnail')
+                    ->visible(fn(Get $get) => $get('image_source') === 'url') // ← tambah ini
                     ->content(function (Get $get) {
                         $url = $get('image_url');
                         if (!$url) {
