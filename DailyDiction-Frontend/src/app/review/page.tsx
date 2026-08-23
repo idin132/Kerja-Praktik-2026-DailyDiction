@@ -16,38 +16,45 @@ interface ReviewItem {
   category?: string | string[];
   categories?: any[];
   summary: string;
-  content: string;
+  content?: string;
   image_url?: string;
   image_full_url?: string;
-  created_at: string;
+  thumbnail?: string;
+  thumbnail_url?: string;
+  created_at?: string;
   type?: string;
 }
 
-// Helper untuk format URL Gambar
 function formatImageUrl(
   imageUrl: string | null | undefined,
-  fallback: string,
+  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
 ): string {
-  if (!imageUrl) return fallback;
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    if (imageUrl.includes("127.0.0.1:8000/storage/http")) {
-      return imageUrl.replace(
-        /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
-        "$1",
-      );
-    }
-    return imageUrl;
+  if (!imageUrl || typeof imageUrl !== "string") return fallback;
+
+  const clean = imageUrl.trim();
+
+  if (clean.includes("/storage/http://") || clean.includes("/storage/https://")) {
+    return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
   }
-  return `https://dailydiction.id/storage/${imageUrl}`;
+
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    return clean;
+  }
+
+  const cleanPath = clean.replace(/^\/+/, "");
+  if (cleanPath.startsWith("storage/")) {
+    return `https://dailydiction.id/${cleanPath}`;
+  }
+
+  return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
 export default function ReviewPage() {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("" );
   const [selectedPlatform, setSelectedPlatform] = useState<string>("ALL");
 
-  // State Pagination (8 Items per Halaman)
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 8;
 
@@ -55,10 +62,14 @@ export default function ReviewPage() {
     let isMounted = true;
 
     async function fetchData() {
+      setIsLoading(true);
       try {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
+
         const [reviewsRes, articlesRes] = await Promise.all([
-          fetch("https://dailydiction.id/api/v1/reviews").catch(() => null),
-          fetch("https://dailydiction.id/api/v1/articles").catch(() => null),
+          fetch(`${apiUrl}/reviews`, { cache: "no-store" }).catch(() => null),
+          fetch(`${apiUrl}/articles`, { cache: "no-store" }).catch(() => null),
         ]);
 
         let fetchedReviews: ReviewItem[] = [];
@@ -70,7 +81,6 @@ export default function ReviewPage() {
             : revJson.data || [];
         }
 
-        // Fallback: Jika endpoint reviews kosong, ambil dari articles yang berkategori/bertipe Review
         if (fetchedReviews.length === 0 && articlesRes && articlesRes.ok) {
           const artJson = await articlesRes.json();
           const rawArticles: ReviewItem[] = artJson.data || [];
@@ -90,14 +100,14 @@ export default function ReviewPage() {
                 ? item.category
                 : [item.category]),
               ...(Array.isArray(item.categories)
-                ? item.categories.map((c: any) => c.name)
+                ? item.categories.map((c: any) => (typeof c === "string" ? c : c.name))
                 : []),
             ]
               .filter(Boolean)
               .map((c) => String(c).toUpperCase());
 
             return cats.some(
-              (cat) => cat.includes("REVIEW") || cat.includes("ULASAN"),
+              (cat) => cat.includes("REVIEW") || cat.includes("ULASAN")
             );
           });
         }
@@ -121,12 +131,10 @@ export default function ReviewPage() {
     };
   }, []);
 
-  // Reset pagination ke halaman 1 saat filter atau pencarian berubah
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedPlatform]);
 
-  // Helper parser array platform super aman
   const getPlatformsArray = (review: ReviewItem): string[] => {
     const raw = review.platform || review.category || ["PC"];
     if (Array.isArray(raw)) return raw;
@@ -140,14 +148,13 @@ export default function ReviewPage() {
     return ["PC"];
   };
 
-  // Filter Data berdasarkan Platform Button & Search Bar
   const filteredReviews = reviews.filter((review) => {
     const plats = getPlatformsArray(review).map((p) => String(p).toUpperCase());
 
     const matchPlatform =
       selectedPlatform === "ALL" ||
       plats.some(
-        (p) => p.includes(selectedPlatform) || selectedPlatform.includes(p),
+        (p) => p.includes(selectedPlatform) || selectedPlatform.includes(p)
       );
 
     const matchSearch =
@@ -157,14 +164,11 @@ export default function ReviewPage() {
     return matchPlatform && matchSearch;
   });
 
-  // ========================================================
-  // LOGIC PAGINATION (8 ITEMS PER HALAMAN)
-  // ========================================================
   const totalPages = Math.ceil(filteredReviews.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentReviews = filteredReviews.slice(
     startIndex,
-    startIndex + itemsPerPage,
+    startIndex + itemsPerPage
   );
 
   const handlePageChange = (page: number) => {
@@ -172,9 +176,7 @@ export default function ReviewPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Featured Review diambil dari data awal
   const featuredReview = reviews.length > 0 ? reviews[0] : null;
-
   const filterButtons = ["ALL", "PC", "PLAYSTATION", "NINTENDO", "XBOX", "MOBILE"];
 
   return (
@@ -183,7 +185,7 @@ export default function ReviewPage() {
         <Navbar />
 
         <main className="mx-auto max-w-[1600px] px-4 py-12 sm:px-6 lg:px-8">
-          {/* ============ HEADER ============ */}
+          {/* Header */}
           <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-dark-border/50 pb-8">
             <div>
               <span className="mb-2 flex w-max items-center gap-2 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-3 py-1 text-xs font-bold tracking-wider text-yellow-500 font-mono">
@@ -211,13 +213,13 @@ export default function ReviewPage() {
             </div>
           </div>
 
-          {/* ============ FEATURED REVIEW (CARD BESAR ATAS) ============ */}
+          {/* Featured Review */}
           {isLoading ? (
             <div className="h-80 md:h-96 rounded-2xl border border-dark-border bg-dark-card/50 animate-pulse mb-12" />
           ) : featuredReview ? (
             <div className="mb-12">
               <Link
-                href={`/artikel/${featuredReview.slug}`}
+                href={`/review/${featuredReview.slug}`}
                 className="group block overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-colors hover:border-brand-cyan/50 shadow-xl"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
@@ -225,8 +227,9 @@ export default function ReviewPage() {
                     <img
                       src={formatImageUrl(
                         featuredReview.image_url ||
-                          featuredReview.image_full_url,
-                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
+                          featuredReview.image_full_url ||
+                          featuredReview.thumbnail_url ||
+                          featuredReview.thumbnail
                       )}
                       alt={featuredReview.title}
                       className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -265,7 +268,7 @@ export default function ReviewPage() {
             </div>
           ) : null}
 
-          {/* ============ FILTER BUTTONS ============ */}
+          {/* Filter Buttons */}
           <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-2 font-mono">
             <span className="flex items-center gap-2 text-xs text-text-muted uppercase tracking-widest mr-2 shrink-0">
               FILTER:
@@ -285,7 +288,7 @@ export default function ReviewPage() {
             ))}
           </div>
 
-          {/* ============ GRID REVIEW DI BAWAHNYA ============ */}
+          {/* Grid Reviews */}
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
@@ -297,7 +300,6 @@ export default function ReviewPage() {
             </div>
           ) : currentReviews.length > 0 ? (
             <>
-              {/* Container Animasi Halaman Halus */}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`review-page-${currentPage}-${selectedPlatform}`}
@@ -313,14 +315,16 @@ export default function ReviewPage() {
                     return (
                       <Link
                         key={review.id}
-                        href={`/artikel/${review.slug}`}
+                        href={`/review/${review.slug}`}
                         className="group flex flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-brand-cyan/50 hover:-translate-y-1 hover:shadow-lg duration-300"
                       >
                         <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-dark-border/50 shrink-0">
                           <img
                             src={formatImageUrl(
-                              review.image_url || review.image_full_url,
-                              "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
+                              review.image_url ||
+                                review.image_full_url ||
+                                review.thumbnail_url ||
+                                review.thumbnail
                             )}
                             alt={review.title}
                             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -349,13 +353,16 @@ export default function ReviewPage() {
 
                           <div className="mt-4 flex items-center justify-between border-t border-dark-border/60 pt-4 font-mono">
                             <span className="text-[10px] text-text-muted">
-                              {new Date(
-                                review.created_at || Date.now(),
-                              ).toLocaleDateString("id-ID", {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              })}
+                              {review.created_at
+                                ? new Date(review.created_at).toLocaleDateString(
+                                    "id-ID",
+                                    {
+                                      day: "numeric",
+                                      month: "short",
+                                      year: "numeric",
+                                    }
+                                  )
+                                : "-"}
                             </span>
                             <span className="text-[10px] font-bold uppercase tracking-wider text-brand-cyan">
                               Baca Review &rarr;
@@ -368,12 +375,9 @@ export default function ReviewPage() {
                 </motion.div>
               </AnimatePresence>
 
-              {/* ========================================================
-                  KOMPONEN PAGINATION
-                  ======================================================== */}
+              {/* Pagination Controls */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 pt-12 font-mono text-xs">
-                  {/* Prev Button */}
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
@@ -383,7 +387,6 @@ export default function ReviewPage() {
                     <ChevronLeft className="h-4 w-4" />
                   </button>
 
-                  {/* Number Buttons */}
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                     (pageNum) => (
                       <button
@@ -397,10 +400,9 @@ export default function ReviewPage() {
                       >
                         {pageNum}
                       </button>
-                    ),
+                    )
                   )}
 
-                  {/* Next Button */}
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
@@ -415,8 +417,7 @@ export default function ReviewPage() {
           ) : (
             <div className="rounded-2xl border border-dark-border bg-dark-card p-12 text-center font-mono">
               <p className="text-sm text-text-muted">
-                Tidak ada ulasan game yang ditemukan untuk filter "
-                {selectedPlatform}".
+                Tidak ada ulasan game yang ditemukan untuk filter "{selectedPlatform}".
               </p>
             </div>
           )}

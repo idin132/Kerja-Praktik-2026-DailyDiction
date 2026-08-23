@@ -7,27 +7,61 @@ import { DiscordWidget } from "@/components/Sidebar";
 import ShareWidget from "@/components/ShareWidget";
 import { User, Clock, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 
-export const revalidate = 3600;
+// Konfigurasi dynamic & revalidate agar data artikel selalu segar
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 
-// Helper buat bersihin URL Gambar
+interface NavItem {
+  title: string;
+  slug: string;
+  thumbnail?: string;
+  thumbnail_url?: string;
+  image?: string;
+  image_url?: string;
+}
+
+interface ArticleDetailItem {
+  id?: number;
+  title: string;
+  slug: string;
+  type?: string;
+  category?: string | string[];
+  category_input?: string | string[];
+  categories?: { id?: number; name: string }[] | any[];
+  category_color?: string;
+  summary?: string;
+  content?: string | any[];
+  image_url?: string;
+  image?: string;
+  thumbnail?: string;
+  thumbnail_url?: string;
+  banner_image?: string;
+  image_full_url?: string;
+  read_time?: string;
+  created_at?: string;
+  author?: string;
+  prev?: NavItem | null;
+  next?: NavItem | null;
+}
+
 function formatImageUrl(
   imageUrl: string | null | undefined,
-  fallback: string,
+  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
 ): string {
-  if (!imageUrl) return fallback;
+  if (!imageUrl || typeof imageUrl !== "string") return fallback;
 
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    if (imageUrl.includes("127.0.0.1:8000/storage/http")) {
-      return imageUrl.replace(
-        /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
-        "$1",
-      );
-    }
-    return imageUrl;
+  const clean = imageUrl.trim();
+
+  if (clean.includes("/storage/http://") || clean.includes("/storage/https://")) {
+    return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
   }
 
-  const cleanPath = imageUrl.startsWith("/") ? imageUrl.slice(1) : imageUrl;
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    return clean;
+  }
 
+  const cleanPath = clean.replace(/^\/+/, "");
   if (cleanPath.startsWith("storage/")) {
     return `https://dailydiction.id/${cleanPath}`;
   }
@@ -48,19 +82,25 @@ export default async function DetailArtikel({
     getAdvertisements().catch(() => null),
   ]);
 
-  const article = articleRes?.data || articleRes;
+  const rawArticle: ArticleDetailItem | null =
+    (articleRes as any)?.data || articleRes;
 
-  if (!article || !article.title) {
+  if (!rawArticle || !rawArticle.title) {
     notFound();
   }
 
-  const sidebarAd = adsData?.data?.[0] || null;
+  const article = rawArticle;
+  const sidebarAd =
+    adsData?.data && Array.isArray(adsData.data)
+      ? adsData.data[0]
+      : Array.isArray(adsData)
+      ? adsData[0]
+      : null;
+
   const prevArticle = article.prev || null;
   const nextArticle = article.next || null;
 
-  // ==========================================
-  // LOGIC KATEGORI SUPER AMAN
-  // ==========================================
+  // Parser kategori terpadu
   let categoryList: string[] = [];
   const rawCategory = article.category_input || article.category;
 
@@ -77,7 +117,9 @@ export default async function DetailArtikel({
       }
     }
   } else if (article.categories && article.categories.length > 0) {
-    categoryList = article.categories.map((c: any) => c.name);
+    categoryList = article.categories.map((c: any) =>
+      typeof c === "string" ? c : c.name
+    );
   }
 
   return (
@@ -90,7 +132,7 @@ export default async function DetailArtikel({
             {/* ================= KOLOM KIRI (KONTEN UTAMA) ================= */}
             <div className="lg:col-span-8">
               <article>
-                {/* Header Artikel - Fade In Up Tahap 1 */}
+                {/* Header Artikel */}
                 <div className="animate-fade-up-1 mb-8 space-y-6">
                   {/* Badge Kategori */}
                   <div className="flex flex-wrap items-center gap-2">
@@ -133,7 +175,7 @@ export default async function DetailArtikel({
                               day: "numeric",
                               month: "long",
                               year: "numeric",
-                            },
+                            }
                           )}
                         </span>
                       </div>
@@ -147,16 +189,17 @@ export default async function DetailArtikel({
                     )}
                   </div>
 
-                  {/* THUMBNAIL UTAMA ARTIKEL */}
+                  {/* Thumbnail Cover */}
                   <div className="mb-10 w-full overflow-hidden rounded-2xl border border-dark-border bg-dark-card shadow-2xl">
                     <img
                       src={formatImageUrl(
                         article.image_url ||
                           article.image ||
                           article.thumbnail ||
+                          article.thumbnail_url ||
                           article.banner_image ||
                           article.image_full_url,
-                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
+                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
                       )}
                       alt={article.title}
                       className="w-full aspect-[16/9] object-cover"
@@ -164,12 +207,11 @@ export default async function DetailArtikel({
                   </div>
 
                   <p className="text-base sm:text-lg text-text-muted text-justify font-medium border-l-4 border-brand-crimson pl-4 bg-dark-card/30 p-4 rounded-r-lg">
-                    {article.summary ||
-                      "Simak berita selengkapnya di bawah ini."}
+                    {article.summary || "Simak berita selengkapnya di bawah ini."}
                   </p>
                 </div>
 
-                {/* Body Artikel (Tiptap HTML) - Fade In Up Tahap 2 */}
+                {/* Body Artikel */}
                 <div
                   className="animate-fade-up-2 rich-text-content prose prose-invert prose-brand-crimson max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-12"
                   dangerouslySetInnerHTML={{
@@ -177,10 +219,8 @@ export default async function DetailArtikel({
                       typeof article.content === "string"
                         ? article.content
                         : Array.isArray(article.content)
-                          ? article.content
-                              .map((b: any) => b.content ?? "")
-                              .join("")
-                          : "",
+                        ? article.content.map((b: any) => b.content ?? "").join("")
+                        : "",
                   }}
                 />
               </article>
@@ -207,7 +247,7 @@ export default async function DetailArtikel({
                           prevArticle.thumbnail ||
                             prevArticle.image ||
                             prevArticle.image_url,
-                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
+                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
                         )}
                         alt={prevArticle.title}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -229,7 +269,7 @@ export default async function DetailArtikel({
                           nextArticle.thumbnail ||
                             nextArticle.image ||
                             nextArticle.image_url,
-                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
+                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
                         )}
                         alt={nextArticle.title}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -252,13 +292,10 @@ export default async function DetailArtikel({
             </div>
 
             {/* ================= KOLOM KANAN (SIDEBAR) ================= */}
-            {/* Bebas transform agar button fixed di Android tidak tertahan */}
             <aside className="lg:col-span-4 space-y-8">
               <div className="sticky top-24 space-y-6">
-                {/* Posisi desktop tidak berubah */}
                 <ShareWidget title={article.title} />
 
-                {/* Animasi diberikan ke elemen individual di bawah share widget */}
                 <div className="animate-fade-up-2">
                   {sidebarAd ? (
                     <a
@@ -328,7 +365,6 @@ export default async function DetailArtikel({
             animation: cinematicFadeUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
           }
 
-          /* Scroll reveal khusus elemen gambar/video di isi artikel */
           @keyframes scrollFadeUp {
             from {
               opacity: 0;
@@ -359,7 +395,7 @@ export default async function DetailArtikel({
             color: #d1d5db;
             text-align: justify;
           }
-          .rich-text-content p { margin-bottom: 1.5em; text-align: justify;}
+          .rich-text-content p { margin-bottom: 1.5em; text-align: justify; }
           .rich-text-content h2,
           .rich-text-content h3 {
             color: white;

@@ -28,7 +28,7 @@ function formatImageUrl(
     return imageUrl;
   }
 
-  return `https://dailydiction.id/storage/${imageUrl}`;
+  return `http://127.0.0.1:8000/storage/${imageUrl}`;
 }
 
 export default async function Home() {
@@ -40,7 +40,9 @@ export default async function Home() {
       getYouTubeVideos(50).catch(() => []),
     ]);
 
-  const rawArticles = articlesData?.data || [];
+  const articles = Array.isArray(articlesData)
+    ? articlesData
+    : articlesData?.data || [];
   let reviews = Array.isArray(reviewsData)
     ? reviewsData
     : reviewsData?.data || [];
@@ -71,11 +73,11 @@ export default async function Home() {
   };
 
   // 1. News Feed: HANYA artikel murni (bukan review)
-  const newsArticles = rawArticles.filter((item: any) => !isReviewItem(item));
+  const newsArticles = articles.filter((item: any) => !isReviewItem(item));
 
-  // 2. Game Reviews: Jika API khusus review kosong, ambil dari rawArticles yang bertipe review
+  // 2. Game Reviews: Jika API khusus review kosong, ambil dari articles yang bertipe review
   if (reviews.length === 0) {
-    reviews = rawArticles.filter((item: any) => isReviewItem(item));
+    reviews = articles.filter((item: any) => isReviewItem(item));
   }
 
   // --- FILTER YOUTUBE: SHORTS VS VIDEO PANJANG ---

@@ -10,19 +10,62 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Gamepad2 } from "lucide-react";
 import { DiscordWidget } from "@/components/Sidebar";
 
-// Helper buat bersihin URL Gambar
+export const revalidate = 0;
+
+interface NavReviewItem {
+  title: string;
+  slug: string;
+  thumbnail_url?: string;
+  thumbnail?: string;
+  image_url?: string;
+  image?: string;
+}
+
+interface ReviewItem {
+  id?: number;
+  title: string;
+  slug: string;
+  type?: string;
+  platform?: string | string[];
+  summary?: string;
+  content?: string | any[];
+  image_url?: string;
+  image_full_url?: string;
+  image?: string;
+  thumbnail_url?: string;
+  thumbnail?: string;
+  created_at?: string;
+  author?: string;
+  prev?: NavReviewItem | null;
+  next?: NavReviewItem | null;
+}
+
+// Helper terpadu untuk format gambar
 function formatImageUrl(
   imageUrl: string | null | undefined,
-  fallback: string,
+  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
 ): string {
-  if (!imageUrl) return fallback;
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    return imageUrl.replace(
-      /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
-      "$1",
-    );
+  if (!imageUrl || typeof imageUrl !== "string") return fallback;
+
+  const clean = imageUrl.trim();
+
+  // Tangani URL embed yang tertumpuk di dalam path storage
+  if (clean.includes("/storage/http://") || clean.includes("/storage/https://")) {
+    return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
   }
-  return `https://dailydiction.id/storage/${imageUrl}`;
+
+  // URL eksternal / embed langsung
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    return clean;
+  }
+
+  // Relative path Laravel Storage
+  const cleanPath = clean.replace(/^\/+/, "");
+  if (cleanPath.startsWith("storage/")) {
+    return `https://dailydiction.id/${cleanPath}`;
+  }
+
+  return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
 export default async function DetailReview({
@@ -33,35 +76,53 @@ export default async function DetailReview({
   const resolvedParams = await params;
   const slug = resolvedParams.slug;
 
-  // Narik data review dan iklan bebarengan
   const [reviewRes, adsData] = await Promise.all([
-    getGameReviewBySlug(slug),
+    getGameReviewBySlug(slug).catch(() => null),
     getAdvertisements().catch(() => null),
   ]);
 
-  // Karena format JSON dari showReview tadi dibungkus 'data', kita ambil isinya
-  let review = reviewRes?.data || reviewRes;
+  let review: ReviewItem | null = (reviewRes as any)?.data || reviewRes;
 
+  // Fallback pencarian artikel jika data review kosong
   if (!review || !review.title) {
     const articleRes = await getArticleBySlug(slug).catch(() => null);
-    review = articleRes?.data || articleRes;
+    review = (articleRes as any)?.data || articleRes;
   }
 
   if (!review || !review.title) {
     notFound();
   }
 
-  const sidebarAd = adsData?.data?.[0] || null;
+  const sidebarAd =
+    adsData?.data && Array.isArray(adsData.data)
+      ? adsData.data[0]
+      : Array.isArray(adsData)
+      ? adsData[0]
+      : null;
+
   const prevReview = review.prev || null;
   const nextReview = review.next || null;
+
+  const parsePlatforms = (platform: string | string[] | undefined): string[] => {
+    if (!platform) return [];
+    if (Array.isArray(platform)) return platform;
+    if (typeof platform === "string") {
+      try {
+        return platform.startsWith("[") ? JSON.parse(platform) : [platform];
+      } catch {
+        return [platform];
+      }
+    }
+    return [];
+  };
+
+  const platforms = parsePlatforms(review.platform);
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
       <Navbar />
 
-      {/* Kontainer Utama Tetap 1600px biar sejajar Navbar & Footer */}
       <main className="mx-auto max-w-[1600px] px-4 py-12 sm:px-6 lg:px-8">
-        {/* 👇 Konten baca dikunci di max-w-7xl (1280px) dan ditaruh di tengah (mx-auto) 👇 */}
         <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
             {/* ================= KOLOM KIRI (KONTEN UTAMA) ================= */}
@@ -70,37 +131,51 @@ export default async function DetailReview({
                 {/* Header Review */}
                 <div className="mb-8 space-y-6">
                   {/* Badge Platform */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    {review.platform && (
-                      <>
-                        {(Array.isArray(review.platform)
-                          ? review.platform
-                          : typeof review.platform === "string" &&
-                              review.platform.startsWith("[")
-                            ? JSON.parse(review.platform)
-                            : [review.platform]
-                        ).map((plat: string, idx: number) => (
-                          <span
-                            key={idx}
-                            className="flex items-center gap-1.5 rounded bg-brand-cyan/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-cyan border border-brand-cyan/30"
-                          >
-                            <Gamepad2 className="h-3.5 w-3.5" />
-                            {plat}
-                          </span>
-                        ))}
-                      </>
-                    )}
-                  </div>
+                  {platforms.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {platforms.map((plat: string, idx: number) => (
+                        <span
+                          key={idx}
+                          className="flex items-center gap-1.5 rounded bg-brand-cyan/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-cyan border border-brand-cyan/30"
+                        >
+                          <Gamepad2 className="h-3.5 w-3.5" />
+                          {plat}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white leading-tight">
                     {review.title}
                   </h1>
 
-                  {/* Summary / Kesimpulan Singkat */}
+                  {/* Summary */}
                   <p className="text-lg text-text-muted text-justify font-medium border-l-4 border-brand-crimson pl-4 bg-dark-card/30 p-4 rounded-r-lg">
                     {review.summary || "Baca ulasan lengkap game ini di bawah."}
                   </p>
                 </div>
+
+                {/* Cover Image Utama */}
+                {(review.image_url ||
+                  review.image_full_url ||
+                  review.image ||
+                  review.thumbnail_url ||
+                  review.thumbnail) && (
+                  <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-dark-border mb-8">
+                    <img
+                      src={formatImageUrl(
+                        review.image_url ||
+                          review.image_full_url ||
+                          review.image ||
+                          review.thumbnail_url ||
+                          review.thumbnail,
+                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
+                      )}
+                      alt={review.title}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
 
                 {/* Body Konten Review */}
                 <div
@@ -110,10 +185,8 @@ export default async function DetailReview({
                       typeof review.content === "string"
                         ? review.content
                         : Array.isArray(review.content)
-                          ? review.content
-                              .map((b: any) => b.content ?? "")
-                              .join("")
-                          : "",
+                        ? review.content.map((b: any) => b.content ?? "").join("")
+                        : "",
                   }}
                 />
               </article>
@@ -138,8 +211,11 @@ export default async function DetailReview({
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
                       <img
                         src={formatImageUrl(
-                          prevReview.thumbnail,
-                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
+                          prevReview.thumbnail_url ||
+                            prevReview.thumbnail ||
+                            prevReview.image_url ||
+                            prevReview.image,
+                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
                         )}
                         alt={prevReview.title}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -159,8 +235,11 @@ export default async function DetailReview({
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
                       <img
                         src={formatImageUrl(
-                          nextReview.thumbnail,
-                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
+                          nextReview.thumbnail_url ||
+                            nextReview.thumbnail ||
+                            nextReview.image_url ||
+                            nextReview.image,
+                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
                         )}
                         alt={nextReview.title}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -185,7 +264,6 @@ export default async function DetailReview({
             {/* ================= KOLOM KANAN (SIDEBAR) ================= */}
             <aside className="lg:col-span-4 space-y-8">
               <div className="sticky top-24 space-y-8">
-                {/* Space Iklan Dinamis */}
                 {sidebarAd ? (
                   <a
                     href={sidebarAd.url_link}
@@ -216,7 +294,6 @@ export default async function DetailReview({
                   </div>
                 )}
 
-                {/* Widget Discord */}
                 <div className="w-full max-w-[320px] mx-auto">
                   <DiscordWidget />
                 </div>
@@ -237,7 +314,7 @@ export default async function DetailReview({
             color: #d1d5db;
             text-align: justify;
           }
-          .rich-text-content p { margin-bottom: 1.5em; text-align: justify;}
+          .rich-text-content p { margin-bottom: 1.5em; text-align: justify; }
           .rich-text-content h2,
           .rich-text-content h3 {
             color: white;

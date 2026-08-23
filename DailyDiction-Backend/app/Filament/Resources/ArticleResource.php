@@ -76,9 +76,7 @@ class ArticleResource extends Resource
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
 
-                // ================= 3. FORM HYBRID (KONDISIONAL SESUAI TIPE) =================
-
-                // A. KHUSUS ARTIKEL BIASA
+                // ================= 3. FORM HYBRID KATEGORI =================
                 Forms\Components\TagsInput::make('category_input')
                     ->label('Category')
                     ->placeholder('Ketik kategori, tekan Enter...')
@@ -86,7 +84,6 @@ class ArticleResource extends Resource
                     ->visible(fn(Get $get) => $get('type') === 'article')
                     ->required(fn(Get $get) => $get('type') === 'article'),
 
-                // B. KHUSUS TEKNOLOGI & HARDWARE
                 Forms\Components\TagsInput::make('category_input')
                     ->label('Kategori Tech / Perangkat')
                     ->placeholder('Contoh: Keyboard, Mouse, GPU, Monitor...')
@@ -104,9 +101,8 @@ class ArticleResource extends Resource
                     ->visible(fn(Get $get) => $get('type') === 'technology')
                     ->required(fn(Get $get) => $get('type') === 'technology'),
 
-                // C. KHUSUS REVIEW: Platform Game
                 Forms\Components\Select::make('platform')
-                    ->label('Platform')
+                    ->label('Platform Game')
                     ->multiple()
                     ->options([
                         'PC' => 'PC',
@@ -126,58 +122,66 @@ class ArticleResource extends Resource
                     ->maxLength(255)
                     ->default('crimson'),
 
-                // ================= 4. KONTEN ARTIKEL =================
-                Forms\Components\Radio::make('image_source')
-                    ->label('Sumber Thumbnail')
-                    ->options([
-                        'url'  => 'URL Gambar (eksternal)',
-                        'file' => 'Upload File',
-                    ])
-                    ->default('url')
-                    ->live()
-                    ->columnSpanFull(),
+                // ================= 4. THUMBNAIL HYBRID (UPLOAD & URL) =================
+                Forms\Components\Section::make('Media & Thumbnail')
+                    ->description('Pilih salah satu: Upload gambar dari perangkat Anda ATAU gunakan Link URL.')
+                    ->schema([
+                        Forms\Components\FileUpload::make('image')
+                            ->label('Upload Gambar (Internal)')
+                            ->image()
+                            ->directory('articles/thumbnails')
+                            ->maxSize(5120)
+                            ->live()  // ganti onBlur ke live() supaya disable langsung reaktif
+                            ->columnSpan(1)
+                            ->disabled(fn(Get $get) => !empty($get('image_url')))
+                            ->hint(fn(Get $get) => !empty($get('image_url')) ? '⚠️ Hapus URL dulu untuk menggunakan upload file.' : null),
 
-                Forms\Components\TextInput::make('image_url')
-                    ->label('Thumbnail Artikel (URL Gambar)')
-                    ->url()
-                    ->placeholder('https://example.com/image.jpg')
-                    ->live(onBlur: true)
-                    ->columnSpanFull()
-                    ->maxLength(2000)
-                    ->visible(fn(Get $get) => $get('image_source') === 'url')
-                    ->required(fn(Get $get) => $get('image_source') === 'url'),
+                        Forms\Components\TextInput::make('image_url')
+                            ->label('Atau URL Gambar (Eksternal)')
+                            ->placeholder('https://example.com/image.jpg')
+                            ->url()
+                            ->maxLength(2000)
+                            ->live()  // sama, ganti ke live()
+                            ->columnSpan(1)
+                            ->disabled(fn(Get $get) => !empty($get('image')) && !is_array($get('image'))
+                                ? true
+                                : (is_array($get('image')) && count($get('image')) > 0))
+                            ->hint(fn(Get $get) => (!empty($get('image')) || (is_array($get('image')) && count($get('image')) > 0))
+                                ? '⚠️ Hapus file upload dulu untuk menggunakan URL.'
+                                : null),
 
-                Forms\Components\FileUpload::make('image_path')
-                    ->label('Upload Thumbnail')
-                    ->image()
-                    ->disk('public')
-                    ->directory('thumbnails')
-                    ->imageResizeMode('cover')
-                    ->imageCropAspectRatio('16:9')
-                    ->imageResizeTargetWidth('1280')
-                    ->imageResizeTargetHeight('720')
-                    ->maxSize(2048) // 2MB
-                    ->columnSpanFull()
-                    ->visible(fn(Get $get) => $get('image_source') === 'file')
-                    ->required(fn(Get $get) => $get('image_source') === 'file'),
+                        Forms\Components\Placeholder::make('image_preview')
+                            ->label('Preview Thumbnail')
+                            ->content(function (Get $get) {
+                                $internalImage = $get('image');
+                                $externalUrl = $get('image_url');
 
-                // ================= 5. MEDIA & SETTINGS =================
-                Forms\Components\Placeholder::make('image_preview')
-                    ->label('Preview Thumbnail')
-                    ->visible(fn(Get $get) => $get('image_source') === 'url') // ← tambah ini
-                    ->content(function (Get $get) {
-                        $url = $get('image_url');
-                        if (!$url) {
-                            return new HtmlString('<span class="text-xs text-gray-400">Belum ada preview (masukkan URL gambar di atas)</span>');
-                        }
-                        return new HtmlString('
-                            <div class="mt-1">
-                                <img src="' . e($url) . '" alt="Thumbnail Preview" class="max-h-48 rounded-lg object-cover border border-gray-200 shadow-sm" onerror="this.src=\'https://placehold.co/600x400?text=Gambar+Tidak+Valid\'"/>
-                            </div>
-                        ');
-                    })
-                    ->columnSpanFull(),
+                                // Fix: FileUpload return array saat baru diupload
+                                if (is_array($internalImage)) {
+                                    $internalImage = $internalImage[0] ?? null;
+                                }
 
+                                $displayUrl = null;
+                                if ($internalImage) {
+                                    $displayUrl = '/storage/' . $internalImage;
+                                } elseif ($externalUrl) {
+                                    $displayUrl = $externalUrl;
+                                }
+
+                                if (!$displayUrl) {
+                                    return new HtmlString('<span class="text-xs text-gray-400 font-mono">Belum ada thumbnail. Silakan upload file atau masukkan link URL.</span>');
+                                }
+
+                                return new HtmlString('
+                                    <div class="mt-2 flex justify-center bg-gray-900/50 rounded-xl p-4 border border-gray-800">
+                                        <img src="' . e($displayUrl) . '" alt="Preview" class="max-h-64 rounded-lg object-contain shadow-lg" onerror="this.src=\'https://placehold.co/800x450?text=Gambar+Tidak+Valid\'"/>
+                                    </div>
+                                ');
+                            })
+                            ->columnSpanFull(),
+                    ])->columns(2),
+
+                // ================= 5. KONTEN & SETTINGS =================
                 Forms\Components\Textarea::make('summary')
                     ->required()
                     ->columnSpanFull(),
@@ -231,27 +235,10 @@ class ArticleResource extends Resource
                     ])
                     ->mediaAction(CustomMediaAction::class)
                     ->columnSpanFull()
-                    ->required()
-                    ->live(onBlur: true)
-                    ->afterStateUpdated(function (mixed $state, Set $set) {
-                        if (!$state) {
-                            $set('read_time', '1 MIN READ');
-                            return;
-                        }
+                    ->required(),
 
-                        $rawText = is_array($state) ? json_encode($state) : (string) $state;
-                        $cleanText = strip_tags($rawText);
-                        $wordCount = str_word_count($cleanText);
-                        $minutes = max(1, ceil($wordCount / 200));
-
-                        $set('read_time', "{$minutes} MIN READ");
-                    }),
-
-                Forms\Components\TextInput::make('read_time')
-                    ->required()
-                    ->maxLength(255)
-                    ->default('1 MIN READ')
-                    ->readOnly(),
+                Forms\Components\Hidden::make('read_time')
+                    ->default('1 MIN READ'),
 
                 Forms\Components\Toggle::make('is_featured')
                     ->required()
@@ -266,8 +253,14 @@ class ArticleResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('image_url')
+                // Nampilin Hybrid Thumbnail di Tabel
+                Tables\Columns\ImageColumn::make('cover_image')
                     ->label('Thumbnail')
+                    ->state(function (Article $record) {
+                        return $record->image_path
+                            ? url('storage/' . $record->image_path)
+                            : $record->image_url;
+                    })
                     ->square(),
 
                 Tables\Columns\TextColumn::make('type')
@@ -295,13 +288,8 @@ class ArticleResource extends Resource
                     ->badge()
                     ->separator(','),
 
-                Tables\Columns\TextColumn::make('category_color')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('read_time')
                     ->searchable(),
-                Tables\Columns\IconColumn::make('is_featured')
-                    ->boolean()
-                    ->hidden(),
 
                 Tables\Columns\IconColumn::make('is_published')
                     ->boolean(),

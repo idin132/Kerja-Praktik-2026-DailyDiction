@@ -11,7 +11,7 @@ interface ArticleItem {
   slug: string;
   category_input?: string | string[];
   category?: string | string[];
-  categories?: any[];
+  categories?: { id?: number; name: string }[] | any[];
   summary: string;
   thumbnail?: string;
   thumbnail_url?: string;
@@ -43,22 +43,22 @@ function formatHeroImage(article: ArticleItem): string {
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-// FUNGSI DIUBAH: Sekarang return Array of String persis kayak di NewsPage
+// Helper pengambil seluruh tag kategori
 function getCategoriesArray(item: ArticleItem, fallback = "NEWS"): string[] {
   if (item.contentType === "review") return ["REVIEW"];
 
   let rawCats: any[] = [];
-  
+
   if (item.categories && item.categories.length > 0) {
-    rawCats = item.categories.map((c: any) => c.name);
+    rawCats = item.categories.map((c: any) => (typeof c === "string" ? c : c.name));
   } else if (item.category_input) {
     rawCats = Array.isArray(item.category_input) ? item.category_input : [item.category_input];
   } else if (item.category) {
     if (typeof item.category === "string" && item.category.startsWith("[")) {
-      try { 
-        rawCats = JSON.parse(item.category); 
-      } catch { 
-        rawCats = [item.category]; 
+      try {
+        rawCats = JSON.parse(item.category);
+      } catch {
+        rawCats = [item.category];
       }
     } else {
       rawCats = Array.isArray(item.category) ? item.category : [item.category];
@@ -66,8 +66,7 @@ function getCategoriesArray(item: ArticleItem, fallback = "NEWS"): string[] {
   }
 
   const validCats = rawCats.filter(Boolean).map(String);
-  // Kalau ada isinya, return semuanya (jangan cuma index 0)
-  return validCats.length > 0 ? validCats.map(c => c.toUpperCase()) : [fallback];
+  return validCats.length > 0 ? validCats.map((c) => c.toUpperCase()) : [fallback];
 }
 
 export default function HeroSection() {
@@ -100,19 +99,18 @@ export default function HeroSection() {
         const articlesJson = articlesRes?.ok ? await articlesRes.json() : null;
         const reviewsJson = reviewsRes?.ok ? await reviewsRes.json() : null;
 
-        // Beri tanda tipe rute konten
         const newsData: ArticleItem[] = (articlesJson?.data || []).map(
           (item: any) => ({
             ...item,
             contentType: "artikel",
-          }),
+          })
         );
 
         const reviewsData: ArticleItem[] = (reviewsJson?.data || []).map(
           (item: any) => ({
             ...item,
             contentType: "review",
-          }),
+          })
         );
 
         // Gabungkan dan urutkan berdasarkan created_at descending
@@ -122,7 +120,6 @@ export default function HeroSection() {
           return dateB - dateA;
         });
 
-        // Ambil hanya 5 konten terbaru
         if (isMounted) {
           setArticles(combined.slice(0, 5));
         }
@@ -174,9 +171,7 @@ export default function HeroSection() {
   }
 
   const currentArticle = articles[currentIndex];
-  // Buat link dinamis mengarah ke /artikel/slug atau /review/slug
   const targetLink = `/${currentArticle.contentType || "artikel"}/${currentArticle.slug}`;
-  // Ambil semua array kategori buat artikel yang lagi aktif
   const currentCategories = getCategoriesArray(currentArticle);
 
   return (
@@ -219,10 +214,9 @@ export default function HeroSection() {
                     exit={{ opacity: 0, y: -15 }}
                     transition={{ duration: 0.4 }}
                   >
-                    {/* BAGIAN DIUBAH: Looping semua kategori pake map */}
                     <div className="flex flex-wrap items-center gap-1.5 mb-2">
                       {currentCategories.map((cat, idx) => (
-                        <span 
+                        <span
                           key={idx}
                           className="rounded bg-brand-crimson px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-white shadow-sm"
                         >
