@@ -31,10 +31,16 @@ export default async function SearchPage(props: {
   const query = searchParams.q || "";
   const lowerQuery = query.toLowerCase();
 
+<<<<<<< HEAD
+  // 1. Ambil semua data artikel dari API Laravel
+  const articlesData = await getArticles();
+  const allArticles = (articlesData as any)?.data || articlesData;  
+=======
   const [articlesRes, reviewsRes] = await Promise.all([
     fetch(`https://dailydiction.id/api/v1/articles?type=article&t=${Date.now()}`, { cache: "no-store" }).catch(() => null),
     fetch(`https://dailydiction.id/api/v1/articles?type=review&t=${Date.now()}`, { cache: "no-store" }).catch(() => null),
   ]);
+>>>>>>> b5190bdb7b908a673a20e2907e37306e14a31469
 
   const articlesJson = articlesRes?.ok ? await articlesRes.json() : { data: [] };
   const reviewsJson = reviewsRes?.ok ? await reviewsRes.json() : { data: [] };

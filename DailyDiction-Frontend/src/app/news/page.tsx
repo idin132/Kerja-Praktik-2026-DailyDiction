@@ -26,33 +26,49 @@ interface ArticleItem {
   categories?: any[];
   category_color?: string;
   summary: string;
-  content: string;
+  content?: string;
   image_url?: string;
   image_full_url?: string;
-  read_time: string;
-  created_at: string;
+  thumbnail?: string;
+  thumbnail_url?: string;
+  image?: string;
+  read_time?: string;
+  created_at?: string;
   author?: string;
   type?: string;
 }
 
 function formatNewsImage(item: ArticleItem): string {
-  const imageUrl = item.image_url || item.image_full_url;
+  const rawUrl =
+    item.image_url ||
+    item.thumbnail_url ||
+    item.thumbnail ||
+    item.image_full_url ||
+    item.image;
+
   const fallback =
     "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
 
-  if (!imageUrl) return fallback;
+  if (!rawUrl) return fallback;
 
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    if (imageUrl.includes("127.0.0.1:8000/storage/http")) {
-      return imageUrl.replace(
+  const clean = rawUrl.trim();
+
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    if (clean.includes("127.0.0.1:8000/storage/http")) {
+      return clean.replace(
         /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
-        "$1",
+        "$1"
       );
     }
-    return imageUrl;
+    return clean;
   }
 
-  return `https://dailydiction.id/storage/${imageUrl}`;
+  const cleanPath = clean.startsWith("/") ? clean.slice(1) : clean;
+  if (cleanPath.startsWith("storage/")) {
+    return `https://dailydiction.id/${cleanPath}`;
+  }
+
+  return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
 export default function NewsPage() {
@@ -91,6 +107,9 @@ export default function NewsPage() {
         }
       } catch (err) {
         console.error("Gagal mengambil data berita:", err);
+        if (isMounted) {
+          setArticles([]);
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -105,12 +124,11 @@ export default function NewsPage() {
     };
   }, [currentPage]);
 
-  // Helper parser kategori lengkap dari kode kedua
   const getCategoriesArray = (item: ArticleItem): string[] => {
     let rawCats: any[] = [];
 
     if (item.categories && item.categories.length > 0) {
-      rawCats = item.categories.map((c: any) => c.name);
+      rawCats = item.categories.map((c: any) => (typeof c === "string" ? c : c.name));
     } else if (item.category_input) {
       rawCats = Array.isArray(item.category_input)
         ? item.category_input
@@ -133,7 +151,6 @@ export default function NewsPage() {
     return validCats.length > 0 ? validCats : ["NEWS"];
   };
 
-  // Helper penyaring: Cek apakah item adalah tipe Review
   const isReviewItem = (item: ArticleItem) => {
     if (
       item.type?.toLowerCase() === "review" ||
@@ -148,7 +165,7 @@ export default function NewsPage() {
         : [item.category_input]),
       ...(Array.isArray(item.category) ? item.category : [item.category]),
       ...(Array.isArray(item.categories)
-        ? item.categories.map((c: any) => c.name)
+        ? item.categories.map((c: any) => (typeof c === "string" ? c : c.name))
         : []),
     ]
       .filter(Boolean)
@@ -157,16 +174,13 @@ export default function NewsPage() {
     return cats.some((cat) => cat.includes("REVIEW") || cat.includes("ULASAN"));
   };
 
-  // Filter awal untuk artikel murni (bukan review)
   const pureNewsArticles = articles.filter((item) => !isReviewItem(item));
 
-  // Daftar kategori untuk pills
   const allCategories = pureNewsArticles.flatMap((item) =>
     getCategoriesArray(item).map((cat) => cat.toUpperCase())
   );
   const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
 
-  // Filter Klien untuk Search & Kategori pada data aktif
   const filteredArticles = pureNewsArticles.filter((item) => {
     const itemCats = getCategoriesArray(item).map((c) => c.toUpperCase());
 
