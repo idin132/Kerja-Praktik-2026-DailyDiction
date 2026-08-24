@@ -3,6 +3,7 @@ import HeroSection from "@/components/HeroSection";
 import YoutubeHero from "@/components/YoutubeHero";
 import YoutubeShorts from "@/components/YoutubeShorts";
 import TechSection from "@/components/TechSection";
+import HorizontalAdBanner from "@/components/HorizontalAdBanner";
 import { NewsFeedCard, ReviewCard } from "@/components/Cards";
 import { DiscordWidget } from "@/components/Sidebar";
 import Footer from "@/components/Footer";
@@ -28,7 +29,7 @@ function formatImageUrl(
     return imageUrl;
   }
 
-  return `http://127.0.0.1:8000/storage/${imageUrl}`;
+  return `https://dailydiction.id/storage/${imageUrl}`;
 }
 
 export default async function Home() {
@@ -40,18 +41,15 @@ export default async function Home() {
       getYouTubeVideos(50).catch(() => []),
     ]);
 
-<<<<<<< HEAD
   const rawArticles = articlesData?.data || [];
   let reviews = Array.isArray(reviewsData)
-=======
-  const articles = Array.isArray(articlesData)
-    ? articlesData
-    : articlesData?.data || [];
-  const reviews = Array.isArray(reviewsData)
->>>>>>> eccea1d2ea1f735501271ec8a20e8f9619025105
     ? reviewsData
     : reviewsData?.data || [];
-  const sidebarAd = adsData?.data?.[0] || null;
+
+  // Data Iklan
+  const adsList = adsData?.data || (Array.isArray(adsData) ? adsData : []);
+  const sidebarAd = adsList[0] || null;
+  const horizontalBannerAd = adsList[1] || adsList[0] || null;
 
   // Helper pemeriksa apakah konten adalah Review / Ulasan
   const isReviewItem = (item: any) => {
@@ -131,7 +129,11 @@ export default async function Home() {
       <HeroSection />
 
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
+        {/* Section Latest Video (YouTube Hero) */}
         <YoutubeHero videos={longVideosList} />
+
+        {/* ================= BANNER IKLAN HORIZONTAL (1200 x 250) ================= */}
+        <HorizontalAdBanner adData={horizontalBannerAd} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12 mt-4">
           <div className="lg:col-span-8 2xl:col-span-9 space-y-12">
@@ -191,7 +193,7 @@ export default async function Home() {
                 <div className="flex items-center gap-2">
                   <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
                   <h2 className="text-lg font-black uppercase tracking-wider text-text-primary">
-                    Ulasan Game Terbaru
+                    LATEST GAME REVIEW
                   </h2>
                 </div>
                 <a
