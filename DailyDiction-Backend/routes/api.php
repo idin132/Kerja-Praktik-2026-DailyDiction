@@ -11,17 +11,23 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+// SEMUA ROUTE DI BAWAH INI PUNYA PREFIX /v1/
 Route::prefix('v1')->group(function () {
     // Cuma butuh 3 baris ini untuk artikel & review!
     Route::get('/articles', [ArticleController::class, 'index']);
     Route::get('/articles/featured', [ArticleController::class, 'featured']);
     Route::get('/articles/{slug}', [ArticleController::class, 'show']);
+    
     Route::get('/reviews', [ArticleController::class, 'reviews']);
     Route::get('/reviews/{slug}', [ArticleController::class, 'showReview']);
+    
     Route::get('/reels', [ArticleController::class, 'reels']);
+    
     Route::get('/youtube-videos', [YoutubeController::class, 'getVideos']);
     Route::get('/youtube-shorts', [YoutubeController::class, 'getShorts']);
+    
     Route::get('/technologies', [ArticleController::class, 'technologies']);
+    
     Route::get('/proxy-image', function (\Illuminate\Http\Request $request) {
         $url = $request->query('url');
 
@@ -46,7 +52,7 @@ Route::prefix('v1')->group(function () {
         ]);
     });
 
-    // Jembatan untuk Iklan (Dari Rizqi)
+    // Jembatan untuk Iklan (Dari Rizqi) - INI YANG KITA PAKE!
     Route::get('/advertisements', function () {
         return response()->json([
             'data' => Advertisement::latest()->get()

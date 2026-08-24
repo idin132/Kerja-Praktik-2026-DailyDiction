@@ -88,9 +88,15 @@ class ArticleResource extends Resource
                     ->label('Kategori Tech / Perangkat')
                     ->placeholder('Contoh: Keyboard, Mouse, GPU, Monitor...')
                     ->suggestions([
-                        'Keyboard', 'Mouse', 'Headset', 'Monitor', 
-                        'VGA / GPU', 'Processor', 'Laptop Gaming', 
-                        'Console / Handheld', 'Accessories',
+                        'Keyboard',
+                        'Mouse',
+                        'Headset',
+                        'Monitor',
+                        'VGA / GPU',
+                        'Processor',
+                        'Laptop Gaming',
+                        'Console / Handheld',
+                        'Accessories',
                     ])
                     ->visible(fn(Get $get) => $get('type') === 'technology')
                     ->required(fn(Get $get) => $get('type') === 'technology'),
@@ -124,25 +130,37 @@ class ArticleResource extends Resource
                             ->label('Upload Gambar (Internal)')
                             ->image()
                             ->directory('articles/thumbnails')
-                            ->maxSize(5120) // Maks 5MB
-                            ->live(onBlur: true)
-                            ->columnSpan(1),
+                            ->maxSize(5120)
+                            ->live()  // ganti onBlur ke live() supaya disable langsung reaktif
+                            ->columnSpan(1)
+                            ->disabled(fn(Get $get) => !empty($get('image_url')))
+                            ->hint(fn(Get $get) => !empty($get('image_url')) ? '⚠️ Hapus URL dulu untuk menggunakan upload file.' : null),
 
                         Forms\Components\TextInput::make('image_url')
                             ->label('Atau URL Gambar (Eksternal)')
                             ->placeholder('https://example.com/image.jpg')
                             ->url()
                             ->maxLength(2000)
-                            ->live(onBlur: true)
-                            ->columnSpan(1),
+                            ->live()  // sama, ganti ke live()
+                            ->columnSpan(1)
+                            ->disabled(fn(Get $get) => !empty($get('image')) && !is_array($get('image'))
+                                ? true
+                                : (is_array($get('image')) && count($get('image')) > 0))
+                            ->hint(fn(Get $get) => (!empty($get('image')) || (is_array($get('image')) && count($get('image')) > 0))
+                                ? '⚠️ Hapus file upload dulu untuk menggunakan URL.'
+                                : null),
 
                         Forms\Components\Placeholder::make('image_preview')
                             ->label('Preview Thumbnail')
                             ->content(function (Get $get) {
-                                // Cek upload internal dulu, kalau kosong baru cek URL eksternal
-                                $internalImage = $get('image'); 
+                                $internalImage = $get('image');
                                 $externalUrl = $get('image_url');
-                                
+
+                                // Fix: FileUpload return array saat baru diupload
+                                if (is_array($internalImage)) {
+                                    $internalImage = $internalImage[0] ?? null;
+                                }
+
                                 $displayUrl = null;
                                 if ($internalImage) {
                                     $displayUrl = '/storage/' . $internalImage;
@@ -153,7 +171,7 @@ class ArticleResource extends Resource
                                 if (!$displayUrl) {
                                     return new HtmlString('<span class="text-xs text-gray-400 font-mono">Belum ada thumbnail. Silakan upload file atau masukkan link URL.</span>');
                                 }
-                                
+
                                 return new HtmlString('
                                     <div class="mt-2 flex justify-center bg-gray-900/50 rounded-xl p-4 border border-gray-800">
                                         <img src="' . e($displayUrl) . '" alt="Preview" class="max-h-64 rounded-lg object-contain shadow-lg" onerror="this.src=\'https://placehold.co/800x450?text=Gambar+Tidak+Valid\'"/>
@@ -171,19 +189,49 @@ class ArticleResource extends Resource
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
                     ->tools([
-                        'heading', 'blockquote', 'bold', 'italic', 'strike',
-                        'link', 'media', 'oembed', 'bullet-list', 'ordered-list',
-                        'code-block', 'undo', 'redo',
+                        'heading',
+                        'blockquote',
+                        'bold',
+                        'italic',
+                        'strike',
+                        'link',
+                        'media',
+                        'oembed',
+                        'bullet-list',
+                        'ordered-list',
+                        'code-block',
+                        'undo',
+                        'redo',
                     ])
                     ->bubbleMenuTools([
-                        'heading', 'blockquote', 'bold', 'italic', 'strike',
-                        'link', 'media', 'oembed', 'bullet-list', 'ordered-list',
-                        'code-block', 'undo', 'redo',
+                        'heading',
+                        'blockquote',
+                        'bold',
+                        'italic',
+                        'strike',
+                        'link',
+                        'media',
+                        'oembed',
+                        'bullet-list',
+                        'ordered-list',
+                        'code-block',
+                        'undo',
+                        'redo',
                     ])
                     ->floatingMenuTools([
-                        'heading', 'blockquote', 'bold', 'italic', 'strike',
-                        'link', 'media', 'oembed', 'bullet-list', 'ordered-list',
-                        'code-block', 'undo', 'redo',
+                        'heading',
+                        'blockquote',
+                        'bold',
+                        'italic',
+                        'strike',
+                        'link',
+                        'media',
+                        'oembed',
+                        'bullet-list',
+                        'ordered-list',
+                        'code-block',
+                        'undo',
+                        'redo',
                     ])
                     ->mediaAction(CustomMediaAction::class)
                     ->columnSpanFull()
@@ -209,7 +257,9 @@ class ArticleResource extends Resource
                 Tables\Columns\ImageColumn::make('cover_image')
                     ->label('Thumbnail')
                     ->state(function (Article $record) {
-                        return $record->image ? url('storage/' . $record->image) : $record->image_url;
+                        return $record->image_path
+                            ? url('storage/' . $record->image_path)
+                            : $record->image_url;
                     })
                     ->square(),
 

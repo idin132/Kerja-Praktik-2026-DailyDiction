@@ -11,13 +11,21 @@ import { getArticles, getGameReviews, getAdvertisements } from "@/lib/api";
 import { getYouTubeVideos } from "@/lib/youtube";
 import { Flame, Star, ArrowRight } from "lucide-react";
 
-export const revalidate = 3600;
+export const revalidate = 0; // Biar data iklan langsung ke-fetch real-time pas refresh (bebas cache)
 
 function formatImageUrl(
   imageUrl: string | null | undefined,
   fallback: string
 ): string {
   if (!imageUrl) return fallback;
+
+  // Jika URL mengarah ke production domain, ubah ke local storage XAMPP
+  if (imageUrl.includes("dailydiction.id/storage/")) {
+    return imageUrl.replace(
+      "https://dailydiction.id/storage/",
+      "http://127.0.0.1:8000/storage/"
+    );
+  }
 
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
     if (imageUrl.includes("127.0.0.1:8000/storage/http")) {
@@ -29,7 +37,8 @@ function formatImageUrl(
     return imageUrl;
   }
 
-  return `https://dailydiction.id/storage/${imageUrl}`;
+  // Fallback default lokal backend Laravel
+  return `http://127.0.0.1:8000/storage/${imageUrl}`;
 }
 
 export default async function Home() {
@@ -41,15 +50,29 @@ export default async function Home() {
       getYouTubeVideos(50).catch(() => []),
     ]);
 
-  const rawArticles = articlesData?.data || [];
+  const rawArticles = Array.isArray(articlesData)
+    ? articlesData
+    : articlesData?.data || [];
   let reviews = Array.isArray(reviewsData)
     ? reviewsData
     : reviewsData?.data || [];
 
-  // Data Iklan
+  // =========================================================================
+  // LOGIKA FILTER IKLAN (HORIZONTAL & SIDEBAR)
+  // =========================================================================
   const adsList = adsData?.data || (Array.isArray(adsData) ? adsData : []);
-  const sidebarAd = adsList[0] || null;
-  const horizontalBannerAd = adsList[1] || adsList[0] || null;
+
+  // Ambil iklan Horizontal (Cek position -> type -> fallback array)
+  const horizontalBannerAd =
+    adsList.find((ad: any) => ad.position === "horizontal") ||
+    adsList.find((ad: any) => ad.type === "banner") ||
+    adsList[0] ||
+    null;
+
+  // Ambil iklan Sidebar (Cek position == 'sidebar' atau fallback)
+  const sidebarAd =
+    adsList.find((ad: any) => ad.position === "sidebar") ||
+    (adsList.length > 1 ? adsList[1] : null);
 
   // Helper pemeriksa apakah konten adalah Review / Ulasan
   const isReviewItem = (item: any) => {
@@ -132,7 +155,7 @@ export default async function Home() {
         {/* Section Latest Video (YouTube Hero) */}
         <YoutubeHero videos={longVideosList} />
 
-        {/* ================= BANNER IKLAN HORIZONTAL (1200 x 250) ================= */}
+        {/* Banner Iklan Horizontal (1200 x 250) */}
         <HorizontalAdBanner adData={horizontalBannerAd} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12 mt-4">
@@ -193,7 +216,7 @@ export default async function Home() {
                 <div className="flex items-center gap-2">
                   <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
                   <h2 className="text-lg font-black uppercase tracking-wider text-text-primary">
-                    LATEST GAME REVIEW
+                    Ulasan Game Terbaru
                   </h2>
                 </div>
                 <a

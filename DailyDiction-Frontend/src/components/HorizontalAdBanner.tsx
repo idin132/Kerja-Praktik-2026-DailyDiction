@@ -19,19 +19,24 @@ function formatImageUrl(
   fallback: string = ""
 ): string {
   if (!imageUrl) return fallback;
+
+  // Jika URL mengarah ke domain production, konversi ke local storage XAMPP
+  if (imageUrl.includes("dailydiction.id/storage/")) {
+    return imageUrl.replace(
+      "https://dailydiction.id/storage/",
+      "http://127.0.0.1:8000/storage/"
+    );
+  }
+
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
     return imageUrl;
   }
-  const cleanPath = imageUrl.startsWith("/") ? imageUrl.slice(1) : imageUrl;
-  if (cleanPath.startsWith("storage/")) {
-    return `https://dailydiction.id/${cleanPath}`;
-  }
-  return `https://dailydiction.id/storage/${cleanPath}`;
+
+  return `http://127.0.0.1:8000/storage/${imageUrl}`;
 }
 
 export default function HorizontalAdBanner({ adData }: HorizontalAdBannerProps) {
-  if (!adData) {
-    // Fallback jika belum ada data iklan dari backend
+  if (!adData || !adData.banner_image) {
     return (
       <div className="my-8 w-full max-w-[1200px] mx-auto overflow-hidden rounded-2xl border border-dashed border-dark-border bg-dark-card/30 p-4 sm:p-6 text-center relative aspect-[1200/250] flex flex-col items-center justify-center">
         <span className="absolute top-3 right-4 text-[10px] font-mono text-text-muted/50 border border-text-muted/20 px-1.5 py-0.5 rounded">

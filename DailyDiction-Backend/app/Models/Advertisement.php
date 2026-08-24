@@ -13,6 +13,7 @@ class Advertisement extends Model
     protected $fillable = [
         'title',
         'type',          // <-- Tambahan buat nentuin banner / script
+        'position',
         'banner_image',
         'url_link',
         'script_code',   // <-- Tambahan buat nyimpen kode adsense
