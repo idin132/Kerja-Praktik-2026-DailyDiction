@@ -114,14 +114,23 @@ export default function HeroSection() {
         );
 
         // Gabungkan dan urutkan berdasarkan created_at descending
-        const combined = [...newsData, ...reviewsData].sort((a, b) => {
+        // Gabungkan data
+        const rawCombined = [...newsData, ...reviewsData];
+
+        // FILTER ANTI-KEMBAR: Cek ID biar gak ada yang double
+        const uniqueCombined = Array.from(
+          new Map(rawCombined.map((item) => [item.id, item])).values()
+        );
+
+        // Urutkan berdasarkan created_at descending
+        const sortedCombined = uniqueCombined.sort((a, b) => {
           const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
           const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
           return dateB - dateA;
         });
 
         if (isMounted) {
-          setArticles(combined.slice(0, 5));
+          setArticles(sortedCombined.slice(0, 5));
         }
       } catch (error) {
         console.warn("Gagal memuat konten Hero:", error);
