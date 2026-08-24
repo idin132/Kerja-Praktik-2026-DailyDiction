@@ -38,7 +38,8 @@ function formatImageUrl(
 export default function HorizontalAdBanner({ adData }: HorizontalAdBannerProps) {
   if (!adData || !adData.banner_image) {
     return (
-      <div className="my-8 w-full max-w-[1200px] mx-auto overflow-hidden rounded-2xl border border-dashed border-dark-border bg-dark-card/30 p-4 sm:p-6 text-center relative aspect-[1200/250] flex flex-col items-center justify-center">
+      // max-w-[1200px] dan mx-auto DIHAPUS biar full stretch dari kiri ke kanan
+      <div className="my-8 w-full overflow-hidden rounded-2xl border border-dashed border-dark-border bg-dark-card/30 p-4 sm:p-6 text-center relative aspect-[1200/250] flex flex-col items-center justify-center">
         <span className="absolute top-3 right-4 text-[10px] font-mono text-text-muted/50 border border-text-muted/20 px-1.5 py-0.5 rounded">
           ADVERTISEMENT
         </span>
@@ -46,14 +47,15 @@ export default function HorizontalAdBanner({ adData }: HorizontalAdBannerProps) 
           SPACE IKLAN BANNER UTAMA
         </span>
         <span className="text-xs font-mono text-brand-crimson/60 mt-1">
-          1200 x 250 px (Kelola dari Admin Panel)
+          Banner Horizontal (Responsive Full Width)
         </span>
       </div>
     );
   }
 
   return (
-    <div className="my-8 w-full max-w-[1200px] mx-auto overflow-hidden rounded-2xl border border-dark-border/40 bg-dark-card shadow-2xl relative group">
+    // max-w-[1200px] dan mx-auto DIHAPUS biar lebarnya sejajar sempurna
+    <div className="my-8 w-full overflow-hidden rounded-2xl border border-dark-border/40 bg-dark-card shadow-2xl relative group">
       <a
         href={adData.url_link || "#"}
         target="_blank"
@@ -63,7 +65,8 @@ export default function HorizontalAdBanner({ adData }: HorizontalAdBannerProps) 
         <img
           src={formatImageUrl(adData.banner_image, "")}
           alt={adData.title || "Advertisement"}
-          className="w-full h-auto max-h-[250px] object-cover transition-transform duration-500 group-hover:scale-[1.01]"
+          // w-full dan object-cover biar gambar melar dengan proporsional (gak gepeng)
+          className="w-full h-auto min-h-[150px] max-h-[250px] object-cover transition-transform duration-500 group-hover:scale-[1.01]"
         />
         <span className="absolute top-3 right-4 text-[9px] font-black tracking-widest text-white bg-black/70 backdrop-blur-md px-2 py-0.5 rounded border border-white/10">
           AD
