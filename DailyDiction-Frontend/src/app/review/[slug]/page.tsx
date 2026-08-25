@@ -7,7 +7,8 @@ import {
 } from "@/lib/api";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Gamepad2 } from "lucide-react";
+// IMPORT ICON TAMBAHAN: User, Calendar, Clock
+import { ChevronLeft, ChevronRight, Gamepad2, User, Calendar, Clock } from "lucide-react";
 import { DiscordWidget } from "@/components/Sidebar";
 
 export const revalidate = 0;
@@ -36,6 +37,7 @@ interface ReviewItem {
   thumbnail?: string;
   created_at?: string;
   author?: string;
+  read_time?: string; // Ditambahin buat jaga-jaga
   prev?: NavReviewItem | null;
   next?: NavReviewItem | null;
 }
@@ -148,6 +150,30 @@ export default async function DetailReview({
                   <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white leading-tight">
                     {review.title}
                   </h1>
+
+                  {/* INFO AUTHOR & TANGGAL (INI YANG TADI ILANG QI!) */}
+                  <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-text-muted mt-4 mb-2">
+                    <div className="flex items-center gap-1.5">
+                      <User className="h-4 w-4 text-brand-crimson" />
+                      <span className="font-bold text-white">{review.author || "Redaksi"}</span>
+                    </div>
+                    {review.created_at && (
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4" />
+                        <span>
+                          {new Date(review.created_at).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-4 w-4" />
+                      <span>{review.read_time || "3 MIN READ"}</span>
+                    </div>
+                  </div>
 
                   {/* Summary */}
                   <p className="text-lg text-text-muted text-justify font-medium border-l-4 border-brand-crimson pl-4 bg-dark-card/30 p-4 rounded-r-lg">
