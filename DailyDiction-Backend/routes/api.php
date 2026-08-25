@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ArticleController;
 use App\Models\Sponsor;
 use App\Models\Advertisement;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\YoutubeController;
 
 Route::get('/user', function (Request $request) {
@@ -43,6 +44,25 @@ Route::prefix('v1')->group(function () {
         return response($response->body(), 200)
             ->header('Content-Type', $response->header('Content-Type') ?? 'image/jpeg')
             ->header('Cache-Control', 'public, max-age=86400');
+    });
+
+    // Like & Get Comments (Bisa diakses siapa saja)
+    Route::post('/articles/{id}/like', [ArticleController::class, 'like']);
+    Route::get('/articles/{id}/comments', [ArticleController::class, 'getComments']);
+
+    // Post Komentar (Wajib Login)
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/articles/{id}/comments', [ArticleController::class, 'storeComment']);
+    });
+
+    // Auth Publik
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+
+    // Auth Terproteksi
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/logout', [AuthController::class, 'logout']);
     });
 
     // Jembatan untuk Sponsor (Dari Rizqi)

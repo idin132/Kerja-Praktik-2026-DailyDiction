@@ -23,6 +23,7 @@ class Article extends Model
         'read_time',
         'is_featured',
         'is_published',
+        'likes_count',
         'type',
         'platform',
         'category_input',
@@ -42,6 +43,7 @@ class Article extends Model
         });
     }
 
+
     protected $casts = [
         'content' => 'array',
         'is_featured' => 'boolean',
@@ -55,7 +57,7 @@ class Article extends Model
 
     public function getImageFullUrlAttribute()
     {
-        if (! $this->image_url) {
+        if (!$this->image_url) {
             return null;
         }
 
@@ -79,5 +81,10 @@ class Article extends Model
     public function categories(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Category::class, 'article_category');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(\App\Models\Comment::class)->with('user')->latest();
     }
 }

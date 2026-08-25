@@ -32,8 +32,7 @@ export interface AdvertisementItem {
 }
 
 // FIX UTAMA: Arahin paksa ke XAMPP lokal lu biar nyambung sama database yang barusan lu edit!
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
 // Helper Format Gambar Terpusat
 export function formatImageUrl(
@@ -55,8 +54,8 @@ export function formatImageUrl(
   const cleanPath = clean.replace(/^\/+/, "");
   
   // Kalau lagi jalan di localhost, tembak gambar ke local XAMPP juga
-  if (API_BASE_URL.includes("127.0.0.1") || API_BASE_URL.includes("localhost")) {
-      return `http://127.0.0.1:8000/storage/${cleanPath}`;
+  if (API_BASE_URL.includes("https://dailydiction.id") || API_BASE_URL.includes("localhost")) {
+      return `https://dailydiction.id/storage/${cleanPath}`;
   }
 
   return `https://dailydiction.id/storage/${cleanPath}`;
