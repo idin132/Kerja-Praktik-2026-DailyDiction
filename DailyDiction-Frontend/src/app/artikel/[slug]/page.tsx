@@ -6,6 +6,7 @@ import Link from "next/link";
 import { DiscordWidget } from "@/components/Sidebar";
 import ShareWidget from "@/components/ShareWidget";
 import { User, Clock, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import ArticleInteractions from "@/components/ArticleInteractions";
 
 // Konfigurasi dynamic & revalidate agar data artikel selalu segar
 export const dynamic = "force-dynamic";
@@ -223,6 +224,14 @@ export default async function DetailArtikel({
                         : "",
                   }}
                 />
+                  {/* Interaksi Like & Komen Hybrid */}
+                  {article.id && (
+                    <ArticleInteractions
+                      articleId={article.id}
+                      initialLikes={(article as any).likes_count || 0}
+                    />
+                  )}
+                
               </article>
 
               {/* ================= NAVIGASI NEXT / PREV ARTIKEL ================= */}
