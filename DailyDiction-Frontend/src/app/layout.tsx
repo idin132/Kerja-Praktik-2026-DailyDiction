@@ -33,11 +33,27 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* Gunakan tag script HTML standar untuk AdSense agar tidak menyuntikkan data-nscript */}
+        {/* 1. Tag Script Google AdSense lu */}
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9670478748166310"
           crossOrigin="anonymous"
+        />
+
+        {/* 2. TARUH SCRIPT GOOGLE ANALYTICS DI SINI */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-0G788S57DZ"
+        ></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-0G788S57DZ');
+            `,
+          }}
         />
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
