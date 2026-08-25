@@ -19,24 +19,18 @@ class CreateArticle extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        unset($data['category_input']);
-        unset($data['image_source']);
-
-        // Fix: FileUpload kadang return array, ambil nilai pertama
-        if (isset($data['image']) && is_array($data['image'])) {
-            $data['image'] = $data['image'][0] ?? null;
-        }
-
-        // Prioritas: file upload > URL
-        if (!empty($data['image'])) {
-            $data['image_path'] = $data['image']; // simpan ke kolom image_path
-            $data['image_url'] = null;
+        // Hitung Read Time otomatis sebelum save ke database
+        if (!empty($data['content'])) {
+            $rawText = is_array($data['content']) ? json_encode($data['content']) : (string) $data['content'];
+            $cleanText = strip_tags($rawText);
+            $wordCount = str_word_count($cleanText);
+            $minutes = max(1, ceil($wordCount / 200));
+            $data['read_time'] = "{$minutes} MIN READ";
         } else {
-            $data['image_path'] = null;
-            $data['image'] = null;
-            // image_url dibiarkan apa adanya
+            $data['read_time'] = '1 MIN READ';
         }
 
+        unset($data['category_input']);
         return $data;
     }
 
