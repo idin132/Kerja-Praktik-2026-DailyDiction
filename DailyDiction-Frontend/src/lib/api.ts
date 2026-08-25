@@ -31,8 +31,8 @@ export interface AdvertisementItem {
   is_active?: boolean;
 }
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
+// FIX UTAMA: Arahin paksa ke XAMPP lokal lu biar nyambung sama database yang barusan lu edit!
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
 // Helper Format Gambar Terpusat
 export function formatImageUrl(
@@ -52,8 +52,10 @@ export function formatImageUrl(
   }
 
   const cleanPath = clean.replace(/^\/+/, "");
-  if (cleanPath.startsWith("storage/")) {
-    return `https://dailydiction.id/${cleanPath}`;
+  
+  // Kalau lagi jalan di localhost, tembak gambar ke local XAMPP juga
+  if (API_BASE_URL.includes("https://dailydiction.id") || API_BASE_URL.includes("localhost")) {
+      return `https://dailydiction.id/storage/${cleanPath}`;
   }
 
   return `https://dailydiction.id/storage/${cleanPath}`;
@@ -64,7 +66,7 @@ export async function getAdvertisements(): Promise<{ data: AdvertisementItem[] }
   try {
     const res = await fetch(`${API_BASE_URL}/advertisements`, {
       headers: { Accept: "application/json" },
-      cache: "no-store",
+      cache: "no-store", // Matiin cache
     });
 
     if (!res.ok) return { data: [] };
@@ -124,7 +126,7 @@ export async function getArticleBySlug(slug: string): Promise<ArticleItem | null
   }
 }
 
-// 4. Fetch Game Reviews (Coba endpoint /reviews, fallback ke /articles?type=review)
+// 4. Fetch Game Reviews
 export async function getGameReviews(): Promise<ArticleItem[]> {
   try {
     const res = await fetch(`${API_BASE_URL}/reviews`, {
@@ -160,7 +162,7 @@ export async function getGameReviews(): Promise<ArticleItem[]> {
   }
 }
 
-// 5. Fetch Single Review by Slug (Coba endpoint /reviews/{slug}, fallback ke /articles/{slug})
+// 5. Fetch Single Review by Slug
 export async function getGameReviewBySlug(slug: string): Promise<ArticleItem | null> {
   try {
     const res = await fetch(`${API_BASE_URL}/reviews/${slug}`, {

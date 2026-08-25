@@ -21,36 +21,25 @@ class EditArticle extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
+        // Isi TagsInput dengan nama kategori yang sudah ada
         $data['category_input'] = $this->record->categories->pluck('name')->toArray();
-        $data['image_source'] = !empty($data['image_path']) ? 'file' : 'url';
-
-        // Isi field 'image' dari image_path supaya FileUpload bisa tampil saat edit
-        if (!empty($data['image_path'])) {
-            $data['image'] = $data['image_path'];
-        }
-
         return $data;
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        unset($data['category_input']);
-        unset($data['image_source']);
-
-        // Fix: FileUpload kadang return array, ambil nilai pertama
-        if (isset($data['image']) && is_array($data['image'])) {
-            $data['image'] = $data['image'][0] ?? null;
-        }
-
-        // Prioritas: file upload > URL
-        if (!empty($data['image'])) {
-            $data['image_path'] = $data['image'];
-            $data['image_url'] = null;
+        // Hitung Read Time otomatis sebelum update ke database
+        if (!empty($data['content'])) {
+            $rawText = is_array($data['content']) ? json_encode($data['content']) : (string) $data['content'];
+            $cleanText = strip_tags($rawText);
+            $wordCount = str_word_count($cleanText);
+            $minutes = max(1, ceil($wordCount / 200));
+            $data['read_time'] = "{$minutes} MIN READ";
         } else {
-            $data['image_path'] = null;
-            $data['image'] = null;
+            $data['read_time'] = '1 MIN READ';
         }
 
+        unset($data['category_input']);
         return $data;
     }
 
