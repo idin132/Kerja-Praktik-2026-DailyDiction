@@ -32,7 +32,8 @@ export interface AdvertisementItem {
 }
 
 // FIX UTAMA: Arahin paksa ke XAMPP lokal lu biar nyambung sama database yang barusan lu edit!
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
 
 // Helper Format Gambar Terpusat
 export function formatImageUrl(

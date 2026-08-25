@@ -10,7 +10,8 @@ const nextConfig: NextConfig = {
       // Localhost Backend Laravel
       {
         protocol: "http",
-        hostname: "https://dailydiction.id",
+        hostname: "127.0.0.1",
+        port: "8000",
         pathname: "/**",
       },
       // Backend / Domain Utama di Hosting
