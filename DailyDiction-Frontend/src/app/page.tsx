@@ -11,7 +11,7 @@ import { getArticles, getGameReviews, getAdvertisements } from "@/lib/api";
 import { getYouTubeVideos } from "@/lib/youtube";
 import { Flame, Star, ArrowRight } from "lucide-react";
 
-export const revalidate = 0; // Biar data iklan langsung ke-fetch real-time pas refresh (bebas cache)
+export const revalidate = 0;
 
 function formatImageUrl(
   imageUrl: string | null | undefined,
@@ -19,7 +19,6 @@ function formatImageUrl(
 ): string {
   if (!imageUrl) return fallback;
 
-  // Jika URL mengarah ke production domain, ubah ke local storage XAMPP
   if (imageUrl.includes("dailydiction.id/storage/")) {
     return imageUrl.replace(
       "https://dailydiction.id/storage/",
@@ -37,7 +36,6 @@ function formatImageUrl(
     return imageUrl;
   }
 
-  // Fallback default lokal backend Laravel
   return `http://127.0.0.1:8000/storage/${imageUrl}`;
 }
 
@@ -57,24 +55,18 @@ export default async function Home() {
     ? reviewsData
     : reviewsData?.data || [];
 
-  // =========================================================================
-  // LOGIKA FILTER IKLAN (HORIZONTAL & SIDEBAR)
-  // =========================================================================
   const adsList = adsData?.data || (Array.isArray(adsData) ? adsData : []);
 
-  // Ambil iklan Horizontal (Cek position -> type -> fallback array)
   const horizontalBannerAd =
     adsList.find((ad: any) => ad.position === "horizontal") ||
     adsList.find((ad: any) => ad.type === "banner") ||
     adsList[0] ||
     null;
 
-  // Ambil iklan Sidebar (Cek position == 'sidebar' atau fallback)
   const sidebarAd =
     adsList.find((ad: any) => ad.position === "sidebar") ||
     (adsList.length > 1 ? adsList[1] : null);
 
-  // Helper pemeriksa apakah konten adalah Review / Ulasan
   const isReviewItem = (item: any) => {
     if (
       item.type?.toLowerCase() === "review" ||
@@ -98,15 +90,12 @@ export default async function Home() {
     return cats.some((cat) => cat.includes("REVIEW") || cat.includes("ULASAN"));
   };
 
-  // 1. News Feed: HANYA artikel murni (bukan review)
   const newsArticles = rawArticles.filter((item: any) => !isReviewItem(item));
 
-  // 2. Game Reviews: Jika API khusus review kosong, ambil dari rawArticles yang bertipe review
   if (reviews.length === 0) {
     reviews = rawArticles.filter((item: any) => isReviewItem(item));
   }
 
-  // --- FILTER YOUTUBE: SHORTS VS VIDEO PANJANG ---
   const getDurationInSeconds = (duration: string) => {
     let hours = 0,
       minutes = 0,
@@ -148,18 +137,20 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
       <Navbar />
-
       <HeroSection />
 
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
-        {/* Section Latest Video (YouTube Hero) */}
         <YoutubeHero videos={longVideosList} />
 
-        {/* Banner Iklan Horizontal (1200 x 250) */}
-        <HorizontalAdBanner adData={horizontalBannerAd} />
+        {/* Buka Grid di sini */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12 mt-8">
+          
+          {/* KOLOM KIRI (LEBIH LEBAR) */}
+          <div className="lg:col-span-8 2xl:col-span-9 space-y-8 2xl:space-y-12">
+            
+            {/* SEKARANG BANNERNYA MASUK DI DALEM KOLOM KIRI */}
+            <HorizontalAdBanner adData={horizontalBannerAd} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12 mt-4">
-          <div className="lg:col-span-8 2xl:col-span-9 space-y-12">
             {/* News Feed Section */}
             <section>
               <div className="flex items-center justify-between mb-6">
@@ -251,14 +242,11 @@ export default async function Home() {
               </div>
             </section>
 
-            {/* Info Teknologi Section */}
             <TechSection />
-
-            {/* Youtube Shorts */}
             <YoutubeShorts videos={shortsList} />
           </div>
 
-          {/* Sidebar (Kanan) */}
+          {/* KOLOM KANAN (SIDEBAR) */}
           <aside className="lg:col-span-4 2xl:col-span-3 space-y-8">
             <div className="flex h-[250px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
               {sidebarAd ? (
