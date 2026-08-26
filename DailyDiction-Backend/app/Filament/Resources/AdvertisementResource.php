@@ -10,7 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-// IMPORT TAMBAHAN BUAT HYBRID FORM
+// IMPORT TAMBAHAN
 use Filament\Forms\Get;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -23,7 +23,6 @@ class AdvertisementResource extends Resource
 {
     protected static ?string $model = Advertisement::class;
 
-    // Aku ganti icon-nya jadi TOA (megaphone) biar beda sama Sponsor di sidebar
     protected static ?string $navigationIcon = 'heroicon-o-megaphone'; 
 
     public static function form(Form $form): Form
@@ -36,7 +35,18 @@ class AdvertisementResource extends Resource
                     ->maxLength(255)
                     ->columnSpanFull(),
 
-                // Select Tipe Iklan
+                // 1. SELECT POSISI IKLAN (NEW!)
+                Select::make('position')
+                    ->label('Posisi Penempatan Iklan')
+                    ->options([
+                        'sidebar'    => 'Sidebar Kanan (300 x 250 px)',
+                        'horizontal' => 'Banner Horizontal Tengah (1200 x 250 px)',
+                    ])
+                    ->default('sidebar')
+                    ->required()
+                    ->columnSpanFull(),
+
+                // 2. SELECT TIPE IKLAN
                 Select::make('type')
                     ->label('Tipe Iklan')
                     ->options([
@@ -48,7 +58,7 @@ class AdvertisementResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // MUNCUL KALAU PILIH BANNER
+                // 3. MUNCUL KALAU PILIH BANNER
                 FileUpload::make('banner_image')
                     ->label('Gambar Banner Iklan')
                     ->image()
@@ -58,12 +68,13 @@ class AdvertisementResource extends Resource
 
                 TextInput::make('url_link')
                     ->label('Link Tujuan (URL)')
+                    ->placeholder('https://...')
                     ->url()
                     ->visible(fn (Get $get) => $get('type') === 'banner')
                     ->required(fn (Get $get) => $get('type') === 'banner')
                     ->maxLength(255),
 
-                // MUNCUL KALAU PILIH SCRIPT
+                // 4. MUNCUL KALAU PILIH SCRIPT
                 Textarea::make('script_code')
                     ->label('Script Google Ads / HTML')
                     ->rows(6)
@@ -85,14 +96,29 @@ class AdvertisementResource extends Resource
                     ->label('Judul Iklan')
                     ->searchable(),
 
-                // Tambahan badge penanda tipe iklan di tabel
+                // BADGE POSISI IKLAN
+                TextColumn::make('position')
+                    ->label('Posisi')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'sidebar'    => 'info',
+                        'horizontal' => 'warning',
+                        default      => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'sidebar'    => 'Sidebar (300x250)',
+                        'horizontal' => 'Horizontal (1200x250)',
+                        default      => $state,
+                    }),
+
+                // BADGE TIPE IKLAN
                 TextColumn::make('type')
                     ->label('Tipe')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'banner' => 'success',
                         'script' => 'warning',
-                        default => 'gray',
+                        default  => 'gray',
                     }),
                 
                 TextColumn::make('url_link')
@@ -100,7 +126,13 @@ class AdvertisementResource extends Resource
                     ->limit(30),
             ])
             ->filters([
-                //
+                // Filter berdasarkan Posisi Iklan
+                Tables\Filters\SelectFilter::make('position')
+                    ->label('Filter Posisi')
+                    ->options([
+                        'sidebar'    => 'Sidebar (300x250)',
+                        'horizontal' => 'Horizontal (1200x250)',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -123,9 +155,9 @@ class AdvertisementResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAdvertisements::route('/'),
+            'index'  => Pages\ListAdvertisements::route('/'),
             'create' => Pages\CreateAdvertisement::route('/create'),
-            'edit' => Pages\EditAdvertisement::route('/{record}/edit'),
+            'edit'   => Pages\EditAdvertisement::route('/{record}/edit'),
         ];
     }
 }

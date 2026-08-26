@@ -33,11 +33,34 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* Gunakan tag script HTML standar untuk AdSense agar tidak menyuntikkan data-nscript */}
+        {/* 1. Google AdSense Script */}
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9670478748166310"
           crossOrigin="anonymous"
+        />
+
+        {/* 2. Google Analytics (gtag.js) */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-0G788S57DZ"
+        ></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-0G788S57DZ');
+            `,
+          }}
+        />
+
+        {/* 3. Twitter / X Widget Script (Biar blockquote Tweet mekar otomatis) */}
+        <script
+          async
+          src="https://platform.twitter.com/widgets.js"
+          charSet="utf-8"
         />
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>

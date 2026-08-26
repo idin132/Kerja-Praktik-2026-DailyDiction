@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use App\Models\Comment;
 use App\Models\Reel;
 use Illuminate\Http\Request;
 
@@ -104,6 +105,51 @@ class ArticleController extends Controller
             ->paginate($request->get('per_page', 8));
 
         return response()->json($technologies);
+    }
+
+    // 1. Endpoint Like Anonim (Siapa Saja)
+    public function like($id)
+    {
+        $article = Article::findOrFail($id);
+        $article->increment('likes_count');
+
+        return response()->json([
+            'status' => 'success',
+            'likes_count' => $article->likes_count
+        ]);
+    }
+
+    // 2. Ambil Komentar Berdasarkan Artikel
+    public function getComments($id)
+    {
+        $comments = Comment::with('user')
+            ->where('article_id', $id)
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $comments
+        ]);
+    }
+
+    // 3. Post Komentar (Wajib Token / Auth Login)
+    public function storeComment(Request $request, $id)
+    {
+        $request->validate([
+            'comment' => 'required|string|max:1000'
+        ]);
+
+        $comment = Comment::create([
+            'article_id' => $id,
+            'user_id' => auth()->id(), // didapat dari middleware auth:sanctum
+            'comment' => $request->comment
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $comment->load('user')
+        ], 201);
     }
 
     // Get list of Reels

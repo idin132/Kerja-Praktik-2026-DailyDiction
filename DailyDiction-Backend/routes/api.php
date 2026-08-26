@@ -5,23 +5,30 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ArticleController;
 use App\Models\Sponsor;
 use App\Models\Advertisement;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\YoutubeController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+// SEMUA ROUTE DI BAWAH INI PUNYA PREFIX /v1/
 Route::prefix('v1')->group(function () {
     // Cuma butuh 3 baris ini untuk artikel & review!
     Route::get('/articles', [ArticleController::class, 'index']);
     Route::get('/articles/featured', [ArticleController::class, 'featured']);
     Route::get('/articles/{slug}', [ArticleController::class, 'show']);
+    
     Route::get('/reviews', [ArticleController::class, 'reviews']);
     Route::get('/reviews/{slug}', [ArticleController::class, 'showReview']);
+    
     Route::get('/reels', [ArticleController::class, 'reels']);
+    
     Route::get('/youtube-videos', [YoutubeController::class, 'getVideos']);
     Route::get('/youtube-shorts', [YoutubeController::class, 'getShorts']);
+    
     Route::get('/technologies', [ArticleController::class, 'technologies']);
+    
     Route::get('/proxy-image', function (\Illuminate\Http\Request $request) {
         $url = $request->query('url');
 
@@ -39,6 +46,25 @@ Route::prefix('v1')->group(function () {
             ->header('Cache-Control', 'public, max-age=86400');
     });
 
+    // Like & Get Comments (Bisa diakses siapa saja)
+    Route::post('/articles/{id}/like', [ArticleController::class, 'like']);
+    Route::get('/articles/{id}/comments', [ArticleController::class, 'getComments']);
+
+    // Post Komentar (Wajib Login)
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/articles/{id}/comments', [ArticleController::class, 'storeComment']);
+    });
+
+    // Auth Publik
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+
+    // Auth Terproteksi
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+    });
+
     // Jembatan untuk Sponsor (Dari Rizqi)
     Route::get('/sponsors', function () {
         return response()->json([
@@ -46,7 +72,7 @@ Route::prefix('v1')->group(function () {
         ]);
     });
 
-    // Jembatan untuk Iklan (Dari Rizqi)
+    // Jembatan untuk Iklan (Dari Rizqi) - INI YANG KITA PAKE!
     Route::get('/advertisements', function () {
         return response()->json([
             'data' => Advertisement::latest()->get()

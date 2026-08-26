@@ -6,6 +6,8 @@ import Link from "next/link";
 import { DiscordWidget } from "@/components/Sidebar";
 import ShareWidget from "@/components/ShareWidget";
 import { User, Clock, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import ArticleInteractions from "@/components/ArticleInteractions";
+import TweetRenderer from "@/components/TweetRenderer"; // 👈 COMPONENT RENDERER BARU
 
 // Konfigurasi dynamic & revalidate agar data artikel selalu segar
 export const dynamic = "force-dynamic";
@@ -122,6 +124,13 @@ export default async function DetailArtikel({
     );
   }
 
+  const rawContentString =
+    typeof article.content === "string"
+      ? article.content
+      : Array.isArray(article.content)
+      ? article.content.map((b: any) => b.content ?? "").join("")
+      : "";
+
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
       <Navbar />
@@ -211,18 +220,16 @@ export default async function DetailArtikel({
                   </p>
                 </div>
 
-                {/* Body Artikel */}
-                <div
-                  className="animate-fade-up-2 rich-text-content prose prose-invert prose-brand-crimson max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-12"
-                  dangerouslySetInnerHTML={{
-                    __html:
-                      typeof article.content === "string"
-                        ? article.content
-                        : Array.isArray(article.content)
-                        ? article.content.map((b: any) => b.content ?? "").join("")
-                        : "",
-                  }}
-                />
+                {/* Body Artikel Langsung Digarap Sama TweetRenderer */}
+                <TweetRenderer htmlContent={rawContentString} />
+
+                {/* Interaksi Like & Komen Hybrid */}
+                {article.id && (
+                  <ArticleInteractions
+                    articleId={article.id}
+                    initialLikes={(article as any).likes_count || 0}
+                  />
+                )}
               </article>
 
               {/* ================= NAVIGASI NEXT / PREV ARTIKEL ================= */}
@@ -365,30 +372,6 @@ export default async function DetailArtikel({
             animation: cinematicFadeUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
           }
 
-          @keyframes scrollFadeUp {
-            from {
-              opacity: 0;
-              transform: translateY(40px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-
-          .rich-text-content img,
-          .rich-text-content iframe {
-            animation: scrollFadeUp linear both;
-            animation-timeline: view();
-            animation-range: entry 5% cover 30%;
-            width: 100%;
-            height: auto;
-            border-radius: 0.75rem;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-          }
-
           .rich-text-content {
             font-size: 1.125rem;
             line-height: 1.75;
@@ -404,6 +387,14 @@ export default async function DetailArtikel({
             margin-bottom: 0.75em;
             text-align: justify;
           }
+          .rich-text-content img {
+            width: 100%;
+            height: auto;
+            border-radius: 0.75rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+          }
           .rich-text-content a {
             color: #00e5ff;
             text-decoration: none;
@@ -411,7 +402,9 @@ export default async function DetailArtikel({
           .rich-text-content a:hover { text-decoration: underline; }
           .rich-text-content strong { color: white; }
           .rich-text-content iframe {
+            width: 100%;
             aspect-ratio: 16/9;
+            border-radius: 0.75rem;
             margin-top: 1.5rem;
             margin-bottom: 1.5rem;
           }

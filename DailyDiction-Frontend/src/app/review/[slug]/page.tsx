@@ -7,8 +7,9 @@ import {
 } from "@/lib/api";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Gamepad2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Gamepad2, User, Calendar, Clock } from "lucide-react";
 import { DiscordWidget } from "@/components/Sidebar";
+import TweetRenderer from "@/components/TweetRenderer"; // 👈 RENDERER BARU
 
 export const revalidate = 0;
 
@@ -36,11 +37,11 @@ interface ReviewItem {
   thumbnail?: string;
   created_at?: string;
   author?: string;
+  read_time?: string;
   prev?: NavReviewItem | null;
   next?: NavReviewItem | null;
 }
 
-// Helper terpadu untuk format gambar
 function formatImageUrl(
   imageUrl: string | null | undefined,
   fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
@@ -49,17 +50,14 @@ function formatImageUrl(
 
   const clean = imageUrl.trim();
 
-  // Tangani URL embed yang tertumpuk di dalam path storage
   if (clean.includes("/storage/http://") || clean.includes("/storage/https://")) {
     return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
   }
 
-  // URL eksternal / embed langsung
   if (clean.startsWith("http://") || clean.startsWith("https://")) {
     return clean;
   }
 
-  // Relative path Laravel Storage
   const cleanPath = clean.replace(/^\/+/, "");
   if (cleanPath.startsWith("storage/")) {
     return `https://dailydiction.id/${cleanPath}`;
@@ -83,7 +81,6 @@ export default async function DetailReview({
 
   let review: ReviewItem | null = (reviewRes as any)?.data || reviewRes;
 
-  // Fallback pencarian artikel jika data review kosong
   if (!review || !review.title) {
     const articleRes = await getArticleBySlug(slug).catch(() => null);
     review = (articleRes as any)?.data || articleRes;
@@ -118,6 +115,13 @@ export default async function DetailReview({
 
   const platforms = parsePlatforms(review.platform);
 
+  const rawContentString =
+    typeof review.content === "string"
+      ? review.content
+      : Array.isArray(review.content)
+      ? review.content.map((b: any) => b.content ?? "").join("")
+      : "";
+
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
       <Navbar />
@@ -149,6 +153,30 @@ export default async function DetailReview({
                     {review.title}
                   </h1>
 
+                  {/* INFO AUTHOR & TANGGAL */}
+                  <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-text-muted mt-4 mb-2">
+                    <div className="flex items-center gap-1.5">
+                      <User className="h-4 w-4 text-brand-crimson" />
+                      <span className="font-bold text-white">{review.author || "Redaksi"}</span>
+                    </div>
+                    {review.created_at && (
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4" />
+                        <span>
+                          {new Date(review.created_at).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-4 w-4" />
+                      <span>{review.read_time || "3 MIN READ"}</span>
+                    </div>
+                  </div>
+
                   {/* Summary */}
                   <p className="text-lg text-text-muted text-justify font-medium border-l-4 border-brand-crimson pl-4 bg-dark-card/30 p-4 rounded-r-lg">
                     {review.summary || "Baca ulasan lengkap game ini di bawah."}
@@ -177,23 +205,12 @@ export default async function DetailReview({
                   </div>
                 )}
 
-                {/* Body Konten Review */}
-                <div
-                  className="rich-text-content prose prose-invert prose-brand-crimson max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-12"
-                  dangerouslySetInnerHTML={{
-                    __html:
-                      typeof review.content === "string"
-                        ? review.content
-                        : Array.isArray(review.content)
-                        ? review.content.map((b: any) => b.content ?? "").join("")
-                        : "",
-                  }}
-                />
+                {/* Body Konten Review Langsung Digarap Sama TweetRenderer */}
+                <TweetRenderer htmlContent={rawContentString} />
               </article>
 
               {/* ================= NAVIGASI NEXT / PREV REVIEW ================= */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-dark-border pt-8 mt-8">
-                {/* Previous Review */}
                 {prevReview ? (
                   <Link
                     href={`/review/${prevReview.slug}`}
@@ -226,7 +243,6 @@ export default async function DetailReview({
                   <div />
                 )}
 
-                {/* Next Review */}
                 {nextReview ? (
                   <Link
                     href={`/review/${nextReview.slug}`}

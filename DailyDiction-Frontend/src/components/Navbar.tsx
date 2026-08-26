@@ -1,14 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Search, User, Flame, Newspaper, Star, Cpu } from "lucide-react";
+import {
+  Menu,
+  X,
+  Search,
+  User,
+  LogOut,
+  Flame,
+  Newspaper,
+  Star,
+  Cpu,
+} from "lucide-react";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
+  const [user, setUser] = useState<{ name: string } | null>(null);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -28,6 +39,24 @@ export default function Navbar() {
       router.push(`/search?q=${encodeURIComponent(keyword)}`);
       setIsOpen(false);
     }
+  };
+
+  useEffect(() => {
+    const rawUser = localStorage.getItem("user_data");
+    if (rawUser) {
+      try {
+        setUser(JSON.parse(rawUser));
+      } catch (e) {
+        setUser(null);
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user_data");
+    setUser(null);
+    window.location.reload();
   };
 
   return (
@@ -92,6 +121,31 @@ export default function Navbar() {
             <User className="h-3.5 w-3.5" />
             <span>MASUK</span>
           </Link> */}
+
+          {/* Login Button */}
+          <div className="flex items-center gap-3">
+            {user ? (
+              <div className="flex items-center gap-3 font-mono text-xs">
+                <span className="text-brand-cyan font-bold">
+                  Halo, {user.name}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  title="Keluar"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-muted hover:border-brand-crimson hover:text-white"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-lg border border-dark-border bg-dark-card px-3.5 py-1.5 font-mono text-xs font-bold uppercase text-text-primary hover:border-brand-crimson transition-all"
+              >
+                Masuk
+              </Link>
+            )}
+          </div>
 
           {/* Hamburger Menu Button */}
           <button
