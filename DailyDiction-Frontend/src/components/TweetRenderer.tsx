@@ -3,21 +3,25 @@
 import { Tweet } from "react-tweet";
 
 export default function TweetRenderer({ content }: { content: string }) {
-  // Regex buat mendeteksi link tweet: https://x.com/user/status/123456789 atau twitter.com
-  const tweetUrlRegex = /https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/([0-9]+)/gi;
+  if (!content) return null;
 
-  const matches = [...content.matchAll(tweetUrlRegex)];
+  // Regex fleksibel: Nangkep ID tweet dari link biasa maupun link di dalam tag href/HTML
+  const tweetRegex = /(?:twitter\.com|x\.com)\/(?:[a-zA-Z0-9_]+)\/status\/([0-9]+)/gi;
 
-  if (matches.length > 0) {
-    // Ambil Tweet ID pertama yang dapet
-    const tweetId = matches[0][2];
+  const matches = [...content.matchAll(tweetRegex)];
 
-    return (
-      <div className="my-6 flex justify-center light-theme-tweet">
-        <Tweet id={tweetId} />
-      </div>
-    );
-  }
+  if (matches.length === 0) return null;
 
-  return null;
+  // Ambil semua Tweet ID unik jika ada lebih dari 1 tweet di artikel
+  const tweetIds = Array.from(new Set(matches.map((m) => m[1])));
+
+  return (
+    <div className="my-8 flex flex-col items-center gap-6 light-theme-tweet">
+      {tweetIds.map((id) => (
+        <div key={id} className="w-full flex justify-center">
+          <Tweet id={id} />
+        </div>
+      ))}
+    </div>
+  );
 }
