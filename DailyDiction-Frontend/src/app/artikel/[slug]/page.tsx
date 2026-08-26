@@ -7,6 +7,7 @@ import { DiscordWidget } from "@/components/Sidebar";
 import ShareWidget from "@/components/ShareWidget";
 import { User, Clock, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import ArticleInteractions from "@/components/ArticleInteractions";
+import TwitterEmbedHandler from "@/components/TwitterEmbedHandler";
 
 // Konfigurasi dynamic & revalidate agar data artikel selalu segar
 export const dynamic = "force-dynamic";
@@ -126,6 +127,9 @@ export default async function DetailArtikel({
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
       <Navbar />
+      
+      {/* HANDLER EMBED TWITTER CLIENT-SIDE */}
+      <TwitterEmbedHandler />
 
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
@@ -348,19 +352,6 @@ export default async function DetailArtikel({
 
       <Footer />
 
-      {/* SCRIPT TRIGGER UNTUK RENDER TWITTER TWEET EMBED */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            setTimeout(function() {
-              if (window.twttr && window.twttr.widgets) {
-                window.twttr.widgets.load();
-              }
-            }, 300);
-          `,
-        }}
-      />
-
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -424,13 +415,18 @@ export default async function DetailArtikel({
             margin-top: 1.5rem;
             margin-bottom: 1.5rem;
           }
-          /* Container Tweet agar pas di tengah artikel */
+
+          /* FIX UTAMA DISINI: PAKSA CONTAINER EMBED X/TWITTER MEMILIKI TAMPILAN DAN VISIBILITY TERBUKA */
           .rich-text-content .twitter-tweet,
-          .rich-text-content twitter-widget {
+          .rich-text-content twitter-widget,
+          .rich-text-content iframe.twitter-tweet {
             margin-left: auto !important;
             margin-right: auto !important;
             margin-top: 1.5rem !important;
             margin-bottom: 1.5rem !important;
+            display: block !important;
+            visibility: visible !important;
+            min-height: 250px;
           }
         `,
         }}

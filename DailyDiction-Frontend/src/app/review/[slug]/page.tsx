@@ -9,6 +9,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Gamepad2, User, Calendar, Clock } from "lucide-react";
 import { DiscordWidget } from "@/components/Sidebar";
+import TwitterEmbedHandler from "@/components/TwitterEmbedHandler";
 
 export const revalidate = 0;
 
@@ -50,17 +51,14 @@ function formatImageUrl(
 
   const clean = imageUrl.trim();
 
-  // Tangani URL embed yang tertumpuk di dalam path storage
   if (clean.includes("/storage/http://") || clean.includes("/storage/https://")) {
     return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
   }
 
-  // URL eksternal / embed langsung
   if (clean.startsWith("http://") || clean.startsWith("https://")) {
     return clean;
   }
 
-  // Relative path Laravel Storage
   const cleanPath = clean.replace(/^\/+/, "");
   if (cleanPath.startsWith("storage/")) {
     return `https://dailydiction.id/${cleanPath}`;
@@ -84,7 +82,6 @@ export default async function DetailReview({
 
   let review: ReviewItem | null = (reviewRes as any)?.data || reviewRes;
 
-  // Fallback pencarian artikel jika data review kosong
   if (!review || !review.title) {
     const articleRes = await getArticleBySlug(slug).catch(() => null);
     review = (articleRes as any)?.data || articleRes;
@@ -122,6 +119,9 @@ export default async function DetailReview({
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
       <Navbar />
+
+      {/* HANDLER EMBED TWITTER CLIENT-SIDE */}
+      <TwitterEmbedHandler />
 
       <main className="mx-auto max-w-[1600px] px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
@@ -218,7 +218,6 @@ export default async function DetailReview({
 
               {/* ================= NAVIGASI NEXT / PREV REVIEW ================= */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-dark-border pt-8 mt-8">
-                {/* Previous Review */}
                 {prevReview ? (
                   <Link
                     href={`/review/${prevReview.slug}`}
@@ -251,7 +250,6 @@ export default async function DetailReview({
                   <div />
                 )}
 
-                {/* Next Review */}
                 {nextReview ? (
                   <Link
                     href={`/review/${nextReview.slug}`}
@@ -330,19 +328,6 @@ export default async function DetailReview({
 
       <Footer />
 
-      {/* SCRIPT TRIGGER UNTUK RENDER TWITTER TWEET EMBED */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            setTimeout(function() {
-              if (window.twttr && window.twttr.widgets) {
-                window.twttr.widgets.load();
-              }
-            }, 300);
-          `,
-        }}
-      />
-
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -382,13 +367,18 @@ export default async function DetailReview({
             margin-top: 1.5rem;
             margin-bottom: 1.5rem;
           }
-          /* Container Tweet agar pas di tengah review */
+
+          /* FIX UTAMA CONTAINER TWITTER EMBED */
           .rich-text-content .twitter-tweet,
-          .rich-text-content twitter-widget {
+          .rich-text-content twitter-widget,
+          .rich-text-content iframe.twitter-tweet {
             margin-left: auto !important;
             margin-right: auto !important;
             margin-top: 1.5rem !important;
             margin-bottom: 1.5rem !important;
+            display: block !important;
+            visibility: visible !important;
+            min-height: 250px;
           }
         `,
         }}
