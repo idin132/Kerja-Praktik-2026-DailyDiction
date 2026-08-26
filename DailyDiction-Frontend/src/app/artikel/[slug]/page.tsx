@@ -7,7 +7,7 @@ import { DiscordWidget } from "@/components/Sidebar";
 import ShareWidget from "@/components/ShareWidget";
 import { User, Clock, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import ArticleInteractions from "@/components/ArticleInteractions";
-import TwitterEmbedHandler from "@/components/TwitterEmbedHandler";
+import TweetRenderer from "@/components/TweetRenderer"; // 👈 COMPONENT BARU HASIL REACT-TWEET
 
 // Konfigurasi dynamic & revalidate agar data artikel selalu segar
 export const dynamic = "force-dynamic";
@@ -124,12 +124,16 @@ export default async function DetailArtikel({
     );
   }
 
+  const rawContentString =
+    typeof article.content === "string"
+      ? article.content
+      : Array.isArray(article.content)
+      ? article.content.map((b: any) => b.content ?? "").join("")
+      : "";
+
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
       <Navbar />
-      
-      {/* HANDLER EMBED TWITTER CLIENT-SIDE */}
-      <TwitterEmbedHandler />
 
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
@@ -218,16 +222,16 @@ export default async function DetailArtikel({
 
                 {/* Body Artikel */}
                 <div
-                  className="animate-fade-up-2 rich-text-content prose prose-invert prose-brand-crimson max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-12"
+                  className="animate-fade-up-2 rich-text-content prose prose-invert prose-brand-crimson max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-6"
                   dangerouslySetInnerHTML={{
-                    __html:
-                      typeof article.content === "string"
-                        ? article.content
-                        : Array.isArray(article.content)
-                        ? article.content.map((b: any) => b.content ?? "").join("")
-                        : "",
+                    __html: rawContentString,
                   }}
                 />
+
+                {/* AUTOMATIC TWEET EMBEDDER FROM URL */}
+                {rawContentString && (
+                  <TweetRenderer content={rawContentString} />
+                )}
 
                 {/* Interaksi Like & Komen Hybrid */}
                 {article.id && (
@@ -378,7 +382,6 @@ export default async function DetailArtikel({
             animation: cinematicFadeUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
           }
 
-          /* STYLING UNTUK PROSE & EMBED X/TWITTER */
           .rich-text-content {
             font-size: 1.125rem;
             line-height: 1.75;
@@ -414,19 +417,6 @@ export default async function DetailArtikel({
             border-radius: 0.75rem;
             margin-top: 1.5rem;
             margin-bottom: 1.5rem;
-          }
-
-          /* FIX UTAMA DISINI: PAKSA CONTAINER EMBED X/TWITTER MEMILIKI TAMPILAN DAN VISIBILITY TERBUKA */
-          .rich-text-content .twitter-tweet,
-          .rich-text-content twitter-widget,
-          .rich-text-content iframe.twitter-tweet {
-            margin-left: auto !important;
-            margin-right: auto !important;
-            margin-top: 1.5rem !important;
-            margin-bottom: 1.5rem !important;
-            display: block !important;
-            visibility: visible !important;
-            min-height: 250px;
           }
         `,
         }}
