@@ -7,7 +7,7 @@ import { DiscordWidget } from "@/components/Sidebar";
 import ShareWidget from "@/components/ShareWidget";
 import { User, Clock, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import ArticleInteractions from "@/components/ArticleInteractions";
-import TweetRenderer from "@/components/TweetRenderer"; // 👈 COMPONENT BARU HASIL REACT-TWEET
+import TweetRenderer from "@/components/TweetRenderer"; // 👈 COMPONENT RENDERER BARU
 
 // Konfigurasi dynamic & revalidate agar data artikel selalu segar
 export const dynamic = "force-dynamic";
@@ -220,18 +220,8 @@ export default async function DetailArtikel({
                   </p>
                 </div>
 
-                {/* Body Artikel */}
-                <div
-                  className="animate-fade-up-2 rich-text-content prose prose-invert prose-brand-crimson max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-6"
-                  dangerouslySetInnerHTML={{
-                    __html: rawContentString,
-                  }}
-                />
-
-                {/* AUTOMATIC TWEET EMBEDDER FROM URL */}
-                {rawContentString && (
-                  <TweetRenderer content={rawContentString} />
-                )}
+                {/* Body Artikel Langsung Digarap Sama TweetRenderer */}
+                <TweetRenderer htmlContent={rawContentString} />
 
                 {/* Interaksi Like & Komen Hybrid */}
                 {article.id && (

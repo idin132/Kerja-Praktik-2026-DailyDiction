@@ -2,26 +2,43 @@
 
 import { Tweet } from "react-tweet";
 
-export default function TweetRenderer({ content }: { content: string }) {
-  if (!content) return null;
+export default function TweetRenderer({ htmlContent }: { htmlContent: string }) {
+  if (!htmlContent) return null;
 
-  // Regex fleksibel: Nangkep ID tweet dari link biasa maupun link di dalam tag href/HTML
-  const tweetRegex = /(?:twitter\.com|x\.com)\/(?:[a-zA-Z0-9_]+)\/status\/([0-9]+)/gi;
+  // Regex sakti buat misahin HTML biasa dengan tag <a> yang berisi link X/Twitter
+  const regex = /(<p[^>]*>\s*<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/\d+[^"]*"[^>]*>.*?<\/a>\s*<\/p>|<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/\d+[^"]*"[^>]*>.*?<\/a>|<p[^>]*>\s*https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/\d+[^\s<]*\s*<\/p>|https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/\d+[^\s<]*)/gi;
 
-  const matches = [...content.matchAll(tweetRegex)];
-
-  if (matches.length === 0) return null;
-
-  // Ambil semua Tweet ID unik jika ada lebih dari 1 tweet di artikel
-  const tweetIds = Array.from(new Set(matches.map((m) => m[1])));
+  const parts = htmlContent.split(regex);
 
   return (
-    <div className="my-8 flex flex-col items-center gap-6 light-theme-tweet">
-      {tweetIds.map((id) => (
-        <div key={id} className="w-full flex justify-center">
-          <Tweet id={id} />
-        </div>
-      ))}
+    <div className="animate-fade-up-2 rich-text-content prose prose-invert prose-brand-crimson max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-12">
+      {parts.map((part, index) => {
+        // Cek apakah potongan string ini adalah link Twitter
+        const isTwitter = /https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)/.test(part);
+
+        if (isTwitter) {
+          const match = part.match(/status\/(\d+)/);
+          const tweetId = match ? match[1] : null;
+          
+          if (tweetId) {
+            return (
+              // Wrapper tweet dibuat not-prose biar margin Tailwind gak nabrak
+              <div key={index} className="my-10 flex w-full justify-center dark not-prose">
+                <div className="w-full max-w-lg">
+                  <Tweet id={tweetId} />
+                </div>
+              </div>
+            );
+          }
+        }
+
+        // Kalau bukan tweet, render sebagai HTML (Teks Artikel) biasa
+        if (part.trim()) {
+          return <div key={index} dangerouslySetInnerHTML={{ __html: part }} />;
+        }
+
+        return null;
+      })}
     </div>
   );
 }
