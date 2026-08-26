@@ -3,21 +3,17 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Filament\Models\Contracts\FilamentUser; // <--- 1. TAMBAHKAN IMPORT INI
+use Filament\Models\Contracts\HasName;
+use Filament\Panel; // <--- 2. TAMBAHKAN IMPORT INI
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Filament\Models\Contracts\HasName; // <--- 1. TAMBAHAN: Import HasName
 
-class User extends Authenticatable implements HasName // <--- 2. TAMBAHAN: implements HasName
+class User extends Authenticatable implements FilamentUser, HasName // <--- 3. TAMBAHKAN FilamentUser
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'username',
@@ -32,21 +28,17 @@ class User extends Authenticatable implements HasName // <--- 2. TAMBAHAN: imple
         return $this->role === 'superadmin';
     }
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        // Memberikan izin akses untuk role admin dan superadmin
+        return in_array($this->role, ['admin', 'superadmin']);
+    }
+
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -55,13 +47,11 @@ class User extends Authenticatable implements HasName // <--- 2. TAMBAHAN: imple
         ];
     }
 
-    // <--- 3. TAMBAHAN: Fungsi buat ngubah nama di Filament
+    // Fungsi buat ngubah nama di Filament
     public function getFilamentName(): string
     {
-        // Ngecek kalau role-nya ada, huruf depannya dikapitalin. Kalau kosong, tulis 'User'
         $roleName = $this->role ? ucfirst($this->role) : 'User';
 
-        // Gabungin Nama Asli + Role
         return "{$this->name} ({$roleName})";
     }
 }
