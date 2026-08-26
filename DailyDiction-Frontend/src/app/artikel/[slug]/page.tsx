@@ -224,14 +224,14 @@ export default async function DetailArtikel({
                         : "",
                   }}
                 />
-                  {/* Interaksi Like & Komen Hybrid */}
-                  {article.id && (
-                    <ArticleInteractions
-                      articleId={article.id}
-                      initialLikes={(article as any).likes_count || 0}
-                    />
-                  )}
-                
+
+                {/* Interaksi Like & Komen Hybrid */}
+                {article.id && (
+                  <ArticleInteractions
+                    articleId={article.id}
+                    initialLikes={(article as any).likes_count || 0}
+                  />
+                )}
               </article>
 
               {/* ================= NAVIGASI NEXT / PREV ARTIKEL ================= */}
@@ -348,6 +348,19 @@ export default async function DetailArtikel({
 
       <Footer />
 
+      {/* SCRIPT TRIGGER UNTUK RENDER TWITTER TWEET EMBED */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            setTimeout(function() {
+              if (window.twttr && window.twttr.widgets) {
+                window.twttr.widgets.load();
+              }
+            }, 300);
+          `,
+        }}
+      />
+
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -374,30 +387,7 @@ export default async function DetailArtikel({
             animation: cinematicFadeUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
           }
 
-          @keyframes scrollFadeUp {
-            from {
-              opacity: 0;
-              transform: translateY(40px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-
-          .rich-text-content img,
-          .rich-text-content iframe {
-            animation: scrollFadeUp linear both;
-            animation-timeline: view();
-            animation-range: entry 5% cover 30%;
-            width: 100%;
-            height: auto;
-            border-radius: 0.75rem;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-          }
-
+          /* STYLING UNTUK PROSE & EMBED X/TWITTER */
           .rich-text-content {
             font-size: 1.125rem;
             line-height: 1.75;
@@ -413,6 +403,14 @@ export default async function DetailArtikel({
             margin-bottom: 0.75em;
             text-align: justify;
           }
+          .rich-text-content img {
+            width: 100%;
+            height: auto;
+            border-radius: 0.75rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+          }
           .rich-text-content a {
             color: #00e5ff;
             text-decoration: none;
@@ -420,9 +418,19 @@ export default async function DetailArtikel({
           .rich-text-content a:hover { text-decoration: underline; }
           .rich-text-content strong { color: white; }
           .rich-text-content iframe {
+            width: 100%;
             aspect-ratio: 16/9;
+            border-radius: 0.75rem;
             margin-top: 1.5rem;
             margin-bottom: 1.5rem;
+          }
+          /* Container Tweet agar pas di tengah artikel */
+          .rich-text-content .twitter-tweet,
+          .rich-text-content twitter-widget {
+            margin-left: auto !important;
+            margin-right: auto !important;
+            margin-top: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
           }
         `,
         }}

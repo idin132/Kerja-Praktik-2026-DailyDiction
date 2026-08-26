@@ -7,7 +7,6 @@ import {
 } from "@/lib/api";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-// IMPORT ICON TAMBAHAN: User, Calendar, Clock
 import { ChevronLeft, ChevronRight, Gamepad2, User, Calendar, Clock } from "lucide-react";
 import { DiscordWidget } from "@/components/Sidebar";
 
@@ -37,7 +36,7 @@ interface ReviewItem {
   thumbnail?: string;
   created_at?: string;
   author?: string;
-  read_time?: string; // Ditambahin buat jaga-jaga
+  read_time?: string;
   prev?: NavReviewItem | null;
   next?: NavReviewItem | null;
 }
@@ -151,7 +150,7 @@ export default async function DetailReview({
                     {review.title}
                   </h1>
 
-                  {/* INFO AUTHOR & TANGGAL (INI YANG TADI ILANG QI!) */}
+                  {/* INFO AUTHOR & TANGGAL */}
                   <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-text-muted mt-4 mb-2">
                     <div className="flex items-center gap-1.5">
                       <User className="h-4 w-4 text-brand-crimson" />
@@ -331,6 +330,19 @@ export default async function DetailReview({
 
       <Footer />
 
+      {/* SCRIPT TRIGGER UNTUK RENDER TWITTER TWEET EMBED */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            setTimeout(function() {
+              if (window.twttr && window.twttr.widgets) {
+                window.twttr.widgets.load();
+              }
+            }, 300);
+          `,
+        }}
+      />
+
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -369,6 +381,14 @@ export default async function DetailReview({
             border-radius: 0.75rem;
             margin-top: 1.5rem;
             margin-bottom: 1.5rem;
+          }
+          /* Container Tweet agar pas di tengah review */
+          .rich-text-content .twitter-tweet,
+          .rich-text-content twitter-widget {
+            margin-left: auto !important;
+            margin-right: auto !important;
+            margin-top: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
           }
         `,
         }}

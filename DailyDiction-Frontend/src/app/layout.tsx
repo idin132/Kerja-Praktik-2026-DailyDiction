@@ -33,14 +33,14 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* 1. Tag Script Google AdSense lu */}
+        {/* 1. Google AdSense Script */}
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9670478748166310"
           crossOrigin="anonymous"
         />
 
-        {/* 2. TARUH SCRIPT GOOGLE ANALYTICS DI SINI */}
+        {/* 2. Google Analytics (gtag.js) */}
         <script
           async
           src="https://www.googletagmanager.com/gtag/js?id=G-0G788S57DZ"
@@ -54,6 +54,13 @@ export default function RootLayout({
               gtag('config', 'G-0G788S57DZ');
             `,
           }}
+        />
+
+        {/* 3. Twitter / X Widget Script (Biar blockquote Tweet mekar otomatis) */}
+        <script
+          async
+          src="https://platform.twitter.com/widgets.js"
+          charSet="utf-8"
         />
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
