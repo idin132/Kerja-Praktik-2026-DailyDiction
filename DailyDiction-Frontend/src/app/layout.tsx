@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,19 +34,33 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* 1. Google AdSense Script */}
-        <script
+        {/* Google AdSense */}
+        <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9670478748166310"
           crossOrigin="anonymous"
+          strategy="afterInteractive"
         />
 
-        {/* 2. Google Analytics (gtag.js) */}
-        <script
+        {/* Twitter / X Widget */}
+        <Script
           async
+          src="https://platform.twitter.com/widgets.js"
+          charSet="utf-8"
+          strategy="afterInteractive"
+        />
+      </head>
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        {children}
+
+        {/* Google Analytics — taruh di luar <head>, pakai next/script */}
+        <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-0G788S57DZ"
-        ></script>
-        <script
+          strategy="afterInteractive"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
@@ -55,16 +70,6 @@ export default function RootLayout({
             `,
           }}
         />
-
-        {/* 3. Twitter / X Widget Script (Biar blockquote Tweet mekar otomatis) */}
-        <script
-          async
-          src="https://platform.twitter.com/widgets.js"
-          charSet="utf-8"
-        />
-      </head>
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        {children}
       </body>
     </html>
   );

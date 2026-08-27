@@ -21,14 +21,17 @@ class EditArticle extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        // Isi TagsInput dengan nama kategori yang sudah ada
         $data['category_input'] = $this->record->categories->pluck('name')->toArray();
+
+        // Cukup set mode saja, JANGAN wrap image_path ke array di sini
+        $data['thumbnail_mode'] = !empty($data['image_path']) ? 'file' : 'url';
+
         return $data;
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        // Hitung Read Time otomatis sebelum update ke database
+        // Hitung Read Time
         if (!empty($data['content'])) {
             $rawText = is_array($data['content']) ? json_encode($data['content']) : (string) $data['content'];
             $cleanText = strip_tags($rawText);
@@ -37,6 +40,24 @@ class EditArticle extends EditRecord
             $data['read_time'] = "{$minutes} MIN READ";
         } else {
             $data['read_time'] = '1 MIN READ';
+        }
+
+        // Normalisasi image_path: FileUpload return array, DB butuh string
+        if (isset($data['image_path'])) {
+            if (is_array($data['image_path'])) {
+                $data['image_path'] = reset($data['image_path']) ?: null;
+            }
+            // Mode file aktif — hapus file lama jika diganti, kosongkan image_url
+            if (!empty($this->record->image_path) && $this->record->image_path !== $data['image_path']) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($this->record->image_path);
+            }
+            $data['image_url'] = null;
+        } else {
+            // Mode url aktif — hapus file lama jika sebelumnya pakai upload
+            if (!empty($this->record->image_path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($this->record->image_path);
+            }
+            $data['image_path'] = null;
         }
 
         unset($data['category_input']);

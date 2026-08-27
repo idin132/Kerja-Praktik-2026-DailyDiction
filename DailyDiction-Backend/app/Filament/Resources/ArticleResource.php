@@ -80,9 +80,9 @@ class ArticleResource extends Resource
 
                 // A & B. GABUNGAN ARTIKEL & TEKNOLOGI
                 Forms\Components\TagsInput::make('category_input')
-                    ->label(fn (Get $get) => $get('type') === 'technology' ? 'Kategori Tech / Perangkat' : 'Category')
-                    ->placeholder(fn (Get $get) => $get('type') === 'technology' ? 'Contoh: Keyboard, Mouse, GPU, Monitor...' : 'Ketik kategori, tekan Enter...')
-                    ->suggestions(fn (Get $get) => $get('type') === 'technology' ? [
+                    ->label(fn(Get $get) => $get('type') === 'technology' ? 'Kategori Tech / Perangkat' : 'Category')
+                    ->placeholder(fn(Get $get) => $get('type') === 'technology' ? 'Contoh: Keyboard, Mouse, GPU, Monitor...' : 'Ketik kategori, tekan Enter...')
+                    ->suggestions(fn(Get $get) => $get('type') === 'technology' ? [
                         'Keyboard',
                         'Mouse',
                         'Headset',
@@ -93,8 +93,8 @@ class ArticleResource extends Resource
                         'Console / Handheld',
                         'Accessories',
                     ] : Category::pluck('name')->toArray())
-                    ->visible(fn (Get $get) => in_array($get('type'), ['article', 'technology']))
-                    ->required(fn (Get $get) => in_array($get('type'), ['article', 'technology'])),
+                    ->visible(fn(Get $get) => in_array($get('type'), ['article', 'technology']))
+                    ->required(fn(Get $get) => in_array($get('type'), ['article', 'technology'])),
 
                 // C. KHUSUS REVIEW: Platform Game
                 Forms\Components\Select::make('platform')
@@ -119,6 +119,17 @@ class ArticleResource extends Resource
                     ->default('crimson'),
 
                 // ================= 4. KONTEN ARTIKEL =================
+                Forms\Components\Radio::make('thumbnail_mode')
+                    ->label('Sumber Thumbnail')
+                    ->options([
+                        'url'  => 'URL Gambar (External)',
+                        'file' => 'Upload File',
+                    ])
+                    ->default('url')
+                    ->live()
+                    ->dehydrated(false)
+                    ->columnSpanFull(),
+
                 Forms\Components\TextInput::make('image_url')
                     ->label('Thumbnail Artikel (URL Gambar)')
                     ->url()
@@ -126,19 +137,52 @@ class ArticleResource extends Resource
                     ->live(onBlur: true)
                     ->columnSpanFull()
                     ->maxLength(2000)
-                    ->required(),
+                    ->visible(fn(Get $get) => $get('thumbnail_mode') !== 'file')
+                    ->required(fn(Get $get) => $get('thumbnail_mode') !== 'file')
+                    ->dehydrated(fn(Get $get) => $get('thumbnail_mode') !== 'file'),
 
-                // ================= 5. MEDIA & SETTINGS =================
+                Forms\Components\FileUpload::make('image_path')
+                    ->label('Upload Thumbnail')
+                    ->image()
+                    ->disk('public')
+                    ->directory('thumbnails')
+                    ->visibility('public')
+                    ->imageResizeMode('cover')
+                    ->imageCropAspectRatio('16:9')
+                    ->maxSize(2048)
+                    ->imagePreviewHeight('192')
+                    ->columnSpanFull()
+                    ->afterStateHydrated(function ($component, $state) {
+                        if (is_string($state) && !empty($state)) {
+                            $component->state([$state]);
+                        }
+                    })
+                    ->visible(fn(Get $get) => $get('thumbnail_mode') === 'file')
+                    ->required(fn(Get $get) => $get('thumbnail_mode') === 'file')
+                    ->dehydrated(fn(Get $get) => $get('thumbnail_mode') === 'file'),
+
+
                 Forms\Components\Placeholder::make('image_preview')
                     ->label('Preview Thumbnail')
                     ->content(function (Get $get) {
+                        $mode = $get('thumbnail_mode');
+
+                        // Mode file: preview sudah ditangani oleh FileUpload component di atas
+                        if ($mode === 'file') {
+                            return new HtmlString('<span class="text-xs text-gray-400">Preview tersedia di area upload di atas.</span>');
+                        }
+
                         $url = $get('image_url');
+
                         if (!$url) {
                             return new HtmlString('<span class="text-xs text-gray-400">Belum ada preview (masukkan URL gambar di atas)</span>');
                         }
+
                         return new HtmlString('
                             <div class="mt-1">
-                                <img src="' . e($url) . '" alt="Thumbnail Preview" class="max-h-48 rounded-lg object-cover border border-gray-200 shadow-sm" onerror="this.src=\'https://placehold.co/600x400?text=Gambar+Tidak+Valid\'"/>
+                                <img src="' . e($url) . '" alt="Thumbnail Preview"
+                                    class="max-h-48 rounded-lg object-cover border border-gray-200 shadow-sm"
+                                    onerror="this.src=\'https://placehold.co/600x400?text=Gambar+Tidak+Valid\'"/>
                             </div>
                         ');
                     })
@@ -220,9 +264,11 @@ class ArticleResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('image_url')
+                Tables\Columns\ImageColumn::make('thumbnail')
                     ->label('Thumbnail')
-                    ->square(),
+                    ->square()
+                    ->disk('public')
+                    ->defaultImageUrl('https://placehold.co/100x100?text=No+Image'),
 
                 Tables\Columns\TextColumn::make('type')
                     ->label('Tipe')

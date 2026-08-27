@@ -32,9 +32,9 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login(Login::class)
             ->colors([
-                'primary' => Color::Hex('#FF3E3E'),   // Crimson Red DailyDiction
-                'secondary' => Color::Hex('#00E5FF'), // Cyber Cyan
-                'gray' => Color::Slate,               // Dark Neutral Tone
+                'primary' => Color::Hex('#FF3E3E'),
+                'secondary' => Color::Hex('#00E5FF'),
+                'gray' => Color::Slate,
             ])
             ->brandName('Daily Diction Admin Panel')
             ->favicon(asset('favicon.ico'))
@@ -42,7 +42,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->renderHook(
                 PanelsRenderHook::USER_MENU_BEFORE,
-                fn (): string => Blade::render('
+                fn(): string => Blade::render('
                     @if(auth()->check())
                         <div style="margin-right: 1rem; padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid {{ auth()->user()->role === \'superadmin\' ? \'#e11d48\' : \'#06b6d4\' }}; color: {{ auth()->user()->role === \'superadmin\' ? \'#e11d48\' : \'#06b6d4\' }}; background-color: {{ auth()->user()->role === \'superadmin\' ? \'rgba(225,29,72,0.1)\' : \'rgba(6,182,212,0.1)\' }};">
                             {{ auth()->user()->role ?? \'Admin\' }}
@@ -50,6 +50,57 @@ class AdminPanelProvider extends PanelProvider
                     @endif
                 ')
             )
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn(): string => Blade::render('
+                    <style>
+                        .tiptap-wrapper .ProseMirror {
+                            scroll-margin-top: 0 !important;
+                            scroll-margin-bottom: 0 !important;
+                        }
+                    </style>
+                    <script>
+                        // Override scrollIntoView sebelum Tiptap/ProseMirror load
+                        // agar saat ProseMirror panggil node.scrollIntoView(), tidak hijack window scroll
+                        (function () {
+                            var _orig = Element.prototype.scrollIntoView;
+                            Element.prototype.scrollIntoView = function (arg) {
+                                // Cek apakah element ini ada di dalam ProseMirror
+                                if (this.closest && this.closest(".ProseMirror, .tiptap-prosemirror-wrapper")) {
+                                    // Diam saja — jangan scroll window
+                                    return;
+                                }
+                                return _orig.apply(this, arguments);
+                            };
+                        })();
+                    </script>
+                ')
+            )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn(): string => Blade::render('
+                    <script>
+                        (function () {
+                            function applyTiptapFixes() {
+                                // Keydown di ProseMirror jangan direbut Livewire
+                                document.addEventListener("keydown", function (e) {
+                                    if (!e.target.closest(".ProseMirror")) return;
+                                    e.stopPropagation();
+                                }, true);
+                            }
+
+                            document.addEventListener("livewire:init", applyTiptapFixes);
+
+                            if (document.readyState === "complete" || document.readyState === "interactive") {
+                                applyTiptapFixes();
+                            } else {
+                                document.addEventListener("DOMContentLoaded", applyTiptapFixes);
+                            }
+                        })();
+                    </script>
+                ')
+            )
+
             ->pages([
                 Pages\Dashboard::class,
             ])

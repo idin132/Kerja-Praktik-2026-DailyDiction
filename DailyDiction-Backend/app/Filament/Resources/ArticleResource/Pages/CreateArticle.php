@@ -11,7 +11,6 @@ class CreateArticle extends CreateRecord
 {
     protected static string $resource = ArticleResource::class;
 
-    // 👇 REDIRECT KE LIST ARTIKEL SETELAH KLIK CREATE 👇
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
@@ -19,7 +18,7 @@ class CreateArticle extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // Hitung Read Time otomatis sebelum save ke database
+        // Hitung Read Time
         if (!empty($data['content'])) {
             $rawText = is_array($data['content']) ? json_encode($data['content']) : (string) $data['content'];
             $cleanText = strip_tags($rawText);
@@ -28,6 +27,18 @@ class CreateArticle extends CreateRecord
             $data['read_time'] = "{$minutes} MIN READ";
         } else {
             $data['read_time'] = '1 MIN READ';
+        }
+
+        // Normalisasi image_path: FileUpload return array, DB butuh string
+        if (isset($data['image_path'])) {
+            if (is_array($data['image_path'])) {
+                $data['image_path'] = reset($data['image_path']) ?: null;
+            }
+            // Mode file aktif, pastikan image_url null
+            $data['image_url'] = null;
+        } else {
+            // Mode url aktif, pastikan image_path null
+            $data['image_path'] = null;
         }
 
         unset($data['category_input']);

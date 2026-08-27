@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Search, Trophy, Gamepad2, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  Trophy,
+  Gamepad2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -27,13 +33,16 @@ interface ReviewItem {
 
 function formatImageUrl(
   imageUrl: string | null | undefined,
-  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
+  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
 ): string {
   if (!imageUrl || typeof imageUrl !== "string") return fallback;
 
   const clean = imageUrl.trim();
 
-  if (clean.includes("/storage/http://") || clean.includes("/storage/https://")) {
+  if (
+    clean.includes("/storage/http://") ||
+    clean.includes("/storage/https://")
+  ) {
     return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
   }
 
@@ -52,7 +61,7 @@ function formatImageUrl(
 export default function ReviewPage() {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [searchQuery, setSearchQuery] = useState<string>("" );
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedPlatform, setSelectedPlatform] = useState<string>("ALL");
 
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -100,14 +109,16 @@ export default function ReviewPage() {
                 ? item.category
                 : [item.category]),
               ...(Array.isArray(item.categories)
-                ? item.categories.map((c: any) => (typeof c === "string" ? c : c.name))
+                ? item.categories.map((c: any) =>
+                    typeof c === "string" ? c : c.name,
+                  )
                 : []),
             ]
               .filter(Boolean)
               .map((c) => String(c).toUpperCase());
 
             return cats.some(
-              (cat) => cat.includes("REVIEW") || cat.includes("ULASAN")
+              (cat) => cat.includes("REVIEW") || cat.includes("ULASAN"),
             );
           });
         }
@@ -135,6 +146,27 @@ export default function ReviewPage() {
     setCurrentPage(1);
   }, [searchQuery, selectedPlatform]);
 
+  const [platforms, setPlatforms] = useState<string[]>(["ALL"]);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
+        const res = await fetch(`${apiUrl}/categories`, { cache: "no-store" });
+        if (!res.ok) return;
+        const json = await res.json();
+        const names: string[] = (json.data || []).map((c: { name: string }) =>
+          c.name.toUpperCase(),
+        );
+        setPlatforms(["ALL", ...names]);
+      } catch (err) {
+        console.error("Gagal fetch categories:", err);
+      }
+    }
+    fetchCategories();
+  }, []);
+
   const getPlatformsArray = (review: ReviewItem): string[] => {
     const raw = review.platform || review.category || ["PC"];
     if (Array.isArray(raw)) return raw;
@@ -154,7 +186,7 @@ export default function ReviewPage() {
     const matchPlatform =
       selectedPlatform === "ALL" ||
       plats.some(
-        (p) => p.includes(selectedPlatform) || selectedPlatform.includes(p)
+        (p) => p.includes(selectedPlatform) || selectedPlatform.includes(p),
       );
 
     const matchSearch =
@@ -168,7 +200,7 @@ export default function ReviewPage() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentReviews = filteredReviews.slice(
     startIndex,
-    startIndex + itemsPerPage
+    startIndex + itemsPerPage,
   );
 
   const handlePageChange = (page: number) => {
@@ -177,7 +209,6 @@ export default function ReviewPage() {
   };
 
   const featuredReview = reviews.length > 0 ? reviews[0] : null;
-  const filterButtons = ["ALL", "PC", "PLAYSTATION", "NINTENDO", "XBOX", "MOBILE"];
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white flex flex-col justify-between font-sans">
@@ -229,7 +260,7 @@ export default function ReviewPage() {
                         featuredReview.image_url ||
                           featuredReview.image_full_url ||
                           featuredReview.thumbnail_url ||
-                          featuredReview.thumbnail
+                          featuredReview.thumbnail,
                       )}
                       alt={featuredReview.title}
                       className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -273,19 +304,31 @@ export default function ReviewPage() {
             <span className="flex items-center gap-2 text-xs text-text-muted uppercase tracking-widest mr-2 shrink-0">
               FILTER:
             </span>
-            {filterButtons.map((filter) => (
-              <button
-                key={filter}
-                onClick={() => setSelectedPlatform(filter)}
-                className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
-                  selectedPlatform === filter
-                    ? "bg-brand-crimson text-white shadow-[0_0_15px_rgba(255,62,62,0.4)]"
-                    : "bg-dark-card border border-dark-border text-text-muted hover:border-brand-crimson/50 hover:text-white"
-                }`}
-              >
-                {filter}
-              </button>
-            ))}
+            {platforms.length === 1 ? (
+              // Skeleton saat categories belum load
+              <>
+                {[1, 2, 3, 4].map((n) => (
+                  <div
+                    key={n}
+                    className="h-8 w-20 rounded-lg bg-dark-card border border-dark-border animate-pulse shrink-0"
+                  />
+                ))}
+              </>
+            ) : (
+              platforms.map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setSelectedPlatform(filter)}
+                  className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
+                    selectedPlatform === filter
+                      ? "bg-brand-crimson text-white shadow-[0_0_15px_rgba(255,62,62,0.4)]"
+                      : "bg-dark-card border border-dark-border text-text-muted hover:border-brand-crimson/50 hover:text-white"
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))
+            )}
           </div>
 
           {/* Grid Reviews */}
@@ -324,7 +367,7 @@ export default function ReviewPage() {
                               review.image_url ||
                                 review.image_full_url ||
                                 review.thumbnail_url ||
-                                review.thumbnail
+                                review.thumbnail,
                             )}
                             alt={review.title}
                             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -354,14 +397,13 @@ export default function ReviewPage() {
                           <div className="mt-4 flex items-center justify-between border-t border-dark-border/60 pt-4 font-mono">
                             <span className="text-[10px] text-text-muted">
                               {review.created_at
-                                ? new Date(review.created_at).toLocaleDateString(
-                                    "id-ID",
-                                    {
-                                      day: "numeric",
-                                      month: "short",
-                                      year: "numeric",
-                                    }
-                                  )
+                                ? new Date(
+                                    review.created_at,
+                                  ).toLocaleDateString("id-ID", {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  })
                                 : "-"}
                             </span>
                             <span className="text-[10px] font-bold uppercase tracking-wider text-brand-cyan">
@@ -400,7 +442,7 @@ export default function ReviewPage() {
                       >
                         {pageNum}
                       </button>
-                    )
+                    ),
                   )}
 
                   <button
@@ -417,7 +459,8 @@ export default function ReviewPage() {
           ) : (
             <div className="rounded-2xl border border-dark-border bg-dark-card p-12 text-center font-mono">
               <p className="text-sm text-text-muted">
-                Tidak ada ulasan game yang ditemukan untuk filter "{selectedPlatform}".
+                Tidak ada ulasan game yang ditemukan untuk filter "
+                {selectedPlatform}".
               </p>
             </div>
           )}

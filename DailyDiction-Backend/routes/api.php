@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ArticleController;
 use App\Models\Sponsor;
 use App\Models\Advertisement;
+use App\Models\Category;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\YoutubeController;
 
@@ -18,17 +19,27 @@ Route::prefix('v1')->group(function () {
     Route::get('/articles', [ArticleController::class, 'index']);
     Route::get('/articles/featured', [ArticleController::class, 'featured']);
     Route::get('/articles/{slug}', [ArticleController::class, 'show']);
-    
+
     Route::get('/reviews', [ArticleController::class, 'reviews']);
     Route::get('/reviews/{slug}', [ArticleController::class, 'showReview']);
-    
+
+    Route::get('/categories', function () {
+        return response()->json([
+            'data' => Category::whereHas('articles', function ($q) {
+                $q->where('type', 'review');
+            })
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug'])
+        ]);
+    });
+
     Route::get('/reels', [ArticleController::class, 'reels']);
-    
+
     Route::get('/youtube-videos', [YoutubeController::class, 'getVideos']);
     Route::get('/youtube-shorts', [YoutubeController::class, 'getShorts']);
-    
+
     Route::get('/technologies', [ArticleController::class, 'technologies']);
-    
+
     Route::get('/proxy-image', function (\Illuminate\Http\Request $request) {
         $url = $request->query('url');
 
