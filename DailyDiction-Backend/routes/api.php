@@ -24,15 +24,22 @@ Route::prefix('v1')->group(function () {
     Route::get('/reviews/{slug}', [ArticleController::class, 'showReview']);
 
     Route::get('/categories', function () {
-        return response()->json([
-            'data' => Category::whereHas('articles', function ($q) {
-                $q->where('type', 'review');
+        $platforms = \App\Models\Article::where('type', 'review')
+            ->whereNotNull('platform')
+            ->pluck('platform')
+            ->flatMap(function ($p) {
+                $decoded = is_string($p) ? json_decode($p, true) : $p;
+                return is_array($decoded) ? $decoded : [$p];
             })
-                ->orderBy('name')
-                ->get(['id', 'name', 'slug'])
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        return response()->json([
+            'data' => $platforms->map(fn($p) => ['id' => $p, 'name' => $p, 'slug' => \Illuminate\Support\Str::slug($p)])
         ]);
     });
-
     Route::get('/reels', [ArticleController::class, 'reels']);
 
     Route::get('/youtube-videos', [YoutubeController::class, 'getVideos']);
