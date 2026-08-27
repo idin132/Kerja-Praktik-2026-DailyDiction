@@ -35,7 +35,7 @@ class AdvertisementResource extends Resource
                     ->maxLength(255)
                     ->columnSpanFull(),
 
-                // 1. SELECT POSISI IKLAN (NEW!)
+                // 1. SELECT POSISI IKLAN
                 Select::make('position')
                     ->label('Posisi Penempatan Iklan')
                     ->options([
@@ -46,7 +46,7 @@ class AdvertisementResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // 2. SELECT TIPE IKLAN
+                // 2. SELECT TIPE IKLAN (DIBIKIN LIVE REAKTIF)
                 Select::make('type')
                     ->label('Tipe Iklan')
                     ->options([
@@ -54,32 +54,34 @@ class AdvertisementResource extends Resource
                         'script' => 'Script / Google Ads',
                     ])
                     ->default('banner')
-                    ->live() // Bikin form di bawahnya reaktif berubah
+                    ->live() // 👈 Trigger ubah form bawahnya realtime
                     ->required()
                     ->columnSpanFull(),
 
-                // 3. MUNCUL KALAU PILIH BANNER
+                // 3. FIELD KHUSUS BANNER MANUAL
                 FileUpload::make('banner_image')
                     ->label('Gambar Banner Iklan')
                     ->image()
                     ->directory('advertisements')
-                    ->visible(fn (Get $get) => $get('type') === 'banner')
-                    ->required(fn (Get $get) => $get('type') === 'banner'),
+                    ->visible(fn (Get $get) => in_array($get('type'), ['banner', 'Gambar Banner Manual']))
+                    ->required(fn (Get $get) => in_array($get('type'), ['banner', 'Gambar Banner Manual']))
+                    ->columnSpanFull(),
 
                 TextInput::make('url_link')
                     ->label('Link Tujuan (URL)')
                     ->placeholder('https://...')
                     ->url()
-                    ->visible(fn (Get $get) => $get('type') === 'banner')
-                    ->required(fn (Get $get) => $get('type') === 'banner')
-                    ->maxLength(255),
+                    ->visible(fn (Get $get) => in_array($get('type'), ['banner', 'Gambar Banner Manual']))
+                    ->required(fn (Get $get) => in_array($get('type'), ['banner', 'Gambar Banner Manual']))
+                    ->maxLength(255)
+                    ->columnSpanFull(),
 
-                // 4. MUNCUL KALAU PILIH SCRIPT
+                // 4. FIELD KHUSUS SCRIPT / GOOGLE ADS
                 Textarea::make('script_code')
                     ->label('Script Google Ads / HTML')
                     ->rows(6)
-                    ->visible(fn (Get $get) => $get('type') === 'script')
-                    ->required(fn (Get $get) => $get('type') === 'script')
+                    ->visible(fn (Get $get) => in_array($get('type'), ['script', 'Script / Google Ads']))
+                    ->required(fn (Get $get) => in_array($get('type'), ['script', 'Script / Google Ads']))
                     ->columnSpanFull()
                     ->helperText('Paste kode script Google Adsense atau HTML iframe di sini.'),
             ]);
@@ -116,9 +118,9 @@ class AdvertisementResource extends Resource
                     ->label('Tipe')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'banner' => 'success',
-                        'script' => 'warning',
-                        default  => 'gray',
+                        'banner', 'Gambar Banner Manual' => 'success',
+                        'script', 'Script / Google Ads'  => 'warning',
+                        default                          => 'gray',
                     }),
                 
                 TextColumn::make('url_link')
@@ -126,7 +128,6 @@ class AdvertisementResource extends Resource
                     ->limit(30),
             ])
             ->filters([
-                // Filter berdasarkan Posisi Iklan
                 Tables\Filters\SelectFilter::make('position')
                     ->label('Filter Posisi')
                     ->options([
