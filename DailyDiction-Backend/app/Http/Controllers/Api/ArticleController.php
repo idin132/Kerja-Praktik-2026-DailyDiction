@@ -190,19 +190,23 @@ class ArticleController extends Controller
     }
 
     // 2. Hapus Komentar (Hanya Pemilik Komentar atau Superadmin)
-    public function destroyComment($id)
+    public function destroyComment(Request $request, $id)
     {
         $comment = Comment::findOrFail($id);
-        $user = auth()->user();
+        $user = $request->user(); // Ambil user dari token Sanctum
 
-        // Cek otorisasi: apakah pemilik komentar atau superadmin
-        $isOwner = $comment->user_id === $user->id;
-        $isSuperAdmin = $user->role === 'superadmin' || (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
+        // Cek apakah pemilik komentar
+        $isOwner = (int) $comment->user_id === (int) $user->id;
+
+        // Cek apakah Superadmin / Admin
+        $role = strtolower($user->role ?? '');
+        $isSuperAdmin = in_array($role, ['superadmin', 'admin'])
+            || (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
 
         if (!$isOwner && !$isSuperAdmin) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Anda tidak memiliki izin untuk menghapus komentar ini.'
+                'message' => 'Akses ditolak. Hanya pemilik atau Superadmin yang dapat menghapus komentar ini.'
             ], 403);
         }
 

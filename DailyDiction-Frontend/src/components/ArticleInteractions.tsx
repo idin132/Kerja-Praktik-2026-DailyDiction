@@ -309,11 +309,14 @@ export default function ArticleInteractions({
         {/* List Komentar */}
         <div className="space-y-4 pt-4">
           {comments.map((c) => {
-            const canDelete =
-              currentUser &&
-              (currentUser.id === c.user_id ||
-                currentUser.role === "superadmin" ||
-                currentUser.role === "admin");
+            // 1. Normalisasi pengecekan pemilik & role Superadmin
+            const isOwner =
+              currentUser && Number(currentUser.id) === Number(c.user_id);
+            const userRole = (currentUser?.role || "").toLowerCase();
+            const isSuperAdmin =
+              userRole === "superadmin" || userRole === "admin";
+
+            const canDelete = Boolean(currentUser && (isOwner || isSuperAdmin));
 
             return (
               <div
@@ -324,7 +327,8 @@ export default function ArticleInteractions({
                   <div className="flex items-center gap-2 text-white font-bold">
                     <UserIcon className="h-3.5 w-3.5 text-brand-cyan" />
                     <span>{c.user?.name || "Member"}</span>
-                    {c.user?.role === "superadmin" && (
+                    {(c.user?.role === "superadmin" ||
+                      c.user?.role === "admin") && (
                       <span className="rounded bg-brand-crimson/20 border border-brand-crimson/40 px-1.5 py-0.5 text-[9px] font-bold uppercase text-brand-crimson">
                         ADMIN
                       </span>
@@ -340,13 +344,17 @@ export default function ArticleInteractions({
                       })}
                     </span>
 
-                    {/* Tombol Hapus */}
+                    {/* Tombol Trash muncul untuk pemilik komentar MAUPUN superadmin */}
                     {canDelete && (
                       <button
                         onClick={() => handleDeleteComment(c.id)}
                         disabled={deletingId === c.id}
-                        title="Hapus komentar"
-                        className="text-text-muted hover:text-brand-crimson transition-colors"
+                        title={
+                          isSuperAdmin && !isOwner
+                            ? "Hapus komentar (Superadmin)"
+                            : "Hapus komentar"
+                        }
+                        className="text-text-muted hover:text-brand-crimson transition-colors p-1 rounded"
                       >
                         {deletingId === c.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
