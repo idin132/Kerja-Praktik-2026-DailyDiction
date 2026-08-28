@@ -123,6 +123,7 @@ class ArticleController extends Controller
     public function getComments($id)
     {
         $comments = Comment::with('user')
+            ->with(['user:id,name,role']) // Wajib include id, name, role
             ->where('article_id', $id)
             ->latest()
             ->get();
@@ -151,6 +152,8 @@ class ArticleController extends Controller
             'data' => $comment->load('user')
         ], 201);
     }
+
+
 
     // Get list of Reels
     public function reels()
@@ -215,6 +218,26 @@ class ArticleController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Komentar berhasil dihapus.'
+        ]);
+    }
+
+    public function reviews(Request $request)
+    {
+        $reviews = Article::query()
+            ->where('type', 'review')
+            ->where('is_published', true)
+            ->with('categories')
+            ->latest()
+            ->paginate($request->get('limit', 12));
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $reviews->items(),
+            'meta' => [
+                'current_page' => $reviews->currentPage(),
+                'last_page' => $reviews->lastPage(),
+                'total' => $reviews->total(),
+            ],
         ]);
     }
 }
