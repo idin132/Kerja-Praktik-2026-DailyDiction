@@ -64,13 +64,14 @@ Route::prefix('v1')->group(function () {
             ->header('Cache-Control', 'public, max-age=86400');
     });
 
-    // Like & Get Comments (Bisa diakses siapa saja)
-    Route::post('/articles/{id}/like', [ArticleController::class, 'like']);
+    // Like & Get Comments
+    Route::post('/articles/{id}/toggle-like', [ArticleController::class, 'toggleLike']);
     Route::get('/articles/{id}/comments', [ArticleController::class, 'getComments']);
 
     // Post Komentar (Wajib Login)
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/articles/{id}/comments', [ArticleController::class, 'storeComment']);
+        Route::delete('/comments/{id}', [ArticleController::class, 'destroyComment']);
     });
 
     // Auth Publik

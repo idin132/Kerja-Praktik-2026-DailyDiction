@@ -51,81 +51,31 @@ class AdminPanelProvider extends PanelProvider
                 ')
             )
             ->renderHook(
-                PanelsRenderHook::HEAD_END,
-                fn(): string => Blade::render('
-                    <style>
-                        /* CEGAH TIPTAP & BUBBLE MENU SCROLL JUMPING */
-                        .tiptap-wrapper .ProseMirror {
-                            scroll-margin-top: 0 !important;
-                            scroll-margin-bottom: 0 !important;
-                        }
-                        
-                        /* Fix posisi Tippy / Bubble Menu agar tidak melempar scrollbar window */
-                        [data-tippy-root] {
-                            position: absolute !important;
-                            z-index: 99999 !important;
-                        }
-
-                        .tiptap-bubble-menu {
-                            max-height: 42px !important;
-                        }
-                    </style>
-                    <script>
-                        // Override scrollIntoView sebelum Tiptap/ProseMirror load
-                        (function () {
-                            var _orig = Element.prototype.scrollIntoView;
-                            Element.prototype.scrollIntoView = function (arg) {
-                                // Cek apakah element ini ada di dalam ProseMirror atau Bubble Menu
-                                if (this.closest && this.closest(".ProseMirror, .tiptap-prosemirror-wrapper, [data-tippy-root]")) {
-                                    // Diam saja — jangan scroll window
-                                    return;
-                                }
-                                return _orig.apply(this, arguments);
-                            };
-                        })();
-                    </script>
-                ')
-            )
-            ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn(): string => Blade::render('
                     <script>
                         (function () {
-                            function applyTiptapFixes() {
-                                // 1. Prevent keydown / selection change di ProseMirror merebut window focus
-                                document.addEventListener("keydown", function (e) {
-                                    if (!e.target.closest(".ProseMirror")) return;
-                                    e.stopPropagation();
-                                }, true);
+                            // 1. Matikan scroll-anchoring bawaan browser
+                            const style = document.createElement("style");
+                            style.innerHTML = `
+                                html, body, .fi-body, .fi-main, .ProseMirror {
+                                    overflow-anchor: none !important;
+                                }
+                            `;
+                            document.head.appendChild(style);
 
-                                // 2. Kunci scroll position saat memilih teks di dalam list
-                                let lastScrollPos = 0;
-                                document.addEventListener("selectionchange", function () {
-                                    const activeEl = document.activeElement;
-                                    if (activeEl && activeEl.closest(".ProseMirror")) {
-                                        lastScrollPos = window.scrollY;
-                                    }
-                                });
-
-                                document.addEventListener("mouseup", function (e) {
-                                    if (e.target.closest(".ProseMirror")) {
-                                        // Jaga posisi scroll tetap tenang saat bubble menu aktif
-                                        setTimeout(function() {
-                                            if (Math.abs(window.scrollY - lastScrollPos) > 50 && lastScrollPos > 0) {
-                                                window.scrollTo({ top: lastScrollPos, behavior: "instant" });
-                                            }
-                                        }, 10);
-                                    }
-                                });
-                            }
-
-                            document.addEventListener("livewire:init", applyTiptapFixes);
-
-                            if (document.readyState === "complete" || document.readyState === "interactive") {
-                                applyTiptapFixes();
-                            } else {
-                                document.addEventListener("DOMContentLoaded", applyTiptapFixes);
-                            }
+                            // 2. Lepaskan seleksi kursor Tiptap secara mulus saat user klik input lain
+                            document.addEventListener("mousedown", function (e) {
+                                const activeEl = document.activeElement;
+                                if (
+                                    activeEl && 
+                                    activeEl.closest(".ProseMirror") && 
+                                    !e.target.closest(".ProseMirror")
+                                ) {
+                                    // Blur editor agar tidak mempertahankan focus-trap
+                                    activeEl.blur();
+                                }
+                            }, true);
                         })();
                     </script>
                 ')

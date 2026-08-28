@@ -34,9 +34,9 @@ class ArticleResource extends Resource
                 Forms\Components\Select::make('type')
                     ->label('Tipe Konten')
                     ->options([
-                        'article'    => 'Berita / Artikel',
+                        'article' => 'Berita / Artikel',
                         'technology' => 'Teknologi & Hardware',
-                        'review'     => 'Game Review',
+                        'review' => 'Game Review',
                     ])
                     ->default('article')
                     ->required()
@@ -47,7 +47,7 @@ class ArticleResource extends Resource
                     ->label('Title')
                     ->required()
                     ->maxLength(255)
-                    ->live(onBlur: true)
+                    ->lazy() // JANGAN GUNAKAN live(onBlur: true)
                     ->afterStateUpdated(function (string $operation, ?string $state, Set $set) {
                         if ($operation === 'create') {
                             $set('slug', Str::slug($state));
@@ -55,14 +55,14 @@ class ArticleResource extends Resource
                     }),
 
                 (auth()->user()?->role === 'superadmin' || (auth()->user() && method_exists(auth()->user(), 'isSuperAdmin') && auth()->user()->isSuperAdmin()))
-                    ? Forms\Components\Select::make('author')
+                ? Forms\Components\Select::make('author')
                     ->label('Author (Penulis)')
                     ->options(fn() => User::pluck('name', 'name')->toArray())
                     ->searchable()
                     ->preload()
                     ->default(fn() => auth()->user()?->name)
                     ->required()
-                    : Forms\Components\TextInput::make('author')
+                : Forms\Components\TextInput::make('author')
                     ->label('Author (Penulis)')
                     ->required()
                     ->readOnly()
@@ -122,7 +122,7 @@ class ArticleResource extends Resource
                 Forms\Components\Radio::make('thumbnail_mode')
                     ->label('Sumber Thumbnail')
                     ->options([
-                        'url'  => 'URL Gambar (External)',
+                        'url' => 'URL Gambar (External)',
                         'file' => 'Upload File',
                     ])
                     ->default('url')
@@ -130,17 +130,17 @@ class ArticleResource extends Resource
                     ->dehydrated(false)
                     ->columnSpanFull(),
 
+                // UBAH IMAGE URL DARI ->live(onBlur: true) MENJADI ->lazy()
                 Forms\Components\TextInput::make('image_url')
                     ->label('Thumbnail Artikel (URL Gambar)')
                     ->url()
                     ->placeholder('https://example.com/image.jpg')
-                    ->live(onBlur: true)
-                    ->columnSpanFull()
+                    ->lazy() // JANGAN GUNAKAN live(onBlur: true)
                     ->maxLength(2000)
                     ->visible(fn(Get $get) => $get('thumbnail_mode') !== 'file')
                     ->required(fn(Get $get) => $get('thumbnail_mode') !== 'file')
                     ->dehydrated(fn(Get $get) => $get('thumbnail_mode') !== 'file'),
-
+                    
                 Forms\Components\FileUpload::make('image_path')
                     ->label('Upload Thumbnail')
                     ->image()
@@ -194,37 +194,18 @@ class ArticleResource extends Resource
 
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
+                    ->extraAttributes([
+                        'wire:ignore.self' => true,
+                        'x-on:focusout.stop' => '', // Mencegah event blur merambat ke Livewire saat pindah field
+                        'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static',
+                        'style' => 'min-height: 450px;',
+                    ])
+                    ->extraInputAttributes([
+                        'tabindex' => '0',
+                    ])
+                    ->disableBubbleMenus()
+                    ->disableFloatingMenus()
                     ->tools([
-                        'heading',
-                        'blockquote',
-                        'bold',
-                        'italic',
-                        'strike',
-                        'link',
-                        'media',
-                        'oembed',
-                        'bullet-list',
-                        'ordered-list',
-                        'code-block',
-                        'undo',
-                        'redo',
-                    ])
-                    ->bubbleMenuTools([
-                        'heading',
-                        'blockquote',
-                        'bold',
-                        'italic',
-                        'strike',
-                        'link',
-                        'media',
-                        'oembed',
-                        'bullet-list',
-                        'ordered-list',
-                        'code-block',
-                        'undo',
-                        'redo',
-                    ])
-                    ->floatingMenuTools([
                         'heading',
                         'blockquote',
                         'bold',
@@ -241,6 +222,7 @@ class ArticleResource extends Resource
                     ])
                     ->mediaAction(CustomMediaAction::class)
                     ->columnSpanFull()
+                    ->dehydrated(true)
                     ->required(),
 
                 Forms\Components\TextInput::make('read_time')
@@ -274,10 +256,10 @@ class ArticleResource extends Resource
                     ->label('Tipe')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
-                        'article'    => 'info',
+                        'article' => 'info',
                         'technology' => 'success',
-                        'review'     => 'warning',
-                        default      => 'gray',
+                        'review' => 'warning',
+                        default => 'gray',
                     })
                     ->formatStateUsing(fn(string $state): string => ucfirst($state)),
 
@@ -316,9 +298,9 @@ class ArticleResource extends Resource
                 Tables\Filters\SelectFilter::make('type')
                     ->label('Filter Tipe Konten')
                     ->options([
-                        'article'    => 'Berita / Artikel',
+                        'article' => 'Berita / Artikel',
                         'technology' => 'Teknologi & Hardware',
-                        'review'     => 'Game Review',
+                        'review' => 'Game Review',
                     ]),
             ])
             ->actions([
@@ -339,9 +321,9 @@ class ArticleResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListArticles::route('/'),
+            'index' => Pages\ListArticles::route('/'),
             'create' => Pages\CreateArticle::route('/create'),
-            'edit'   => Pages\EditArticle::route('/{record}/edit'),
+            'edit' => Pages\EditArticle::route('/{record}/edit'),
         ];
     }
 }

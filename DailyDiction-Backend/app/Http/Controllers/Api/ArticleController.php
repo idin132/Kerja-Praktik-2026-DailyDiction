@@ -164,4 +164,53 @@ class ArticleController extends Controller
             'data' => $reels
         ]);
     }
+
+    // 1. Toggle Like / Unlike (Anonim / Siapa Saja)
+    public function toggleLike(Request $request, $id)
+    {
+        $request->validate([
+            'action' => 'required|in:like,unlike'
+        ]);
+
+        $article = Article::findOrFail($id);
+
+        if ($request->action === 'like') {
+            $article->increment('likes_count');
+        } else {
+            // Cegah like bernilai minus
+            if ($article->likes_count > 0) {
+                $article->decrement('likes_count');
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'likes_count' => (int) $article->likes_count
+        ]);
+    }
+
+    // 2. Hapus Komentar (Hanya Pemilik Komentar atau Superadmin)
+    public function destroyComment($id)
+    {
+        $comment = Comment::findOrFail($id);
+        $user = auth()->user();
+
+        // Cek otorisasi: apakah pemilik komentar atau superadmin
+        $isOwner = $comment->user_id === $user->id;
+        $isSuperAdmin = $user->role === 'superadmin' || (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
+
+        if (!$isOwner && !$isSuperAdmin) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda tidak memiliki izin untuk menghapus komentar ini.'
+            ], 403);
+        }
+
+        $comment->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Komentar berhasil dihapus.'
+        ]);
+    }
 }

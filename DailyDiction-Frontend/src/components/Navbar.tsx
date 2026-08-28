@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import Swal from "sweetalert2";
 import {
   Menu,
   X,
@@ -23,14 +24,13 @@ export default function Navbar() {
 
   const pathname = usePathname();
   const router = useRouter();
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
   const navLinks = [
     { name: "HOME", href: "/", icon: Flame },
     { name: "NEWS", href: "/news", icon: Newspaper },
-    // { name: "REELS", href: "/reels", icon: Clapperboard, isReels: true },
     { name: "REVIEW", href: "/review", icon: Star },
     { name: "TECHNOLOGY", href: "/technology", icon: Cpu },
-    // { name: "KOMUNITAS", href: "/komunitas", icon: Users },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -52,10 +52,67 @@ export default function Navbar() {
     }
   }, []);
 
-  const handleLogout = () => {
+  // Handler Logout dengan Modal Konfirmasi SweetAlert2
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: "Keluar Akun?",
+      text: "Anda Perlu Login Lagi Untuk Akses Komentar.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#FF3E3E", // Brand Crimson
+      cancelButtonColor: "#1F2430",  // Dark border / surface
+      confirmButtonText: "Ya, Keluar!",
+      cancelButtonText: "Batal",
+      background: "#141721",        // Dark theme background
+      color: "#FFFFFF",
+      iconColor: "#FF3E3E",
+      customClass: {
+        popup: "rounded-2xl border border-white/10 shadow-2xl font-mono",
+        title: "text-lg font-bold uppercase tracking-wider text-white",
+        confirmButton: "rounded-xl px-5 py-2.5 font-mono text-xs font-bold uppercase",
+        cancelButton: "rounded-xl px-5 py-2.5 font-mono text-xs font-bold uppercase border border-white/10 text-gray-300 hover:text-white",
+      },
+    });
+
+    if (!result.isConfirmed) return;
+
+    const token = localStorage.getItem("auth_token");
+
+    // Optional: Revoke token di Backend Laravel
+    if (token) {
+      try {
+        await fetch(`${apiUrl}/logout`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+      } catch (err) {
+        console.error("Gagal logout backend:", err);
+      }
+    }
+
+    // Bersihkan sesi client
     localStorage.removeItem("auth_token");
     localStorage.removeItem("user_data");
     setUser(null);
+
+    // Notifikasi berhasil
+    await Swal.fire({
+      title: "Berhasil Keluar",
+      text: "Sesi Anda telah diakhiri.",
+      icon: "success",
+      timer: 1200,
+      showConfirmButton: false,
+      background: "#141721",
+      color: "#FFFFFF",
+      iconColor: "#00F0FF", // Brand Cyan
+      customClass: {
+        popup: "rounded-2xl border border-white/10 font-mono text-xs",
+      },
+    });
+
     window.location.reload();
   };
 
@@ -113,16 +170,7 @@ export default function Navbar() {
             />
           </form>
 
-          {/* Login Button */}
-          {/* <Link
-            href="/login"
-            className="hidden sm:inline-flex items-center gap-2 rounded-lg bg-brand-crimson px-4 py-2 text-xs font-mono font-bold uppercase text-white transition-all hover:bg-brand-crimson/90 hover:shadow-[0_0_15px_rgba(255,62,62,0.4)]"
-          >
-            <User className="h-3.5 w-3.5" />
-            <span>MASUK</span>
-          </Link> */}
-
-          {/* Login Button */}
+          {/* Login / User Status */}
           <div className="flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3 font-mono text-xs">
@@ -132,7 +180,7 @@ export default function Navbar() {
                 <button
                   onClick={handleLogout}
                   title="Keluar"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-muted hover:border-brand-crimson hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-muted hover:border-brand-crimson hover:text-white transition-colors"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                 </button>
@@ -211,17 +259,21 @@ export default function Navbar() {
                 );
               })}
 
-              {/* Mobile Login Button */}
-              {/* <div className="pt-2">
-                <Link
-                  href="/login"
-                  onClick={() => setIsOpen(false)}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-crimson py-3 font-bold uppercase text-white shadow-md active:scale-95 transition-all"
-                >
-                  <User className="h-4 w-4" />
-                  <span>MASUK KE AKUN</span>
-                </Link>
-              </div> */}
+              {/* Mobile Logout Option jika User Login */}
+              {user && (
+                <div className="pt-2">
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      handleLogout();
+                    }}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-crimson/15 border border-brand-crimson/30 py-3 font-bold uppercase text-brand-crimson hover:bg-brand-crimson hover:text-white transition-all"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>KELUAR AKUN</span>
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

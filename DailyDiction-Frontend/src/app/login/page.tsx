@@ -77,7 +77,7 @@ export default function AuthPage() {
             <p className="mt-2 text-xs text-text-muted font-mono">
               {isRegister
                 ? "Daftar untuk ikut berdiskusi dan berkomentar di artikel."
-                : "Masuk untuk menulis komentar dan berinteraksi di portal."}
+                : "Masuk untuk menulis komentar dan berinteraksi."}
             </p>
           </div>
 
