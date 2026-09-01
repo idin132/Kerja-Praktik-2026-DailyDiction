@@ -22,7 +22,7 @@ function formatTechImage(item: TechItem): string {
   const fallback = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
   if (!imageUrl) return fallback;
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    if (imageUrl.includes("127.0.0.1:8000/storage/http")) {
+    if (imageUrl.includes("https://dailydiction.id/storage/http")) {
       return imageUrl.replace(/http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/, "$1");
     }
     return imageUrl;

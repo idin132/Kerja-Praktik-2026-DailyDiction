@@ -9,7 +9,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Gamepad2, User, Calendar, Clock } from "lucide-react";
 import { DiscordWidget } from "@/components/Sidebar";
-import TweetRenderer from "@/components/TweetRenderer"; // 👈 RENDERER BARU
+import TweetRenderer from "@/components/TweetRenderer";
 
 export const revalidate = 0;
 
@@ -140,7 +140,7 @@ export default async function DetailReview({
                       {platforms.map((plat: string, idx: number) => (
                         <span
                           key={idx}
-                          className="flex items-center gap-1.5 rounded bg-brand-cyan/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-cyan border border-brand-cyan/30"
+                          className="flex items-center gap-1.5 rounded bg-[#FFD700]/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#FFD700] border border-[#FFD700]/30"
                         >
                           <Gamepad2 className="h-3.5 w-3.5" />
                           {plat}
@@ -156,7 +156,7 @@ export default async function DetailReview({
                   {/* INFO AUTHOR & TANGGAL */}
                   <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-text-muted mt-4 mb-2">
                     <div className="flex items-center gap-1.5">
-                      <User className="h-4 w-4 text-brand-crimson" />
+                      <User className="h-4 w-4 text-[#FFD700]" />
                       <span className="font-bold text-white">{review.author || "Redaksi"}</span>
                     </div>
                     {review.created_at && (
@@ -178,7 +178,7 @@ export default async function DetailReview({
                   </div>
 
                   {/* Summary */}
-                  <p className="text-lg text-text-muted text-justify font-medium border-l-4 border-brand-crimson pl-4 bg-dark-card/30 p-4 rounded-r-lg">
+                  <p className="text-lg text-text-muted text-justify font-medium border-l-4 border-[#FFD700] pl-4 bg-dark-card/30 p-4 rounded-r-lg">
                     {review.summary || "Baca ulasan lengkap game ini di bawah."}
                   </p>
                 </div>
@@ -205,7 +205,7 @@ export default async function DetailReview({
                   </div>
                 )}
 
-                {/* Body Konten Review Langsung Digarap Sama TweetRenderer */}
+                {/* Body Konten Review */}
                 <TweetRenderer htmlContent={rawContentString} />
               </article>
 
@@ -214,14 +214,14 @@ export default async function DetailReview({
                 {prevReview ? (
                   <Link
                     href={`/review/${prevReview.slug}`}
-                    className="group flex items-center gap-4 p-4 rounded-xl border border-dark-border bg-dark-card hover:border-brand-crimson transition-colors"
+                    className="group flex items-center gap-4 p-4 rounded-xl border border-dark-border bg-dark-card hover:border-[#FFD700] transition-colors"
                   >
-                    <ChevronLeft className="h-6 w-6 text-text-muted group-hover:text-brand-crimson shrink-0" />
+                    <ChevronLeft className="h-6 w-6 text-text-muted group-hover:text-[#FFD700] shrink-0" />
                     <div className="flex-1 min-w-0 text-right md:text-left">
                       <p className="text-xs font-mono text-text-muted mb-1">
                         REVIEW SEBELUMNYA
                       </p>
-                      <h4 className="text-sm font-bold text-white truncate">
+                      <h4 className="text-sm font-bold text-white group-hover:text-[#FFD700] truncate transition-colors">
                         {prevReview.title}
                       </h4>
                     </div>
@@ -246,7 +246,7 @@ export default async function DetailReview({
                 {nextReview ? (
                   <Link
                     href={`/review/${nextReview.slug}`}
-                    className="group flex items-center gap-4 p-4 rounded-xl border border-dark-border bg-dark-card hover:border-brand-cyan transition-colors text-right"
+                    className="group flex items-center gap-4 p-4 rounded-xl border border-dark-border bg-dark-card hover:border-[#FFD700] transition-colors text-right"
                   >
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
                       <img
@@ -265,11 +265,11 @@ export default async function DetailReview({
                       <p className="text-xs font-mono text-text-muted mb-1">
                         REVIEW SELANJUTNYA
                       </p>
-                      <h4 className="text-sm font-bold text-white truncate">
+                      <h4 className="text-sm font-bold text-white group-hover:text-[#FFD700] truncate transition-colors">
                         {nextReview.title}
                       </h4>
                     </div>
-                    <ChevronRight className="h-6 w-6 text-text-muted group-hover:text-brand-cyan shrink-0" />
+                    <ChevronRight className="h-6 w-6 text-text-muted group-hover:text-[#FFD700] shrink-0" />
                   </Link>
                 ) : (
                   <div />
@@ -304,7 +304,7 @@ export default async function DetailReview({
                     <span className="text-xs font-mono text-text-muted">
                       Space Iklan Dinamis
                     </span>
-                    <span className="text-[10px] font-mono text-brand-crimson/50 mt-1">
+                    <span className="text-[10px] font-mono text-[#FFD700]/50 mt-1">
                       Tinggi menyesuaikan gambar
                     </span>
                   </div>
@@ -348,7 +348,7 @@ export default async function DetailReview({
             border: 1px solid rgba(255,255,255,0.1);
           }
           .rich-text-content a {
-            color: #00e5ff;
+            color: #FFD700;
             text-decoration: none;
           }
           .rich-text-content a:hover { text-decoration: underline; }

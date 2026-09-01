@@ -211,7 +211,7 @@ export default function ReviewPage() {
   const featuredReview = reviews.length > 0 ? reviews[0] : null;
 
   return (
-    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white flex flex-col justify-between font-sans">
+    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black flex flex-col justify-between font-sans">
       <div>
         <Navbar />
 
@@ -219,7 +219,7 @@ export default function ReviewPage() {
           {/* Header */}
           <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-dark-border/50 pb-8">
             <div>
-              <span className="mb-2 flex w-max items-center gap-2 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-3 py-1 text-xs font-bold tracking-wider text-yellow-500 font-mono">
+              <span className="mb-2 flex w-max items-center gap-2 rounded-full border border-[#FFD700]/30 bg-[#FFD700]/10 px-3 py-1 text-xs font-bold tracking-wider text-[#FFD700] font-mono">
                 <Trophy className="h-4 w-4" />
                 ULASAN JUJUR & INDEPENDEN
               </span>
@@ -239,7 +239,7 @@ export default function ReviewPage() {
                 placeholder="Cari judul game..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-dark-border bg-dark-card py-2.5 pl-10 pr-4 text-xs text-white placeholder-text-muted/50 focus:border-brand-cyan focus:outline-none transition-colors shadow-inner"
+                className="w-full rounded-xl border border-dark-border bg-dark-card py-2.5 pl-10 pr-4 text-xs text-white placeholder-text-muted/50 focus:border-[#FFD700] focus:outline-none transition-colors shadow-inner"
               />
             </div>
           </div>
@@ -251,7 +251,7 @@ export default function ReviewPage() {
             <div className="mb-12">
               <Link
                 href={`/review/${featuredReview.slug}`}
-                className="group block overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-colors hover:border-brand-cyan/50 shadow-xl"
+                className="group block overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-colors hover:border-[#FFD700]/50 shadow-xl"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
                   <div className="relative aspect-video md:aspect-auto lg:col-span-3 overflow-hidden">
@@ -265,7 +265,7 @@ export default function ReviewPage() {
                       alt={featuredReview.title}
                       className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
-                    <span className="absolute left-4 top-4 rounded bg-brand-crimson px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg font-mono">
+                    <span className="absolute left-4 top-4 rounded bg-[#FFD700] px-3 py-1 text-[10px] font-black uppercase tracking-widest text-black shadow-lg font-mono">
                       Featured Review
                     </span>
                   </div>
@@ -275,7 +275,7 @@ export default function ReviewPage() {
                       {getPlatformsArray(featuredReview).map((plat, idx) => (
                         <span
                           key={idx}
-                          className="flex items-center gap-1.5 rounded bg-brand-cyan/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-cyan border border-brand-cyan/30"
+                          className="flex items-center gap-1.5 rounded bg-[#FFD700]/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#FFD700] border border-[#FFD700]/30"
                         >
                           <Gamepad2 className="h-3.5 w-3.5" />
                           {plat}
@@ -283,14 +283,14 @@ export default function ReviewPage() {
                       ))}
                     </div>
 
-                    <h2 className="text-2xl md:text-3xl font-black text-white group-hover:text-brand-cyan transition-colors line-clamp-2">
+                    <h2 className="text-2xl md:text-3xl font-black text-white group-hover:text-[#FFD700] transition-colors line-clamp-2">
                       {featuredReview.title}
                     </h2>
                     <p className="mt-4 text-text-muted text-xs line-clamp-3 leading-relaxed">
                       {featuredReview.summary}
                     </p>
 
-                    <div className="mt-8 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand-cyan transition-colors font-mono">
+                    <div className="mt-8 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#FFD700] transition-colors font-mono">
                       BACA ULASAN LENGKAP &rarr;
                     </div>
                   </div>
@@ -305,7 +305,6 @@ export default function ReviewPage() {
               FILTER:
             </span>
             {platforms.length === 1 ? (
-              // Skeleton saat categories belum load
               <>
                 {[1, 2, 3, 4].map((n) => (
                   <div
@@ -321,8 +320,8 @@ export default function ReviewPage() {
                   onClick={() => setSelectedPlatform(filter)}
                   className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
                     selectedPlatform === filter
-                      ? "bg-brand-crimson text-white shadow-[0_0_15px_rgba(255,62,62,0.4)]"
-                      : "bg-dark-card border border-dark-border text-text-muted hover:border-brand-crimson/50 hover:text-white"
+                      ? "bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.4)]"
+                      : "bg-dark-card border border-dark-border text-text-muted hover:border-[#FFD700]/50 hover:text-white"
                   }`}
                 >
                   {filter}
@@ -359,7 +358,7 @@ export default function ReviewPage() {
                       <Link
                         key={review.id}
                         href={`/review/${review.slug}`}
-                        className="group flex flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-brand-cyan/50 hover:-translate-y-1 hover:shadow-lg duration-300"
+                        className="group flex flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/50 hover:-translate-y-1 hover:shadow-lg duration-300"
                       >
                         <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-dark-border/50 shrink-0">
                           <img
@@ -376,7 +375,7 @@ export default function ReviewPage() {
                             {platforms.map((plat, idx) => (
                               <span
                                 key={idx}
-                                className="rounded bg-black/60 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-brand-cyan backdrop-blur-sm border border-brand-cyan/30"
+                                className="rounded bg-black/60 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-[#FFD700] backdrop-blur-sm border border-[#FFD700]/30"
                               >
                                 {plat}
                               </span>
@@ -386,7 +385,7 @@ export default function ReviewPage() {
 
                         <div className="flex flex-1 flex-col justify-between p-5">
                           <div>
-                            <h3 className="text-base font-bold text-white group-hover:text-brand-cyan transition-colors line-clamp-2">
+                            <h3 className="text-base font-bold text-white group-hover:text-[#FFD700] transition-colors line-clamp-2">
                               {review.title}
                             </h3>
                             <p className="mt-2 text-xs text-text-muted line-clamp-3 leading-relaxed">
@@ -406,7 +405,7 @@ export default function ReviewPage() {
                                   })
                                 : "-"}
                             </span>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-cyan">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#FFD700]">
                               Baca Review &rarr;
                             </span>
                           </div>
@@ -423,7 +422,7 @@ export default function ReviewPage() {
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-crimson hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700] disabled:opacity-30 disabled:pointer-events-none"
                     aria-label="Previous Page"
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -436,8 +435,8 @@ export default function ReviewPage() {
                         onClick={() => handlePageChange(pageNum)}
                         className={`h-9 min-w-[36px] px-3 rounded-xl font-bold transition-all ${
                           currentPage === pageNum
-                            ? "bg-brand-crimson text-white shadow-[0_0_15px_rgba(255,62,62,0.4)]"
-                            : "border border-dark-border bg-dark-card text-text-muted hover:border-brand-cyan hover:text-text-primary"
+                            ? "bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.4)]"
+                            : "border border-dark-border bg-dark-card text-text-muted hover:border-[#FFD700] hover:text-text-primary"
                         }`}
                       >
                         {pageNum}
@@ -448,7 +447,7 @@ export default function ReviewPage() {
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-crimson hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700] disabled:opacity-30 disabled:pointer-events-none"
                     aria-label="Next Page"
                   >
                     <ChevronRight className="h-4 w-4" />

@@ -42,7 +42,7 @@ function formatTechImage(item: TechItem): string {
   if (!imageUrl) return fallback;
 
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    if (imageUrl.includes("127.0.0.1:8000/storage/http")) {
+    if (imageUrl.includes("https://dailydiction.id/storage/http")) {
       return imageUrl.replace(
         /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
         "$1"

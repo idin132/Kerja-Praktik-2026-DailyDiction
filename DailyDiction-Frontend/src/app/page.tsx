@@ -22,12 +22,12 @@ function formatImageUrl(
   if (imageUrl.includes("dailydiction.id/storage/")) {
     return imageUrl.replace(
       "https://dailydiction.id/storage/",
-      "http://127.0.0.1:8000/storage/"
+      "https://dailydiction.id/storage/"
     );
   }
 
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    if (imageUrl.includes("127.0.0.1:8000/storage/http")) {
+    if (imageUrl.includes("https://dailydiction.id/storage/http")) {
       return imageUrl.replace(
         /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
         "$1"
@@ -36,7 +36,7 @@ function formatImageUrl(
     return imageUrl;
   }
 
-  return `http://127.0.0.1:8000/storage/${imageUrl}`;
+  return `https://dailydiction.id/storage/${imageUrl}`;
 }
 
 export default async function Home() {
@@ -148,7 +148,7 @@ export default async function Home() {
           {/* KOLOM KIRI (LEBIH LEBAR) */}
           <div className="lg:col-span-8 2xl:col-span-9 space-y-8 2xl:space-y-12">
             
-            {/* SEKARANG BANNERNYA MASUK DI DALEM KOLOM KIRI */}
+            {/* BANNER KANAN / HORIZONTAL */}
             <HorizontalAdBanner adData={horizontalBannerAd} />
 
             {/* News Feed Section */}
@@ -162,7 +162,7 @@ export default async function Home() {
                 </div>
                 <a
                   href="/news"
-                  className="flex items-center gap-1 text-xs font-mono font-bold text-brand-cyan hover:underline"
+                  className="flex items-center gap-1 text-xs font-mono font-bold text-[#FFD700] hover:underline hover:opacity-80 transition-opacity"
                 >
                   <span>ALL NEWS</span>
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -205,14 +205,14 @@ export default async function Home() {
             <section>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                  <Star className="h-5 w-5 text-[#FFD700] fill-[#FFD700]" />
                   <h2 className="text-lg font-black uppercase tracking-wider text-text-primary">
                     Ulasan Game Terbaru
                   </h2>
                 </div>
                 <a
                   href="/review"
-                  className="flex items-center gap-1 text-xs font-mono font-bold text-brand-cyan hover:underline"
+                  className="flex items-center gap-1 text-xs font-mono font-bold text-[#FFD700] hover:underline hover:opacity-80 transition-opacity"
                 >
                   <span>SEMUA REVIEW</span>
                   <ArrowRight className="h-3.5 w-3.5" />

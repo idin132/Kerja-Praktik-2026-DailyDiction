@@ -3,13 +3,11 @@ import Footer from "@/components/Footer";
 import { getArticleBySlug, getAdvertisements } from "@/lib/api";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { DiscordWidget } from "@/components/Sidebar";
 import ShareWidget from "@/components/ShareWidget";
-import { User, Clock, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { User, Clock, ChevronLeft, ChevronRight, Calendar, Send } from "lucide-react";
 import ArticleInteractions from "@/components/ArticleInteractions";
-import TweetRenderer from "@/components/TweetRenderer"; // 👈 COMPONENT RENDERER BARU
+import TweetRenderer from "@/components/TweetRenderer";
 
-// Konfigurasi dynamic & revalidate agar data artikel selalu segar
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
@@ -102,7 +100,6 @@ export default async function DetailArtikel({
   const prevArticle = article.prev || null;
   const nextArticle = article.next || null;
 
-  // Parser kategori terpadu
   let categoryList: string[] = [];
   const rawCategory = article.category_input || article.category;
 
@@ -132,7 +129,7 @@ export default async function DetailArtikel({
       : "";
 
   return (
-    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
+    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
       <Navbar />
 
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
@@ -149,13 +146,13 @@ export default async function DetailArtikel({
                       categoryList.map((cat, idx) => (
                         <span
                           key={idx}
-                          className="rounded bg-brand-cyan/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-cyan border border-brand-cyan/30"
+                          className="rounded bg-[#FFD700]/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#FFD700] border border-[#FFD700]/30"
                         >
                           {cat}
                         </span>
                       ))
                     ) : (
-                      <span className="rounded bg-brand-cyan/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-cyan border border-brand-cyan/30">
+                      <span className="rounded bg-[#FFD700]/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#FFD700] border border-[#FFD700]/30">
                         Berita Utama
                       </span>
                     )}
@@ -168,7 +165,7 @@ export default async function DetailArtikel({
                   {/* Info Bar */}
                   <div className="flex flex-wrap items-center gap-6 text-sm font-mono text-text-muted border-y border-dark-border py-4">
                     <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-brand-crimson" />
+                      <User className="h-4 w-4 text-[#FFD700]" />
                       <span className="font-bold text-white">
                         {article.author || "Redaksi"}
                       </span>
@@ -192,7 +189,7 @@ export default async function DetailArtikel({
 
                     {article.read_time && (
                       <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
+                        <Clock className="h-4 w-4 text-[#FFD700]" />
                         <span>{article.read_time}</span>
                       </div>
                     )}
@@ -215,15 +212,15 @@ export default async function DetailArtikel({
                     />
                   </div>
 
-                  <p className="text-base sm:text-lg text-text-muted text-justify font-medium border-l-4 border-brand-crimson pl-4 bg-dark-card/30 p-4 rounded-r-lg">
+                  <p className="text-base sm:text-lg text-text-muted text-justify font-medium border-l-4 border-[#FFD700] pl-4 bg-dark-card/30 p-4 rounded-r-lg">
                     {article.summary || "Simak berita selengkapnya di bawah ini."}
                   </p>
                 </div>
 
-                {/* Body Artikel Langsung Digarap Sama TweetRenderer */}
+                {/* Body Artikel */}
                 <TweetRenderer htmlContent={rawContentString} />
 
-                {/* Interaksi Like & Komen Hybrid */}
+                {/* Interaksi Like & Komen */}
                 {article.id && (
                   <ArticleInteractions
                     articleId={article.id}
@@ -237,14 +234,14 @@ export default async function DetailArtikel({
                 {prevArticle ? (
                   <Link
                     href={`/artikel/${prevArticle.slug}`}
-                    className="group flex items-center gap-4 p-4 rounded-xl border border-dark-border bg-dark-card hover:border-brand-crimson transition-colors"
+                    className="group flex items-center gap-4 p-4 rounded-xl border border-dark-border bg-dark-card hover:border-[#FFD700] transition-colors"
                   >
-                    <ChevronLeft className="h-6 w-6 text-text-muted group-hover:text-brand-crimson shrink-0" />
+                    <ChevronLeft className="h-6 w-6 text-text-muted group-hover:text-[#FFD700] shrink-0" />
                     <div className="flex-1 min-w-0 text-right md:text-left">
                       <p className="text-xs font-mono text-text-muted mb-1">
                         ARTIKEL SEBELUMNYA
                       </p>
-                      <h4 className="text-sm font-bold text-white truncate">
+                      <h4 className="text-sm font-bold text-white group-hover:text-[#FFD700] truncate transition-colors">
                         {prevArticle.title}
                       </h4>
                     </div>
@@ -268,7 +265,7 @@ export default async function DetailArtikel({
                 {nextArticle ? (
                   <Link
                     href={`/artikel/${nextArticle.slug}`}
-                    className="group flex items-center gap-4 p-4 rounded-xl border border-dark-border bg-dark-card hover:border-brand-cyan transition-colors text-right"
+                    className="group flex items-center gap-4 p-4 rounded-xl border border-dark-border bg-dark-card hover:border-[#FFD700] transition-colors text-right"
                   >
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
                       <img
@@ -286,11 +283,11 @@ export default async function DetailArtikel({
                       <p className="text-xs font-mono text-text-muted mb-1">
                         ARTIKEL SELANJUTNYA
                       </p>
-                      <h4 className="text-sm font-bold text-white truncate">
+                      <h4 className="text-sm font-bold text-white group-hover:text-[#FFD700] truncate transition-colors">
                         {nextArticle.title}
                       </h4>
                     </div>
-                    <ChevronRight className="h-6 w-6 text-text-muted group-hover:text-brand-cyan shrink-0" />
+                    <ChevronRight className="h-6 w-6 text-text-muted group-hover:text-[#FFD700] shrink-0" />
                   </Link>
                 ) : (
                   <div />
@@ -301,8 +298,10 @@ export default async function DetailArtikel({
             {/* ================= KOLOM KANAN (SIDEBAR) ================= */}
             <aside className="lg:col-span-4 space-y-8">
               <div className="sticky top-24 space-y-6">
+                {/* 1. Widget Share */}
                 <ShareWidget title={article.title} />
 
+                {/* 2. Space Iklan Dinamis */}
                 <div className="animate-fade-up-2">
                   {sidebarAd ? (
                     <a
@@ -328,15 +327,42 @@ export default async function DetailArtikel({
                       <span className="text-xs font-mono text-text-muted">
                         Space Iklan Dinamis
                       </span>
-                      <span className="text-[10px] font-mono text-brand-crimson/50 mt-1">
+                      <span className="text-[10px] font-mono text-[#FFD700]/50 mt-1">
                         Tinggi menyesuaikan gambar
                       </span>
                     </div>
                   )}
                 </div>
 
+                {/* 3. Widget Discord Komunitas */}
                 <div className="animate-fade-up-3 w-full max-w-[320px] mx-auto">
-                  <DiscordWidget />
+                  <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="w-10 h-10 fill-indigo-400 mx-auto mb-3 animate-bounce"
+                      aria-hidden="true"
+                    >
+                      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515c-.213.385-.444.905-.608 1.315a18.27 18.27 0 0 0-5.648 0c-.164-.41-.4-.93-.615-1.315A19.736 19.736 0 0 0 3.67 4.37C.533 9.046-.319 13.608.106 18.11a19.98 19.98 0 0 0 6.002 3.03c.49-.67.924-1.38 1.293-2.13-.71-.27-1.39-.61-2.04-1.01.17-.125.337-.255.5-.39 3.93 1.84 8.18 1.84 12.06 0 .164.135.33.265.5.39-.65.4-1.33.74-2.04 1.01.37.75.8 1.46 1.29 2.13a19.98 19.98 0 0 0 6.006-3.03c.5-5.22-.85-9.74-3.36-13.74ZM8.02 15.33c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Zm7.96 0c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Z" />
+                    </svg>
+
+                    <h3 className="text-base font-mono font-black text-white uppercase tracking-wide">
+                      TEMPAT NONGKRONG GAMER
+                    </h3>
+
+                    <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
+                      Join server Discord Daily Diction buat mabar, berbagi info gacha, pamer spek PC, atau sekadar gibahin industri pop culture!
+                    </p>
+
+                    <a
+                      href="https://discord.com/invite/DG6Nebkex9"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex w-full items-center justify-center gap-2 bg-[#FFD700] text-black font-mono font-bold text-xs uppercase py-3 px-4 rounded-xl hover:bg-[#FFD700]/90 transition-all shadow-[0_0_15px_rgba(255,215,0,0.3)] relative z-10"
+                    >
+                      <Send className="h-3.5 w-3.5 fill-current" />
+                      <span>Masuk Server (Gratis)</span>
+                    </a>
+                  </div>
                 </div>
               </div>
             </aside>
@@ -396,7 +422,7 @@ export default async function DetailArtikel({
             border: 1px solid rgba(255, 255, 255, 0.1);
           }
           .rich-text-content a {
-            color: #00e5ff;
+            color: #FFD700;
             text-decoration: none;
           }
           .rich-text-content a:hover { text-decoration: underline; }

@@ -23,7 +23,7 @@ function formatImageUrl(
   if (imageUrl.includes("dailydiction.id/storage/")) {
     return imageUrl.replace(
       "https://dailydiction.id/storage/",
-      "http://127.0.0.1:8000/storage/"
+      "https://dailydiction.id/storage/"
     );
   }
 
@@ -31,7 +31,7 @@ function formatImageUrl(
     return imageUrl;
   }
 
-  return `http://127.0.0.1:8000/storage/${imageUrl}`;
+  return `https://dailydiction.id/storage/${imageUrl}`;
 }
 
 export default function HorizontalAdBanner({ adData }: HorizontalAdBannerProps) {

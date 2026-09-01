@@ -164,18 +164,18 @@ export default function ArticleInteractions({
       text: "Komentar yang dihapus tidak dapat dipulihkan kembali.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#FF3E3E", // Brand Crimson
-      cancelButtonColor: "#1F2430", // Dark card / border
+      confirmButtonColor: "#FFD700",
+      cancelButtonColor: "#1F2430",
       confirmButtonText: "Ya, Hapus!",
       cancelButtonText: "Batal",
-      background: "#141721", // Dark background modal
-      color: "#FFFFFF", // Warna teks modal
-      iconColor: "#FF3E3E",
+      background: "#141721",
+      color: "#FFFFFF",
+      iconColor: "#FFD700",
       customClass: {
         popup: "rounded-2xl border border-white/10 shadow-2xl font-mono",
         title: "text-lg font-bold uppercase tracking-wider text-white",
         confirmButton:
-          "rounded-xl px-5 py-2.5 font-mono text-xs font-bold uppercase",
+          "rounded-xl px-5 py-2.5 font-mono text-xs font-bold uppercase text-black",
         cancelButton:
           "rounded-xl px-5 py-2.5 font-mono text-xs font-bold uppercase border border-white/10 text-gray-300 hover:text-white",
       },
@@ -207,7 +207,7 @@ export default function ArticleInteractions({
           showConfirmButton: false,
           background: "#141721",
           color: "#FFFFFF",
-          iconColor: "#00F0FF", // Brand Cyan
+          iconColor: "#FFD700",
           customClass: {
             popup: "rounded-2xl border border-white/10 font-mono text-xs",
           },
@@ -220,7 +220,10 @@ export default function ArticleInteractions({
           icon: "error",
           background: "#141721",
           color: "#FFFFFF",
-          confirmButtonColor: "#FF3E3E",
+          confirmButtonColor: "#FFD700",
+          customClass: {
+            confirmButton: "text-black font-bold",
+          },
         });
       }
     } catch (err) {
@@ -231,7 +234,10 @@ export default function ArticleInteractions({
         icon: "error",
         background: "#141721",
         color: "#FFFFFF",
-        confirmButtonColor: "#FF3E3E",
+        confirmButtonColor: "#FFD700",
+        customClass: {
+          confirmButton: "text-black font-bold",
+        },
       });
     } finally {
       setDeletingId(null);
@@ -247,20 +253,20 @@ export default function ArticleInteractions({
           disabled={isLiking}
           className={`flex items-center gap-2 rounded-xl px-5 py-2.5 font-mono text-xs font-bold transition-all active:scale-95 ${
             hasLiked
-              ? "bg-brand-crimson/20 text-brand-crimson border border-brand-crimson/40 shadow-[0_0_15px_rgba(255,62,62,0.25)]"
-              : "border border-dark-border bg-dark-card text-text-muted hover:border-brand-crimson hover:text-white"
+              ? "bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/40 shadow-[0_0_15px_rgba(255,215,0,0.25)]"
+              : "border border-dark-border bg-dark-card text-text-muted hover:border-[#FFD700] hover:text-white"
           }`}
         >
           <Heart
             className={`h-4 w-4 transition-transform duration-200 ${
-              hasLiked ? "fill-brand-crimson text-brand-crimson scale-110" : ""
+              hasLiked ? "fill-[#FFD700] text-[#FFD700] scale-110" : ""
             }`}
           />
           <span>{likes} MENYUKAI</span>
         </button>
 
         <div className="flex items-center gap-2 font-mono text-xs text-text-muted">
-          <MessageSquare className="h-4 w-4" />
+          <MessageSquare className="h-4 w-4 text-[#FFD700]" />
           <span>{comments.length} Komentar</span>
         </div>
       </div>
@@ -279,14 +285,14 @@ export default function ArticleInteractions({
               value={commentInput}
               onChange={(e) => setCommentInput(e.target.value)}
               placeholder="Tulis tanggapan atau opini Anda..."
-              className="w-full rounded-xl border border-dark-border bg-dark-card p-4 text-sm text-text-primary placeholder:text-text-muted focus:border-brand-crimson focus:outline-none"
+              className="w-full rounded-xl border border-dark-border bg-dark-card p-4 text-sm text-text-primary placeholder:text-text-muted focus:border-[#FFD700] focus:outline-none transition-colors"
             />
             <button
               type="submit"
               disabled={isSubmitting || !commentInput.trim()}
-              className="flex items-center gap-2 rounded-xl bg-brand-crimson px-5 py-2.5 font-mono text-xs font-bold uppercase text-white hover:bg-brand-crimson/90 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl bg-[#FFD700] px-5 py-2.5 font-mono text-xs font-bold uppercase text-black hover:bg-[#FFD700]/90 disabled:opacity-50 transition-all"
             >
-              <Send className="h-3.5 w-3.5" />
+              <Send className="h-3.5 w-3.5 fill-black" />
               <span>{isSubmitting ? "Mengirim..." : "Kirim Komentar"}</span>
             </button>
           </form>
@@ -299,7 +305,7 @@ export default function ArticleInteractions({
             </p>
             <Link
               href="/login"
-              className="inline-block rounded-xl bg-brand-crimson px-5 py-2 font-mono text-xs font-bold uppercase text-white hover:bg-brand-crimson/90"
+              className="inline-block rounded-xl bg-[#FFD700] px-5 py-2 font-mono text-xs font-bold uppercase text-black hover:bg-[#FFD700]/90 transition-all"
             >
               Masuk Sekarang
             </Link>
@@ -309,7 +315,6 @@ export default function ArticleInteractions({
         {/* List Komentar */}
         <div className="space-y-4 pt-4">
           {comments.map((c) => {
-            // 1. Normalisasi pengecekan pemilik & role Superadmin
             const isOwner =
               currentUser && Number(currentUser.id) === Number(c.user_id);
             const userRole = (currentUser?.role || "").toLowerCase();
@@ -325,11 +330,11 @@ export default function ArticleInteractions({
               >
                 <div className="flex items-center justify-between text-xs font-mono text-text-muted">
                   <div className="flex items-center gap-2 text-white font-bold">
-                    <UserIcon className="h-3.5 w-3.5 text-brand-cyan" />
+                    <UserIcon className="h-3.5 w-3.5 text-[#FFD700]" />
                     <span>{c.user?.name || "Member"}</span>
                     {(c.user?.role === "superadmin" ||
                       c.user?.role === "admin") && (
-                      <span className="rounded bg-brand-crimson/20 border border-brand-crimson/40 px-1.5 py-0.5 text-[9px] font-bold uppercase text-brand-crimson">
+                      <span className="rounded bg-[#FFD700]/20 border border-[#FFD700]/40 px-1.5 py-0.5 text-[9px] font-bold uppercase text-[#FFD700]">
                         ADMIN
                       </span>
                     )}
@@ -344,7 +349,6 @@ export default function ArticleInteractions({
                       })}
                     </span>
 
-                    {/* Tombol Trash muncul untuk pemilik komentar MAUPUN superadmin */}
                     {canDelete && (
                       <button
                         onClick={() => handleDeleteComment(c.id)}
@@ -354,7 +358,7 @@ export default function ArticleInteractions({
                             ? "Hapus komentar (Superadmin)"
                             : "Hapus komentar"
                         }
-                        className="text-text-muted hover:text-brand-crimson transition-colors p-1 rounded"
+                        className="text-text-muted hover:text-[#FFD700] transition-colors p-1 rounded"
                       >
                         {deletingId === c.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />

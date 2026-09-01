@@ -52,24 +52,23 @@ export default function Navbar() {
     }
   }, []);
 
-  // Handler Logout dengan Modal Konfirmasi SweetAlert2
   const handleLogout = async () => {
     const result = await Swal.fire({
       title: "Keluar Akun?",
       text: "Anda Perlu Login Lagi Untuk Akses Komentar.",
       icon: "question",
       showCancelButton: true,
-      confirmButtonColor: "#FF3E3E", // Brand Crimson
-      cancelButtonColor: "#1F2430",  // Dark border / surface
+      confirmButtonColor: "#FFD700",
+      cancelButtonColor: "#1F2430",
       confirmButtonText: "Ya, Keluar!",
       cancelButtonText: "Batal",
-      background: "#141721",        // Dark theme background
+      background: "#141721",
       color: "#FFFFFF",
-      iconColor: "#FF3E3E",
+      iconColor: "#FFD700",
       customClass: {
         popup: "rounded-2xl border border-white/10 shadow-2xl font-mono",
         title: "text-lg font-bold uppercase tracking-wider text-white",
-        confirmButton: "rounded-xl px-5 py-2.5 font-mono text-xs font-bold uppercase",
+        confirmButton: "rounded-xl px-5 py-2.5 font-mono text-xs font-bold uppercase text-black",
         cancelButton: "rounded-xl px-5 py-2.5 font-mono text-xs font-bold uppercase border border-white/10 text-gray-300 hover:text-white",
       },
     });
@@ -78,7 +77,6 @@ export default function Navbar() {
 
     const token = localStorage.getItem("auth_token");
 
-    // Optional: Revoke token di Backend Laravel
     if (token) {
       try {
         await fetch(`${apiUrl}/logout`, {
@@ -93,12 +91,10 @@ export default function Navbar() {
       }
     }
 
-    // Bersihkan sesi client
     localStorage.removeItem("auth_token");
     localStorage.removeItem("user_data");
     setUser(null);
 
-    // Notifikasi berhasil
     await Swal.fire({
       title: "Berhasil Keluar",
       text: "Sesi Anda telah diakhiri.",
@@ -107,7 +103,7 @@ export default function Navbar() {
       showConfirmButton: false,
       background: "#141721",
       color: "#FFFFFF",
-      iconColor: "#00F0FF", // Brand Cyan
+      iconColor: "#FFD700",
       customClass: {
         popup: "rounded-2xl border border-white/10 font-mono text-xs",
       },
@@ -130,8 +126,8 @@ export default function Navbar() {
             className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
           />
           <div className="flex items-center gap-1">
-            DAILY<span className="text-brand-yellow">DICTION</span>
-            <span className="h-2 w-2 rounded-full bg-brand-yellow animate-pulse" />
+            DAILY<span className="text-[#FFD700]">DICTION</span>
+            <span className="h-2 w-2 rounded-full bg-[#FFD700] animate-pulse" />
           </div>
         </Link>
 
@@ -143,8 +139,8 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 href={link.href}
-                className={`transition-colors hover:text-brand-crimson flex items-center gap-1.5 ${
-                  isActive ? "font-bold text-text-primary" : ""
+                className={`transition-colors hover:text-[#FFD700] flex items-center gap-1.5 ${
+                  isActive ? "font-bold text-[#FFD700]" : ""
                 }`}
               >
                 <span>{link.name}</span>
@@ -158,7 +154,7 @@ export default function Navbar() {
           {/* Desktop Search Form */}
           <form
             onSubmit={handleSearch}
-            className="hidden md:flex items-center bg-dark-bg border border-dark-border rounded-full px-4 py-1.5 focus-within:border-brand-cyan transition-colors"
+            className="hidden md:flex items-center bg-dark-bg border border-dark-border rounded-full px-4 py-1.5 focus-within:border-[#FFD700] transition-colors"
           >
             <Search className="h-4 w-4 text-text-muted mr-2" />
             <input
@@ -174,13 +170,13 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3 font-mono text-xs">
-                <span className="text-brand-cyan font-bold">
+                <span className="text-[#FFD700] font-bold">
                   Halo, {user.name}
                 </span>
                 <button
                   onClick={handleLogout}
                   title="Keluar"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-muted hover:border-brand-crimson hover:text-white transition-colors"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-muted hover:border-[#FFD700] hover:text-[#FFD700] transition-colors"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                 </button>
@@ -188,7 +184,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="rounded-lg border border-dark-border bg-dark-card px-3.5 py-1.5 font-mono text-xs font-bold uppercase text-text-primary hover:border-brand-crimson transition-all"
+                className="rounded-lg border border-dark-border bg-dark-card px-3.5 py-1.5 font-mono text-xs font-bold uppercase text-text-primary hover:border-[#FFD700] hover:text-[#FFD700] transition-all"
               >
                 Masuk
               </Link>
@@ -199,10 +195,10 @@ export default function Navbar() {
           <button
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle Navigation Menu"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-primary md:hidden hover:border-brand-crimson transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-primary md:hidden hover:border-[#FFD700] transition-colors"
           >
             {isOpen ? (
-              <X className="h-5 w-5 text-brand-crimson" />
+              <X className="h-5 w-5 text-[#FFD700]" />
             ) : (
               <Menu className="h-5 w-5" />
             )}
@@ -224,7 +220,7 @@ export default function Navbar() {
               {/* Mobile Search Form */}
               <form
                 onSubmit={handleSearch}
-                className="flex items-center bg-dark-bg border border-dark-border rounded-xl px-4 py-3 mb-4 focus-within:border-brand-cyan transition-colors"
+                className="flex items-center bg-dark-bg border border-dark-border rounded-xl px-4 py-3 mb-4 focus-within:border-[#FFD700] transition-colors"
               >
                 <Search className="h-4 w-4 text-text-muted mr-3" />
                 <input
@@ -247,8 +243,8 @@ export default function Navbar() {
                     onClick={() => setIsOpen(false)}
                     className={`flex items-center justify-between rounded-xl px-4 py-3 font-bold transition-all ${
                       isActive
-                        ? "bg-brand-crimson/15 border border-brand-crimson/40 text-brand-crimson"
-                        : "text-text-muted hover:bg-dark-bg hover:text-text-primary"
+                        ? "bg-[#FFD700]/15 border border-[#FFD700]/40 text-[#FFD700]"
+                        : "text-text-muted hover:bg-dark-bg hover:text-[#FFD700]"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -259,7 +255,7 @@ export default function Navbar() {
                 );
               })}
 
-              {/* Mobile Logout Option jika User Login */}
+              {/* Mobile Logout Option */}
               {user && (
                 <div className="pt-2">
                   <button
@@ -267,7 +263,7 @@ export default function Navbar() {
                       setIsOpen(false);
                       handleLogout();
                     }}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-crimson/15 border border-brand-crimson/30 py-3 font-bold uppercase text-brand-crimson hover:bg-brand-crimson hover:text-white transition-all"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#FFD700]/15 border border-[#FFD700]/30 py-3 font-bold uppercase text-[#FFD700] hover:bg-[#FFD700] hover:text-black transition-all"
                   >
                     <LogOut className="h-4 w-4" />
                     <span>KELUAR AKUN</span>

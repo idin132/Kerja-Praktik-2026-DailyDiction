@@ -7,7 +7,6 @@ export default function YoutubeShorts({ videos = [] }: { videos?: any[] }) {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Ambil sampai 15 Shorts
   const shortsLimit = videos.slice(0, 15);
   if (!shortsLimit || shortsLimit.length === 0) return null;
 
@@ -48,7 +47,7 @@ export default function YoutubeShorts({ videos = [] }: { videos?: any[] }) {
           href="https://www.youtube.com/@DailyDictionID/shorts"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs font-bold text-brand-crimson hover:text-white transition-colors flex items-center gap-1"
+          className="text-xs font-bold text-[#FFD700] hover:text-white transition-colors flex items-center gap-1"
         >
           Lihat Semua &rarr;
         </a>
@@ -56,11 +55,10 @@ export default function YoutubeShorts({ videos = [] }: { videos?: any[] }) {
 
       {/* ================= SLIDER SHORTS ================= */}
       <div className="relative group">
-        {/* 👇 Syarat panah diturunin jadi > 2 biar selalu muncul 👇 */}
         {shortsLimit.length > 2 && (
           <button
             onClick={scrollLeft}
-            className="absolute -left-4 top-1/2 z-10 flex -translate-y-1/2 items-center justify-center rounded-full bg-black/80 p-2.5 text-white opacity-0 backdrop-blur-md transition-all duration-300 hover:bg-brand-crimson hover:scale-110 group-hover:opacity-100 shadow-[0_0_15px_rgba(0,0,0,0.5)] border border-dark-border"
+            className="absolute -left-4 top-1/2 z-10 flex -translate-y-1/2 items-center justify-center rounded-full bg-black/80 p-2.5 text-white opacity-0 backdrop-blur-md transition-all duration-300 hover:bg-[#FFD700] hover:text-black hover:scale-110 group-hover:opacity-100 shadow-[0_0_15px_rgba(0,0,0,0.5)] border border-dark-border"
           >
             <ChevronLeft className="h-6 w-6" />
           </button>
@@ -98,13 +96,13 @@ export default function YoutubeShorts({ videos = [] }: { videos?: any[] }) {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                   
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover/short:opacity-100">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-crimson/90 text-white backdrop-blur-sm shadow-[0_0_20px_rgba(255,62,62,0.5)]">
-                      <Play className="h-5 w-5 ml-1 fill-white" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFD700] text-black backdrop-blur-sm shadow-[0_0_20px_rgba(255,215,0,0.5)]">
+                      <Play className="h-5 w-5 ml-1 fill-black" />
                     </div>
                   </div>
                   
                   <div className="absolute bottom-0 left-0 p-4 w-full">
-                    <h3 className="text-sm font-bold text-white line-clamp-3 leading-snug group-hover/short:text-brand-cyan transition-colors">
+                    <h3 className="text-sm font-bold text-white line-clamp-3 leading-snug group-hover/short:text-[#FFD700] transition-colors">
                       {short.snippet.title}
                     </h3>
                   </div>
@@ -114,11 +112,10 @@ export default function YoutubeShorts({ videos = [] }: { videos?: any[] }) {
           ))}
         </div>
 
-        {/* 👇 Syarat panah diturunin jadi > 2 👇 */}
         {shortsLimit.length > 2 && (
           <button
             onClick={scrollRight}
-            className="absolute -right-4 top-1/2 z-10 flex -translate-y-1/2 items-center justify-center rounded-full bg-black/80 p-2.5 text-white opacity-0 backdrop-blur-md transition-all duration-300 hover:bg-brand-cyan hover:scale-110 group-hover:opacity-100 shadow-[0_0_15px_rgba(0,0,0,0.5)] border border-dark-border"
+            className="absolute -right-4 top-1/2 z-10 flex -translate-y-1/2 items-center justify-center rounded-full bg-black/80 p-2.5 text-white opacity-0 backdrop-blur-md transition-all duration-300 hover:bg-[#FFD700] hover:text-black hover:scale-110 group-hover:opacity-100 shadow-[0_0_15px_rgba(0,0,0,0.5)] border border-dark-border"
           >
             <ChevronRight className="h-6 w-6" />
           </button>

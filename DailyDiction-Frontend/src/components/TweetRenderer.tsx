@@ -6,8 +6,6 @@ import { Tweet } from "react-tweet";
 export default function TweetRenderer({ htmlContent }: { htmlContent: string }) {
   if (!htmlContent) return null;
 
-  // Ganti link X / Twitter (baik berupa <p><a href="..."></a></p>, <a href="..."></a>, atau URL mentah)
-  // dengan marker unik ___TWEET_BLOCK_ID___
   const marker = "___TWEET_BLOCK_";
   const markerEnd = "___";
 
@@ -19,7 +17,6 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
     }
   );
 
-  // Split HTML berdasarkan marker
   const regexSplit = new RegExp(`${marker}(\\d+)${markerEnd}`, "g");
   const parts: string[] = [];
   let lastIndex = 0;
@@ -40,7 +37,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
   }
 
   return (
-    <div className="animate-fade-up-2 rich-text-content prose prose-invert prose-brand-crimson max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-12">
+    <div className="animate-fade-up-2 rich-text-content prose prose-invert prose-yellow max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-12">
       {parts.map((part, index) => {
         if (part.startsWith("TWEET_ID:")) {
           const tweetId = part.replace("TWEET_ID:", "");

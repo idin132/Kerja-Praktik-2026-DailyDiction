@@ -17,7 +17,6 @@ interface NewsFeedCardProps {
 
 export function NewsFeedCard({
   category,
-  categoryColor,
   title,
   summary,
   imageUrl,
@@ -39,7 +38,7 @@ export function NewsFeedCard({
   return (
     <motion.article
       whileHover={{ y: -4 }}
-      className="group relative flex flex-col h-full overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-brand-crimson/50 hover:shadow-[0_4px_20px_rgba(0,0,0,0.5)] cursor-pointer"
+      className="group relative flex flex-col h-full overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/50 hover:shadow-[0_4px_20px_rgba(0,0,0,0.5)] cursor-pointer"
     >
       {/* Gambar dengan rasio tetap */}
       <div className="relative aspect-video w-full overflow-hidden border-b border-dark-border/50 shrink-0">
@@ -54,11 +53,7 @@ export function NewsFeedCard({
           {catList.map((cat, idx) => (
             <span
               key={idx}
-              className={`rounded-md px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider ${
-                categoryColor === "crimson"
-                  ? "bg-brand-crimson text-white"
-                  : "bg-brand-cyan text-black"
-              }`}
+              className="rounded-md px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider bg-[#FFD700] text-black"
             >
               {cat}
             </span>
@@ -66,17 +61,14 @@ export function NewsFeedCard({
         </div>
       </div>
 
-      {/* Konten Text (Atas dan Bawah Terkunci) */}
+      {/* Konten Text */}
       <div className="flex flex-1 flex-col justify-between p-5">
         <div>
-          {/* Judul: Tinggi minimal dikunci setara 2 baris */}
-          <h3 className="text-base font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 min-h-[3rem] leading-snug">
-            {/* INI TRIK RAHASIA TAILWIND-NYA */}
+          <h3 className="text-base font-bold text-text-primary transition-colors group-hover:text-[#FFD700] line-clamp-2 min-h-[3rem] leading-snug">
             <Link href={`/artikel/${slug}`} className="before:absolute before:inset-0 before:z-10 focus:outline-none">
               {title}
             </Link>
           </h3>
-          {/* Deskripsi: Tinggi minimal dikunci setara 2 baris */}
           <p className="mt-2 text-xs text-text-muted line-clamp-2 min-h-[2.5rem] leading-relaxed">
             {summary}
           </p>
@@ -85,7 +77,7 @@ export function NewsFeedCard({
         {/* Footer Card */}
         <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-dark-border/60 pt-4 text-[10px] md:text-xs font-mono text-text-muted">
           <div className="flex items-center gap-1.5 relative z-20">
-            <User className="h-3.5 w-3.5 text-brand-crimson" />
+            <User className="h-3.5 w-3.5 text-[#FFD700]" />
             <span className="font-semibold text-white truncate max-w-[120px]">
               {author || "Redaksi"}
             </span>
@@ -143,8 +135,7 @@ export function ReviewCard({
   return (
     <motion.div
       whileHover={{ x: 4 }}
-      // Tambahin "relative" dan "cursor-pointer" di container ini
-      className="group relative flex items-center gap-4 h-full rounded-xl border border-dark-border bg-dark-card p-3 transition-all hover:border-brand-cyan/50 cursor-pointer"
+      className="group relative flex items-center gap-4 h-full rounded-xl border border-dark-border bg-dark-card p-3 transition-all hover:border-[#FFD700]/50 cursor-pointer"
     >
       <img
         src={imageUrl}
@@ -157,14 +148,13 @@ export function ReviewCard({
           {platformList.map((plat, idx) => (
             <span
               key={idx}
-              className="text-[9px] px-1.5 py-0.5 rounded bg-brand-cyan/10 border border-brand-cyan/30 font-mono font-bold uppercase tracking-wider text-brand-cyan"
+              className="text-[9px] px-1.5 py-0.5 rounded bg-[#FFD700]/10 border border-[#FFD700]/30 font-mono font-bold uppercase tracking-wider text-[#FFD700]"
             >
               {plat}
             </span>
           ))}
         </div>
-        <h4 className="text-sm font-bold text-text-primary line-clamp-2 leading-snug group-hover:text-brand-cyan transition-colors">
-          {/* INI TRIK RAHASIA TAILWIND-NYA */}
+        <h4 className="text-sm font-bold text-text-primary line-clamp-2 leading-snug group-hover:text-[#FFD700] transition-colors">
           <Link href={`/review/${slug}`} className="before:absolute before:inset-0 before:z-10 focus:outline-none">
             {title}
           </Link>

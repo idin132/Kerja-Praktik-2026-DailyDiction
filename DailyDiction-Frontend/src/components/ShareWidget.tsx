@@ -26,7 +26,6 @@ export default function ShareWidget({ title }: ShareWidgetProps) {
     setCurrentUrl(window.location.href);
   }, []);
 
-  // Tutup floating menu jika user klik di luar area
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (mobileRef.current && !mobileRef.current.contains(event.target as Node)) {
@@ -88,7 +87,7 @@ export default function ShareWidget({ title }: ShareWidgetProps) {
       {/* ================= TAMPILAN DESKTOP (SIDEBAR) ================= */}
       <div className="hidden lg:block w-full max-w-[320px] mx-auto rounded-2xl border border-dark-border bg-dark-card/60 p-5 backdrop-blur-md">
         <div className="flex items-center gap-2 mb-4">
-          <span className="h-2 w-2 rounded-full bg-brand-crimson animate-pulse" />
+          <span className="h-2 w-2 rounded-full bg-[#FFD700] animate-pulse" />
           <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-text-muted">
             Share This Website
           </h3>
@@ -104,7 +103,7 @@ export default function ShareWidget({ title }: ShareWidgetProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 title={`Share on ${item.name}`}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-dark-border bg-dark-bg/80 text-text-muted transition-all duration-200 hover:text-white hover:scale-105 active:scale-95"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-dark-border bg-dark-bg/80 text-text-muted transition-all duration-200 hover:text-white hover:border-[#FFD700] hover:scale-105 active:scale-95"
               >
                 <Icon className="h-4 w-4" />
               </a>
@@ -114,9 +113,9 @@ export default function ShareWidget({ title }: ShareWidgetProps) {
           <button
             onClick={handleCopy}
             title="Salin Link"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-dark-border bg-dark-bg/80 text-text-muted transition-all duration-200 hover:border-brand-cyan hover:text-brand-cyan hover:scale-105 active:scale-95"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-dark-border bg-dark-bg/80 text-text-muted transition-all duration-200 hover:border-[#FFD700] hover:text-[#FFD700] hover:scale-105 active:scale-95"
           >
-            {copied ? <Check className="h-4 w-4 text-brand-cyan" /> : <Link2 className="h-4 w-4" />}
+            {copied ? <Check className="h-4 w-4 text-[#FFD700]" /> : <Link2 className="h-4 w-4" />}
           </button>
         </div>
       </div>
@@ -124,7 +123,7 @@ export default function ShareWidget({ title }: ShareWidgetProps) {
       {/* ================= TAMPILAN MOBILE (SINGLE FLOATING BUTTON + POPUP) ================= */}
       <div ref={mobileRef} className="fixed right-4 bottom-24 z-[999] flex flex-col items-end lg:hidden">
         
-        {/* Menu Pilihan Share yang Muncul Saat Tombol Diklik */}
+        {/* Menu Pilihan Share */}
         {isOpenMobile && (
           <div className="mb-3 flex flex-col gap-2.5 rounded-2xl border border-dark-border/80 bg-black/90 p-2.5 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
             {shareLinks.map((item) => {
@@ -145,20 +144,20 @@ export default function ShareWidget({ title }: ShareWidgetProps) {
 
             <button
               onClick={handleCopy}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-dark-card border border-white/20 text-white transition-transform active:scale-90"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-dark-card border border-white/20 text-white transition-transform active:scale-90 hover:border-[#FFD700] hover:text-[#FFD700]"
             >
-              {copied ? <Check className="h-4 w-4 text-brand-cyan" /> : <Link2 className="h-4 w-4" />}
+              {copied ? <Check className="h-4 w-4 text-[#FFD700]" /> : <Link2 className="h-4 w-4" />}
             </button>
           </div>
         )}
 
-        {/* Tombol Utama Mengambang (Toggle Open / Close) */}
+        {/* Tombol Utama Mengambang */}
         <button
           onClick={() => setIsOpenMobile(!isOpenMobile)}
           aria-label="Share options"
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-crimson text-white shadow-[0_0_20px_rgba(255,62,62,0.6)] border border-white/20 active:scale-90 transition-all duration-200"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFD700] text-black shadow-[0_0_20px_rgba(255,215,0,0.5)] border border-white/20 active:scale-90 transition-all duration-200"
         >
-          {isOpenMobile ? <X className="h-5 w-5" /> : <FaShareNodes className="h-5 w-5" />}
+          {isOpenMobile ? <X className="h-5 w-5 stroke-[2.5]" /> : <FaShareNodes className="h-5 w-5 fill-black" />}
         </button>
       </div>
     </>

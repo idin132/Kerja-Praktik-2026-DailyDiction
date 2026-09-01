@@ -43,7 +43,6 @@ function formatHeroImage(article: ArticleItem): string {
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-// Helper pengambil seluruh tag kategori
 function getCategoriesArray(item: ArticleItem, fallback = "NEWS"): string[] {
   if (item.contentType === "review") return ["REVIEW"];
 
@@ -84,7 +83,6 @@ export default function HeroSection() {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
-        // Fetch berita dan review secara paralel
         const [articlesRes, reviewsRes] = await Promise.all([
           fetch(`${apiUrl}/articles`, {
             headers: { Accept: "application/json" },
@@ -113,16 +111,12 @@ export default function HeroSection() {
           })
         );
 
-        // Gabungkan dan urutkan berdasarkan created_at descending
-        // Gabungkan data
         const rawCombined = [...newsData, ...reviewsData];
 
-        // FILTER ANTI-KEMBAR: Cek ID biar gak ada yang double
         const uniqueCombined = Array.from(
           new Map(rawCombined.map((item) => [item.id, item])).values()
         );
 
-        // Urutkan berdasarkan created_at descending
         const sortedCombined = uniqueCombined.sort((a, b) => {
           const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
           const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -227,14 +221,14 @@ export default function HeroSection() {
                       {currentCategories.map((cat, idx) => (
                         <span
                           key={idx}
-                          className="rounded bg-brand-crimson px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-white shadow-sm"
+                          className="rounded bg-[#FFD700] px-2 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase text-black shadow-sm"
                         >
                           {cat}
                         </span>
                       ))}
                     </div>
 
-                    <h1 className="text-base sm:text-2xl md:text-4xl lg:text-5xl font-black tracking-tight text-white leading-snug sm:leading-tight line-clamp-2 group-hover:text-brand-crimson transition-colors drop-shadow-md">
+                    <h1 className="text-base sm:text-2xl md:text-4xl lg:text-5xl font-black tracking-tight text-white leading-snug sm:leading-tight line-clamp-2 group-hover:text-[#FFD700] transition-colors drop-shadow-md">
                       {currentArticle.title}
                     </h1>
 
@@ -248,14 +242,14 @@ export default function HeroSection() {
               <div className="mt-3 sm:mt-5 flex items-center gap-3">
                 <Link
                   href={targetLink}
-                  className="inline-flex items-center gap-1.5 rounded-lg sm:rounded-xl bg-brand-crimson px-3 py-1.5 sm:px-5 sm:py-2.5 font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white shadow-[0_0_15px_rgba(255,62,62,0.4)] transition-all hover:bg-brand-crimson/90 active:scale-95 pointer-events-auto"
+                  className="inline-flex items-center gap-1.5 rounded-lg sm:rounded-xl bg-[#FFD700] px-3 py-1.5 sm:px-5 sm:py-2.5 font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider text-black shadow-[0_0_15px_rgba(255,215,0,0.4)] transition-all hover:bg-[#FFD700]/90 active:scale-95 pointer-events-auto"
                 >
                   <span>Baca</span>
                   <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Link>
 
                 <div className="flex items-center gap-1 font-mono text-[10px] sm:text-xs text-text-muted">
-                  <Clock className="h-3 w-3 text-brand-cyan" />
+                  <Clock className="h-3 w-3 text-[#FFD700]" />
                   <span>{currentArticle.read_time || "5 MIN READ"}</span>
                 </div>
               </div>
@@ -270,7 +264,7 @@ export default function HeroSection() {
                     onClick={() => setCurrentIndex(idx)}
                     className={`h-1.5 rounded-full transition-all duration-300 ${
                       currentIndex === idx
-                        ? "w-6 sm:w-8 bg-brand-crimson"
+                        ? "w-6 sm:w-8 bg-[#FFD700]"
                         : "w-2 bg-dark-border hover:bg-text-muted"
                     }`}
                     aria-label={`Slide ${idx + 1}`}
@@ -282,14 +276,14 @@ export default function HeroSection() {
                 <button
                   onClick={handlePrev}
                   aria-label="Previous Slide"
-                  className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg border border-dark-border bg-dark-card/80 text-text-muted backdrop-blur-md transition-all hover:border-brand-crimson hover:text-white active:scale-95"
+                  className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg border border-dark-border bg-dark-card/80 text-text-muted backdrop-blur-md transition-all hover:border-[#FFD700] hover:text-white active:scale-95"
                 >
                   <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </button>
                 <button
                   onClick={handleNext}
                   aria-label="Next Slide"
-                  className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg border border-dark-border bg-dark-card/80 text-text-muted backdrop-blur-md transition-all hover:border-brand-crimson hover:text-white active:scale-95"
+                  className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg border border-dark-border bg-dark-card/80 text-text-muted backdrop-blur-md transition-all hover:border-[#FFD700] hover:text-white active:scale-95"
                 >
                   <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </button>
