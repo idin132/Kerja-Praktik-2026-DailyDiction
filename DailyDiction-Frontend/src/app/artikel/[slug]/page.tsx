@@ -357,10 +357,10 @@ export default async function DetailArtikel({
                       href="https://discord.com/invite/DG6Nebkex9"
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex w-full items-center justify-center gap-2 bg-[#FFD700] text-black font-mono font-bold text-xs uppercase py-3 px-4 rounded-xl hover:bg-[#FFD700]/90 transition-all shadow-[0_0_15px_rgba(255,215,0,0.3)] relative z-10"
+                      className="inline-flex w-full items-center justify-center gap-2 bg-white text-black font-mono font-bold text-xs uppercase py-3 px-4 rounded-xl hover:bg-white/90 transition-all shadow-lg relative z-10"
                     >
                       <Send className="h-3.5 w-3.5 fill-current" />
-                      <span>Masuk Server (Gratis)</span>
+                      <span>Masuk Server</span>
                     </a>
                   </div>
                 </div>
