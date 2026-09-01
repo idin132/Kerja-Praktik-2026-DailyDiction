@@ -72,10 +72,10 @@ export default function YoutubeHero({ videos = [] }: { videos?: any[] }) {
         <AnimatePresence mode="wait">
           <motion.div
             key={mainVideo.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
             className="group relative lg:col-span-2 aspect-video overflow-hidden rounded-2xl border border-dark-border bg-dark-card shadow-xl"
           >
             {playingId === mainVideo.id ? (
@@ -117,7 +117,7 @@ export default function YoutubeHero({ videos = [] }: { videos?: any[] }) {
         {/* ================= SIDE VIDEOS & NAVIGASI ================= */}
         <div className="flex flex-col h-full justify-between">
           <div className="flex flex-col flex-1 justify-between gap-2 pb-4">
-            {sideVideos.map((video: any) => {
+            {sideVideos.map((video: any, idx: number) => {
               const chunkIndex = currentChunk.findIndex(
                 (v) => v.id === video.id,
               );
@@ -125,8 +125,9 @@ export default function YoutubeHero({ videos = [] }: { videos?: any[] }) {
               return (
                 <motion.div
                   key={video.id}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: idx * 0.05, ease: "easeOut" }}
                   className="group flex gap-4 overflow-hidden rounded-xl border border-dark-border bg-dark-card p-2.5 cursor-pointer transition-all hover:border-[#FFD700]/50 hover:bg-dark-bg h-full"
                   onClick={() => {
                     setActiveLocalIndex(chunkIndex);
