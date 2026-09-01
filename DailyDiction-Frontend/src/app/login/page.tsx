@@ -5,7 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Lock, Mail, User, ArrowRight, Loader2, AlertCircle } from "lucide-react";
+import {
+  Lock,
+  Mail,
+  User,
+  ArrowRight,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -19,7 +26,8 @@ export default function AuthPage() {
     password: "",
   });
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +49,9 @@ export default function AuthPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Terjadi kesalahan, periksa input Anda.");
+        throw new Error(
+          data.message || "Terjadi kesalahan, periksa input Anda.",
+        );
       }
 
       // Simpan kredensial login di LocalStorage
@@ -103,7 +113,9 @@ export default function AuthPage() {
                     required
                     placeholder="Contoh: GamerSejati"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     className="w-full rounded-xl border border-dark-border bg-dark-bg/60 pl-10 pr-4 py-2.5 text-xs text-text-primary placeholder:text-text-muted/60 focus:border-brand-crimson focus:outline-none transition-colors"
                   />
                 </div>
@@ -121,7 +133,9 @@ export default function AuthPage() {
                   required
                   placeholder="name@example.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   className="w-full rounded-xl border border-dark-border bg-dark-bg/60 pl-10 pr-4 py-2.5 text-xs text-text-primary placeholder:text-text-muted/60 focus:border-brand-crimson focus:outline-none transition-colors"
                 />
               </div>
@@ -138,9 +152,19 @@ export default function AuthPage() {
                   required
                   placeholder="••••••••"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                   className="w-full rounded-xl border border-dark-border bg-dark-bg/60 pl-10 pr-4 py-2.5 text-xs text-text-primary placeholder:text-text-muted/60 focus:border-brand-crimson focus:outline-none transition-colors"
                 />
+              </div>
+              <div className="flex justify-end">
+                <Link
+                  href="/forgot-password"
+                  className="text-[11px] font-mono text-text-muted hover:text-brand-cyan transition-colors"
+                >
+                  Lupa password?
+                </Link>
               </div>
             </div>
 
