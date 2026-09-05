@@ -37,6 +37,7 @@ class ArticleResource extends Resource
                         'article' => 'Berita / Artikel',
                         'technology' => 'Teknologi & Hardware',
                         'review' => 'Game Review',
+                        'entertainment' => 'Entertainment',
                     ])
                     ->default('article')
                     ->required()
@@ -55,14 +56,14 @@ class ArticleResource extends Resource
                     }),
 
                 (auth()->user()?->role === 'superadmin' || (auth()->user() && method_exists(auth()->user(), 'isSuperAdmin') && auth()->user()->isSuperAdmin()))
-                ? Forms\Components\Select::make('author')
+                    ? Forms\Components\Select::make('author')
                     ->label('Author (Penulis)')
                     ->options(fn() => User::pluck('name', 'name')->toArray())
                     ->searchable()
                     ->preload()
                     ->default(fn() => auth()->user()?->name)
                     ->required()
-                : Forms\Components\TextInput::make('author')
+                    : Forms\Components\TextInput::make('author')
                     ->label('Author (Penulis)')
                     ->required()
                     ->readOnly()
@@ -93,8 +94,8 @@ class ArticleResource extends Resource
                         'Console / Handheld',
                         'Accessories',
                     ] : Category::pluck('name')->toArray())
-                    ->visible(fn(Get $get) => in_array($get('type'), ['article', 'technology']))
-                    ->required(fn(Get $get) => in_array($get('type'), ['article', 'technology'])),
+                    ->visible(fn(Get $get) => in_array($get('type'), ['article', 'technology', 'entertainment']))
+                    ->required(fn(Get $get) => in_array($get('type'), ['article', 'technology', 'entertainment'])),
 
                 // C. KHUSUS REVIEW: Platform Game
                 Forms\Components\Select::make('platform')
@@ -140,7 +141,7 @@ class ArticleResource extends Resource
                     ->visible(fn(Get $get) => $get('thumbnail_mode') !== 'file')
                     ->required(fn(Get $get) => $get('thumbnail_mode') !== 'file')
                     ->dehydrated(fn(Get $get) => $get('thumbnail_mode') !== 'file'),
-                    
+
                 Forms\Components\FileUpload::make('image_path')
                     ->label('Upload Thumbnail')
                     ->image()
@@ -196,9 +197,12 @@ class ArticleResource extends Resource
                     ->label('Konten Artikel')
                     ->extraAttributes([
                         'wire:ignore.self' => true,
-                        'x-on:focusout.stop' => '', // Mencegah event blur merambat ke Livewire saat pindah field
+                        'x-on:focusout.stop' => '',
                         'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static',
                         'style' => 'min-height: 450px;',
+                        // Tambahkan ini:
+                        'x-data' => '{}',
+                        'x-on:click.outside' => '$el.querySelector(".ProseMirror")?.blur()',
                     ])
                     ->extraInputAttributes([
                         'tabindex' => '0',
@@ -259,6 +263,7 @@ class ArticleResource extends Resource
                         'article' => 'info',
                         'technology' => 'success',
                         'review' => 'warning',
+                        'entertainment' => 'danger',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn(string $state): string => ucfirst($state)),
@@ -301,6 +306,7 @@ class ArticleResource extends Resource
                         'article' => 'Berita / Artikel',
                         'technology' => 'Teknologi & Hardware',
                         'review' => 'Game Review',
+                        'entertainment' => 'Entertainment',
                     ]),
             ])
             ->actions([
