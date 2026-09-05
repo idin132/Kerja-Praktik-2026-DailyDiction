@@ -15,6 +15,7 @@ import {
   Newspaper,
   Star,
   Cpu,
+  Tv2,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -24,13 +25,15 @@ export default function Navbar() {
 
   const pathname = usePathname();
   const router = useRouter();
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
   const navLinks = [
     { name: "HOME", href: "/", icon: Flame },
     { name: "NEWS", href: "/news", icon: Newspaper },
     { name: "REVIEW", href: "/review", icon: Star },
     { name: "TECHNOLOGY", href: "/technology", icon: Cpu },
+    { name: "ENTERTAINMENT", href: "/entertainment", icon: Tv2 },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -68,8 +71,10 @@ export default function Navbar() {
       customClass: {
         popup: "rounded-2xl border border-white/10 shadow-2xl font-mono",
         title: "text-lg font-bold uppercase tracking-wider text-white",
-        confirmButton: "rounded-xl px-5 py-2.5 font-mono text-xs font-bold uppercase text-black",
-        cancelButton: "rounded-xl px-5 py-2.5 font-mono text-xs font-bold uppercase border border-white/10 text-gray-300 hover:text-white",
+        confirmButton:
+          "rounded-xl px-5 py-2.5 font-mono text-xs font-bold uppercase text-black",
+        cancelButton:
+          "rounded-xl px-5 py-2.5 font-mono text-xs font-bold uppercase border border-white/10 text-gray-300 hover:text-white",
       },
     });
 
