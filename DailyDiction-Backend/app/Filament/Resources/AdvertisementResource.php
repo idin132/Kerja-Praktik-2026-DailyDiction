@@ -34,14 +34,13 @@ class AdvertisementResource extends Resource
                     ->maxLength(255)
                     ->columnSpanFull(),
 
-                // 1. POSISI IKLAN
+                // 1. POSISI IKLAN (Hapus ->default('sidebar') biar ga overwrite data asli saat edit)
                 Select::make('position')
                     ->label('Posisi Penempatan Iklan')
                     ->options([
                         'sidebar'    => 'Sidebar Kanan (300 x 250 px)',
                         'horizontal' => 'Banner Horizontal Tengah (1200 x 250 px)',
                     ])
-                    ->default('sidebar')
                     ->required()
                     ->columnSpanFull(),
 
@@ -52,12 +51,11 @@ class AdvertisementResource extends Resource
                         'banner' => 'Gambar Banner Manual',
                         'script' => 'Script / Google Ads',
                     ])
-                    ->default('banner')
                     ->live()
                     ->required()
                     ->columnSpanFull(),
 
-                // 3. FIELD BANNER MANUAL (Gunakan key murni 'banner')
+                // 3. FIELD BANNER MANUAL
                 FileUpload::make('banner_image')
                     ->label('Gambar Banner Iklan')
                     ->image()
@@ -75,7 +73,7 @@ class AdvertisementResource extends Resource
                     ->maxLength(255)
                     ->columnSpanFull(),
 
-                // 4. FIELD SCRIPT / GOOGLE ADS (Gunakan key murni 'script')
+                // 4. FIELD SCRIPT / GOOGLE ADS
                 Textarea::make('script_code')
                     ->label('Script Google Ads / HTML')
                     ->rows(6)

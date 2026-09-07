@@ -7,7 +7,9 @@ export interface Ad {
   id: string | number;
   title?: string;
   banner_image?: string | null;
+  image_url?: string | null;
   url_link?: string | null;
+  link_url?: string | null;
   position?: string;
   type?: string;
 }
@@ -22,28 +24,22 @@ interface AdCarouselProps {
 
 function formatImageUrl(
   imageUrl: string | null | undefined,
-  fallback: string,
+  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
 ): string {
-  if (!imageUrl) return fallback;
+  if (!imageUrl || typeof imageUrl !== "string") return fallback;
 
-  if (imageUrl.includes("dailydiction.id/storage/")) {
-    return imageUrl.replace(
-      "https://dailydiction.id/storage/",
-      "https://dailydiction.id/storage/",
-    );
+  const clean = imageUrl.trim();
+
+  if (clean.includes("/storage/http://") || clean.includes("/storage/https://")) {
+    return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
   }
 
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    if (imageUrl.includes("https://dailydiction.id/storage/http")) {
-      return imageUrl.replace(
-        /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
-        "$1",
-      );
-    }
-    return imageUrl;
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    return clean;
   }
 
-  return `https://dailydiction.id/storage/${imageUrl}`;
+  const cleanPath = clean.replace(/^\/+/, "");
+  return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
 export default function AdCarousel({
@@ -84,7 +80,7 @@ export default function AdCarousel({
         <span className="text-xs font-mono text-text-muted">
           {fallbackText}
         </span>
-        <span className="text-[10px] font-mono text-brand-crimson/50 mt-1">
+        <span className="text-[10px] font-mono text-[#FFD700]/70 mt-1">
           {dimensions}
         </span>
       </div>
@@ -93,16 +89,20 @@ export default function AdCarousel({
 
   const currentAd = ads[currentIndex];
 
+  // FIX UTAMA: Ambil dari banner_image ATAU image_url
+  const rawImage = currentAd?.banner_image || currentAd?.image_url;
+  const targetUrl = currentAd?.url_link || currentAd?.link_url || "#";
+
   return (
     <div className="relative w-full h-full group overflow-hidden flex items-center justify-center bg-black/20">
       <a
-        href={currentAd?.url_link || "#"}
+        href={targetUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="w-full h-full flex items-center justify-center relative"
       >
         <img
-          src={formatImageUrl(currentAd?.banner_image, "")}
+          src={formatImageUrl(rawImage)}
           alt={currentAd?.title || "Iklan"}
           className={`w-full h-full ${objectFit} transition-all duration-500 ease-in-out group-hover:scale-105`}
         />
@@ -142,7 +142,7 @@ export default function AdCarousel({
                 }}
                 className={`h-1.5 rounded-full transition-all ${
                   currentIndex === idx
-                    ? "w-4 bg-brand-crimson"
+                    ? "w-4 bg-[#FFD700]"
                     : "w-1.5 bg-white/50"
                 }`}
                 aria-label={`Go to ad ${idx + 1}`}
