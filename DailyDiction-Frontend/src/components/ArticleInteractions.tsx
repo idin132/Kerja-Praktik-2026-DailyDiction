@@ -349,17 +349,16 @@ export default function ArticleInteractions({
                       })}
                     </span>
 
-                    {/* Tombol Trash muncul untuk pemilik komentar MAUPUN superadmin */}
                     {canDelete && (
                       <button
                         onClick={() => handleDeleteComment(c.id)}
                         disabled={deletingId === c.id}
                         title={
                           isSuperAdmin && !isOwner
-                            ? "Hapus komentar (Admin)"
+                            ? "Hapus komentar (Superadmin)"
                             : "Hapus komentar"
                         }
-                        className="text-text-muted hover:text-brand-crimson transition-colors p-1 rounded"
+                        className="text-text-muted hover:text-[#FFD700] transition-colors p-1 rounded"
                       >
                         {deletingId === c.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -370,7 +369,6 @@ export default function ArticleInteractions({
                     )}
                   </div>
                 </div>
-
                 <p className="text-sm text-text-primary leading-relaxed">
                   {c.comment}
                 </p>
