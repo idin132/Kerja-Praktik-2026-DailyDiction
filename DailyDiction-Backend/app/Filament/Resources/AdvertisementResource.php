@@ -34,7 +34,7 @@ class AdvertisementResource extends Resource
                     ->maxLength(255)
                     ->columnSpanFull(),
 
-                // 1. INPUT POSISI IKLAN (PASTIKAN ADA DI SINI)
+                // 1. POSISI IKLAN
                 Select::make('position')
                     ->label('Posisi Penempatan Iklan')
                     ->options([
@@ -57,30 +57,30 @@ class AdvertisementResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // 3. FIELD BANNER MANUAL
+                // 3. FIELD BANNER MANUAL (Gunakan key murni 'banner')
                 FileUpload::make('banner_image')
                     ->label('Gambar Banner Iklan')
                     ->image()
                     ->directory('advertisements')
-                    ->visible(fn (Get $get) => in_array($get('type'), ['banner', 'Gambar Banner Manual']))
-                    ->required(fn (Get $get) => in_array($get('type'), ['banner', 'Gambar Banner Manual']))
+                    ->visible(fn (Get $get) => $get('type') === 'banner')
+                    ->required(fn (Get $get) => $get('type') === 'banner')
                     ->columnSpanFull(),
 
                 TextInput::make('url_link')
                     ->label('Link Tujuan (URL)')
                     ->placeholder('https://...')
                     ->url()
-                    ->visible(fn (Get $get) => in_array($get('type'), ['banner', 'Gambar Banner Manual']))
-                    ->required(fn (Get $get) => in_array($get('type'), ['banner', 'Gambar Banner Manual']))
+                    ->visible(fn (Get $get) => $get('type') === 'banner')
+                    ->required(fn (Get $get) => $get('type') === 'banner')
                     ->maxLength(255)
                     ->columnSpanFull(),
 
-                // 4. FIELD SCRIPT / GOOGLE ADS
+                // 4. FIELD SCRIPT / GOOGLE ADS (Gunakan key murni 'script')
                 Textarea::make('script_code')
                     ->label('Script Google Ads / HTML')
                     ->rows(6)
-                    ->visible(fn (Get $get) => in_array($get('type'), ['script', 'Script / Google Ads']))
-                    ->required(fn (Get $get) => in_array($get('type'), ['script', 'Script / Google Ads']))
+                    ->visible(fn (Get $get) => $get('type') === 'script')
+                    ->required(fn (Get $get) => $get('type') === 'script')
                     ->columnSpanFull()
                     ->helperText('Paste kode script Google Adsense atau HTML iframe di sini.'),
             ]);
@@ -115,9 +115,9 @@ class AdvertisementResource extends Resource
                     ->label('Tipe')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'banner', 'Gambar Banner Manual' => 'success',
-                        'script', 'Script / Google Ads'  => 'warning',
-                        default                          => 'gray',
+                        'banner'  => 'success',
+                        'script'  => 'warning',
+                        default   => 'gray',
                     }),
                 
                 TextColumn::make('url_link')
