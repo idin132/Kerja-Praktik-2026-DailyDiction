@@ -3,6 +3,7 @@ import HeroSection from "@/components/HeroSection";
 import YoutubeHero from "@/components/YoutubeHero";
 import YoutubeShorts from "@/components/YoutubeShorts";
 import TechSection from "@/components/TechSection";
+import EntertainmentSection from "@/components/EntertainmentSection";
 import HorizontalAdBanner from "@/components/HorizontalAdBanner";
 import { NewsFeedCard, ReviewCard } from "@/components/Cards";
 import { DiscordWidget } from "@/components/Sidebar";
@@ -15,14 +16,14 @@ export const revalidate = 0;
 
 function formatImageUrl(
   imageUrl: string | null | undefined,
-  fallback: string
+  fallback: string,
 ): string {
   if (!imageUrl) return fallback;
 
   if (imageUrl.includes("dailydiction.id/storage/")) {
     return imageUrl.replace(
       "https://dailydiction.id/storage/",
-      "https://dailydiction.id/storage/"
+      "https://dailydiction.id/storage/",
     );
   }
 
@@ -30,7 +31,7 @@ function formatImageUrl(
     if (imageUrl.includes("https://dailydiction.id/storage/http")) {
       return imageUrl.replace(
         /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
-        "$1"
+        "$1",
       );
     }
     return imageUrl;
@@ -144,10 +145,8 @@ export default async function Home() {
 
         {/* Buka Grid di sini */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12 mt-8">
-          
           {/* KOLOM KIRI (LEBIH LEBAR) */}
           <div className="lg:col-span-8 2xl:col-span-9 space-y-8 2xl:space-y-12">
-            
             {/* BANNER KANAN / HORIZONTAL */}
             <HorizontalAdBanner adData={horizontalBannerAd} />
 
@@ -190,7 +189,7 @@ export default async function Home() {
                       summary={item.summary}
                       imageUrl={formatImageUrl(
                         item.image_url || item.image_full_url,
-                        "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
+                        "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                       )}
                       slug={item.slug}
                       author={item.author}
@@ -229,7 +228,7 @@ export default async function Home() {
                       platform={review.platform || review.category || ["PC"]}
                       imageUrl={formatImageUrl(
                         review.image_url || review.image_full_url,
-                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
+                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
                       )}
                       slug={review.slug}
                     />
@@ -243,6 +242,7 @@ export default async function Home() {
             </section>
 
             <TechSection />
+            <EntertainmentSection />
             <YoutubeShorts videos={shortsList} />
           </div>
 
