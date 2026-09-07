@@ -2,15 +2,15 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  /* Warna Custom DailyDiction*/
+  /* Warna Custom DailyDiction */
   --color-dark-bg: #0d0f12;
   --color-dark-card: #161920;
   --color-dark-border: #262a36;
 
-  --color-brand-yellow: #ffd600;
-  --color-brand-crimson: #ff3e3e;
-  --color-brand-cyan: #00e5ff;
-  --color-brand-yellow: #F5C400;
+  /* Semua brand color diseragamkan ke Kuning Daily Diction */
+  --color-brand-yellow: #FFD700;
+  --color-brand-crimson: #FFD700;
+  --color-brand-cyan: #FFD700;
 
   --color-text-primary: #eceff4;
   --color-text-muted: #8a94a6;
@@ -27,6 +27,11 @@ body {
   background-color: var(--color-dark-bg);
   color: var(--color-text-primary);
   font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+::selection {
+  background-color: #FFD700;
+  color: #000000;
 }
 
 @media (prefers-color-scheme: dark) {

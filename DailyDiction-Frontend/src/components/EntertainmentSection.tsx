@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Cpu, ArrowRight } from "lucide-react";
+import { Tv2, ArrowRight } from "lucide-react";
 
-interface TechItem {
+interface EntertainmentItem {
   id: number;
   title: string;
   slug: string;
@@ -17,60 +17,77 @@ interface TechItem {
   created_at: string;
 }
 
-function formatTechImage(item: TechItem): string {
+function formatEntertainmentImage(item: EntertainmentItem): string {
   const imageUrl = item.image_url || item.image_full_url;
-  const fallback = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
+  const fallback =
+    "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800";
   if (!imageUrl) return fallback;
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
     if (imageUrl.includes("https://dailydiction.id/storage/http")) {
-      return imageUrl.replace(/http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/, "$1");
+      return imageUrl.replace(
+        /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
+        "$1",
+      );
     }
     return imageUrl;
   }
   return `https://dailydiction.id/storage/${imageUrl}`;
 }
 
-function getCategoriesArray(item: TechItem): string[] {
+function getCategoriesArray(item: EntertainmentItem): string[] {
   let rawCats: any[] = [];
   if (item.categories && item.categories.length > 0) {
     rawCats = item.categories.map((c: any) => c.name);
   } else if (item.category_input) {
-    rawCats = Array.isArray(item.category_input) ? item.category_input : [item.category_input];
+    rawCats = Array.isArray(item.category_input)
+      ? item.category_input
+      : [item.category_input];
   } else if (item.category) {
     if (typeof item.category === "string" && item.category.startsWith("[")) {
-      try { rawCats = JSON.parse(item.category); } catch { rawCats = [item.category]; }
+      try {
+        rawCats = JSON.parse(item.category);
+      } catch {
+        rawCats = [item.category];
+      }
     } else {
       rawCats = Array.isArray(item.category) ? item.category : [item.category];
     }
   }
   const validCats = rawCats.filter(Boolean).map(String);
-  return validCats.length > 0 ? validCats.map((c) => c.toUpperCase()) : ["HARDWARE"];
+  return validCats.length > 0
+    ? validCats.map((c) => c.toUpperCase())
+    : ["ENTERTAINMENT"];
 }
 
-export default function TechSection() {
-  const [techArticles, setTechArticles] = useState<TechItem[]>([]);
+export default function EntertainmentSection() {
+  const [entertainmentArticles, setEntertainmentArticles] = useState<
+    EntertainmentItem[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-    async function fetchTech() {
+    async function fetchEntertainment() {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
-        // Cukup ambil 3 artikel terbaru biar pas 1 baris
-        const res = await fetch(`${apiUrl}/technologies?per_page=3`, {
-          cache: "no-store",
-        });
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
+        const res = await fetch(
+          `${apiUrl}/articles?type=entertainment&per_page=3`,
+          {
+            cache: "no-store",
+          },
+        );
         if (res.ok) {
           const json = await res.json();
-          if (isMounted) setTechArticles(json.data || []);
+          if (isMounted) setEntertainmentArticles(json.data || []);
         }
       } catch (err) {
-        console.error("Gagal ambil data tech:", err);
+        console.error("Gagal ambil data entertainment:", err);
       } finally {
         if (isMounted) setIsLoading(false);
       }
     }
-    fetchTech();
+    fetchEntertainment();
     return () => {
       isMounted = false;
     };
@@ -82,37 +99,38 @@ export default function TechSection() {
         <div className="h-8 w-48 bg-dark-card rounded mb-6"></div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((n) => (
-            <div key={n} className="h-28 bg-dark-card rounded-2xl border border-dark-border"></div>
+            <div
+              key={n}
+              className="h-28 bg-dark-card rounded-2xl border border-dark-border"
+            ></div>
           ))}
         </div>
       </section>
     );
   }
 
-  if (techArticles.length === 0) return null;
+  if (entertainmentArticles.length === 0) return null;
 
   return (
     <section>
-      {/* Header Section (Ukurannya disamakan persis dengan Ulasan Game) */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <Cpu className="h-5 w-5 text-brand-cyan" />
+          <Tv2 className="h-5 w-5 text-brand-cyan" />
           <h2 className="text-lg font-black uppercase tracking-wider text-text-primary">
-            TECHNOLOGY
+            ENTERTAINMENT
           </h2>
         </div>
         <Link
-          href="/technology"
+          href="/entertainment"
           className="flex items-center gap-1 text-xs font-mono font-bold text-brand-cyan hover:underline"
         >
-          <span>SEMUA TECH</span>
+          <span>SEMUA ENTERTAINMENT</span>
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
-      {/* Grid Card List (Gap disamakan persis dengan Ulasan Game) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {techArticles.map((item) => {
+        {entertainmentArticles.map((item) => {
           const categories = getCategoriesArray(item);
 
           return (
@@ -124,12 +142,12 @@ export default function TechSection() {
               {/* Thumbnail Kiri */}
               <div className="h-20 w-24 sm:h-24 sm:w-32 flex-shrink-0 overflow-hidden rounded-xl relative border border-dark-border/50">
                 <img
-                  src={formatTechImage(item)}
+                  src={formatEntertainmentImage(item)}
                   alt={item.title}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src =
-                      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
+                      "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800";
                   }}
                 />
               </div>

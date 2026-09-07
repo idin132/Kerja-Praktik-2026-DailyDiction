@@ -8,59 +8,74 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar,
   User,
+  Send,
   Search,
   Filter,
-  Cpu,
+  Tv2,
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
-  Send,
 } from "lucide-react";
 
-interface TechItem {
+interface ArticleItem {
   id: number;
   title: string;
   slug: string;
   category_input?: string | string[];
   category?: string | string[];
   categories?: any[];
+  category_color?: string;
   summary: string;
-  content: string;
+  content?: string;
   image_url?: string;
   image_full_url?: string;
-  read_time: string;
-  created_at: string;
+  thumbnail?: string;
+  thumbnail_url?: string;
+  image?: string;
+  read_time?: string;
+  created_at?: string;
   author?: string;
   type?: string;
 }
 
-function formatTechImage(item: TechItem): string {
-  const imageUrl = item.image_url || item.image_full_url;
+function formatImage(item: ArticleItem): string {
+  const rawUrl =
+    item.image_url ||
+    item.thumbnail_url ||
+    item.thumbnail ||
+    item.image_full_url ||
+    item.image;
+
   const fallback =
-    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
+    "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800"; // fallback bertema entertainment/bioskop
 
-  if (!imageUrl) return fallback;
+  if (!rawUrl) return fallback;
 
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    if (imageUrl.includes("https://dailydiction.id/storage/http")) {
-      return imageUrl.replace(
+  const clean = rawUrl.trim();
+
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    if (clean.includes("https://dailydiction.id/storage/http")) {
+      return clean.replace(
         /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
-        "$1"
+        "$1",
       );
     }
-    return imageUrl;
+    return clean;
   }
 
-  return `https://dailydiction.id/storage/${imageUrl}`;
+  const cleanPath = clean.startsWith("/") ? clean.slice(1) : clean;
+  if (cleanPath.startsWith("storage/")) {
+    return `https://dailydiction.id/${cleanPath}`;
+  }
+
+  return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-export default function TechnologyPage() {
-  const [techList, setTechList] = useState<TechItem[]>([]);
+export default function EntertainmentPage() {
+  const [articles, setArticles] = useState<ArticleItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
-
-  // State Pagination Server-Side
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const itemsPerPage = 8;
@@ -68,87 +83,85 @@ export default function TechnologyPage() {
   useEffect(() => {
     let isMounted = true;
 
-    async function fetchTechArticles() {
+    async function fetchArticles() {
       setIsLoading(true);
       try {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
-        // Mengambil data dari endpoint backend /technologies
         const res = await fetch(
-          `${apiUrl}/technologies?page=${currentPage}&per_page=${itemsPerPage}`,
-          { cache: "no-store" }
+          `${apiUrl}/articles?type=entertainment&page=${currentPage}&per_page=${itemsPerPage}`,
+          { cache: "no-store" },
         );
 
         if (res.ok) {
           const json = await res.json();
           if (isMounted) {
-            setTechList(json.data || []);
+            setArticles(json.data || []);
             setTotalPages(
-              json.last_page || Math.ceil((json.total || 0) / itemsPerPage) || 1
+              json.last_page ||
+                Math.ceil((json.total || 0) / itemsPerPage) ||
+                1,
             );
           }
         }
       } catch (err) {
-        console.error("Gagal mengambil data teknologi:", err);
+        console.error("Gagal mengambil data entertainment:", err);
+        if (isMounted) setArticles([]);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     }
 
-    fetchTechArticles();
-
+    fetchArticles();
     return () => {
       isMounted = false;
     };
   }, [currentPage]);
 
-  // FUNGSI DIUBAH: Mengambil seluruh array kategori dari berbagai sumber API
-  const getCategoriesArray = (item: TechItem): string[] => {
+  const getCategoriesArray = (item: ArticleItem): string[] => {
     let rawCats: any[] = [];
-    
+
     if (item.categories && item.categories.length > 0) {
-      rawCats = item.categories.map((c: any) => c.name);
+      rawCats = item.categories.map((c: any) =>
+        typeof c === "string" ? c : c.name,
+      );
     } else if (item.category_input) {
-      rawCats = Array.isArray(item.category_input) ? item.category_input : [item.category_input];
+      rawCats = Array.isArray(item.category_input)
+        ? item.category_input
+        : [item.category_input];
     } else if (item.category) {
       if (typeof item.category === "string" && item.category.startsWith("[")) {
-        try { 
-          rawCats = JSON.parse(item.category); 
-        } catch { 
-          rawCats = [item.category]; 
+        try {
+          rawCats = JSON.parse(item.category);
+        } catch {
+          rawCats = [item.category];
         }
       } else {
-        rawCats = Array.isArray(item.category) ? item.category : [item.category];
+        rawCats = Array.isArray(item.category)
+          ? item.category
+          : [item.category];
       }
     }
 
     const validCats = rawCats.filter(Boolean).map(String);
-    return validCats.length > 0 ? validCats : ["HARDWARE"];
+    return validCats.length > 0 ? validCats : ["ENTERTAINMENT"];
   };
 
-  // Filter Kategori & Pencarian
-  const filteredList = techList.filter((item) => {
-    const itemCats = getCategoriesArray(item).map((c) =>
-      c.toUpperCase()
-    );
+  const allCategories = articles.flatMap((item) =>
+    getCategoriesArray(item).map((cat) => cat.toUpperCase()),
+  );
+  const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
 
+  const filteredArticles = articles.filter((item) => {
+    const itemCats = getCategoriesArray(item).map((c) => c.toUpperCase());
     const matchCategory =
       selectedCategory === "ALL" || itemCats.includes(selectedCategory);
-
     const matchSearch =
       (item.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
       (item.summary?.toLowerCase() || "").includes(searchQuery.toLowerCase());
-
     return matchCategory && matchSearch;
   });
-
-  const allCategories = techList.flatMap((item) =>
-    getCategoriesArray(item).map((cat) => cat.toUpperCase())
-  );
-  const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -156,23 +169,23 @@ export default function TechnologyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-cyan selection:text-black flex flex-col justify-between font-sans">
+    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black flex flex-col justify-between font-sans">
       <div>
         <Navbar />
 
         <main className="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-8">
-          {/* Header Section */}
+          {/* Header */}
           <div className="mb-8 border-b border-dark-border pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="h-6 w-2 rounded-full bg-brand-cyan" />
+                <span className="h-6 w-2 rounded-full bg-[#FFD700]" />
                 <h1 className="text-2xl sm:text-4xl font-black font-mono tracking-tight text-text-primary uppercase">
-                  TECHNOLOGY
+                  ENTERTAINMENT
                 </h1>
               </div>
               <p className="text-xs sm:text-sm text-text-muted font-mono">
-                Eksplorasi periferal gaming, rakitan PC, inovasi gadget, review
-                gear, dan tren teknologi mutakhir.
+                Film, serial, anime, musik, dan semua hal pop culture yang perlu
+                kamu tahu.
               </p>
             </div>
 
@@ -180,23 +193,23 @@ export default function TechnologyPage() {
               <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
               <input
                 type="text"
-                placeholder="Cari periferal, hardware, gadget..."
+                placeholder="Cari konten entertainment..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-dark-border bg-dark-card pl-10 pr-4 py-2.5 text-xs text-text-primary placeholder:text-text-muted focus:border-brand-cyan focus:outline-none transition-colors shadow-inner"
+                className="w-full rounded-xl border border-dark-border bg-dark-card pl-10 pr-4 py-2.5 text-xs text-text-primary placeholder:text-text-muted focus:border-[#FFD700] focus:outline-none transition-colors shadow-inner"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12">
-            {/* Left Column: Tech Post List */}
+            {/* Article List */}
             <div className="lg:col-span-8 2xl:col-span-9 space-y-6">
-              {/* Category Filter Pills */}
+              {/* Category Pills */}
               {categoriesList.length > 1 && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none font-mono text-xs">
                   <span className="flex items-center gap-1 text-text-muted mr-2 shrink-0">
-                    <Filter className="h-3.5 w-3.5 text-brand-cyan" />
-                    <span>PERANGKAT:</span>
+                    <Filter className="h-3.5 w-3.5 text-[#FFD700]" />
+                    <span>KATEGORI:</span>
                   </span>
                   {categoriesList.map((cat) => (
                     <button
@@ -204,8 +217,8 @@ export default function TechnologyPage() {
                       onClick={() => setSelectedCategory(cat)}
                       className={`shrink-0 rounded-lg px-3.5 py-1.5 font-bold uppercase transition-all ${
                         selectedCategory === cat
-                          ? "bg-brand-cyan text-black shadow-[0_0_15px_rgba(0,240,255,0.4)]"
-                          : "border border-dark-border bg-dark-card text-text-muted hover:border-brand-cyan hover:text-text-primary"
+                          ? "bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.4)]"
+                          : "border border-dark-border bg-dark-card text-text-muted hover:border-[#FFD700] hover:text-text-primary"
                       }`}
                     >
                       {cat}
@@ -223,7 +236,7 @@ export default function TechnologyPage() {
                     />
                   ))}
                 </div>
-              ) : filteredList.length > 0 ? (
+              ) : filteredArticles.length > 0 ? (
                 <>
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -234,30 +247,28 @@ export default function TechnologyPage() {
                       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                       className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8"
                     >
-                      {filteredList.map((item) => {
+                      {filteredArticles.map((item) => {
                         const itemCategories = getCategoriesArray(item);
-
                         return (
                           <article
                             key={item.id}
-                            className="group relative flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-cyan/60 hover:-translate-y-1 shadow-lg h-full duration-300 cursor-pointer"
+                            className="group relative flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/60 hover:-translate-y-1 shadow-lg h-full duration-300 cursor-pointer"
                           >
                             <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
                               <img
-                                src={formatTechImage(item)}
+                                src={formatImage(item)}
                                 alt={item.title}
                                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 onError={(e) => {
                                   (e.target as HTMLImageElement).src =
-                                    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
+                                    "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800";
                                 }}
                               />
-
                               <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-20">
                                 {itemCategories.map((cat, idx) => (
                                   <span
                                     key={idx}
-                                    className="rounded-md border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md"
+                                    className="rounded bg-[#FFD700] px-2 py-0.5 text-[10px] font-bold uppercase text-black shadow-sm"
                                   >
                                     {cat}
                                   </span>
@@ -267,7 +278,7 @@ export default function TechnologyPage() {
 
                             <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
                               <div>
-                                <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
+                                <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-[#FFD700] line-clamp-2 leading-snug">
                                   <Link
                                     href={`/artikel/${item.slug}`}
                                     className="before:absolute before:inset-0 before:z-10 focus:outline-none"
@@ -283,12 +294,11 @@ export default function TechnologyPage() {
                               <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4 relative z-20">
                                 <div className="flex items-center gap-3">
                                   <div className="flex items-center gap-1.5">
-                                    <User className="h-3.5 w-3.5 text-brand-cyan" />
+                                    <User className="h-3.5 w-3.5 text-[#FFD700]" />
                                     <span className="truncate max-w-[90px] xl:max-w-[120px] font-semibold text-white">
                                       {item.author || "Redaksi"}
                                     </span>
                                   </div>
-
                                   {item.created_at && (
                                     <>
                                       <span className="text-dark-border hidden sm:inline-block">
@@ -298,7 +308,7 @@ export default function TechnologyPage() {
                                         <Calendar className="h-3.5 w-3.5 text-text-muted" />
                                         <span>
                                           {new Date(
-                                            item.created_at
+                                            item.created_at,
                                           ).toLocaleDateString("id-ID", {
                                             day: "numeric",
                                             month: "short",
@@ -309,11 +319,8 @@ export default function TechnologyPage() {
                                     </>
                                   )}
                                 </div>
-
-                                <div className="flex items-center gap-1 font-bold text-brand-cyan group-hover:underline shrink-0 ml-1">
-                                  <span className="hidden sm:inline">
-                                    DETAIL
-                                  </span>
+                                <div className="flex items-center gap-1 font-bold text-[#FFD700] group-hover:underline shrink-0 ml-1">
+                                  <span className="hidden sm:inline">BACA</span>
                                   <ArrowUpRight className="h-3.5 w-3.5" />
                                 </div>
                               </div>
@@ -324,18 +331,15 @@ export default function TechnologyPage() {
                     </motion.div>
                   </AnimatePresence>
 
-                  {/* Pagination Controls */}
                   {totalPages > 1 && (
                     <div className="flex items-center justify-center gap-2 pt-8 font-mono text-xs">
                       <button
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-cyan hover:text-white disabled:opacity-30 disabled:pointer-events-none"
-                        aria-label="Previous Page"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700] disabled:opacity-30 disabled:pointer-events-none"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </button>
-
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                         (pageNum) => (
                           <button
@@ -343,20 +347,18 @@ export default function TechnologyPage() {
                             onClick={() => handlePageChange(pageNum)}
                             className={`h-9 min-w-[36px] px-3 rounded-xl font-bold transition-all ${
                               currentPage === pageNum
-                                ? "bg-brand-cyan text-black shadow-[0_0_15px_rgba(0,240,255,0.4)]"
-                                : "border border-dark-border bg-dark-card text-text-muted hover:border-brand-cyan hover:text-text-primary"
+                                ? "bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.4)]"
+                                : "border border-dark-border bg-dark-card text-text-muted hover:border-[#FFD700] hover:text-text-primary"
                             }`}
                           >
                             {pageNum}
                           </button>
-                        )
+                        ),
                       )}
-
                       <button
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-cyan hover:text-white disabled:opacity-30 disabled:pointer-events-none"
-                        aria-label="Next Page"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700] disabled:opacity-30 disabled:pointer-events-none"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </button>
@@ -365,16 +367,15 @@ export default function TechnologyPage() {
                 </>
               ) : (
                 <div className="rounded-2xl border border-dark-border bg-dark-card p-12 text-center font-mono">
-                  <Cpu className="h-10 w-10 text-text-muted mx-auto mb-3" />
+                  <Tv2 className="h-10 w-10 text-text-muted mx-auto mb-3" />
                   <p className="text-sm text-text-muted">
-                    Belum ada artikel hardware atau teknologi yang
-                    dipublikasikan.
+                    Tidak ada konten entertainment yang ditemukan.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Right Sidebar Column */}
+            {/* Sidebar */}
             <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
               <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
                 <svg
@@ -384,17 +385,13 @@ export default function TechnologyPage() {
                 >
                   <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515c-.213.385-.444.905-.608 1.315a18.27 18.27 0 0 0-5.648 0c-.164-.41-.4-.93-.615-1.315A19.736 19.736 0 0 0 3.67 4.37C.533 9.046-.319 13.608.106 18.11a19.98 19.98 0 0 0 6.002 3.03c.49-.67.924-1.38 1.293-2.13-.71-.27-1.39-.61-2.04-1.01.17-.125.337-.255.5-.39 3.93 1.84 8.18 1.84 12.06 0 .164.135.33.265.5.39-.65.4-1.33.74-2.04 1.01.37.75.8 1.46 1.29 2.13a19.98 19.98 0 0 0 6.006-3.03c.5-5.22-.85-9.74-3.36-13.74ZM8.02 15.33c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Zm7.96 0c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Z" />
                 </svg>
-
                 <h3 className="text-base lg:text-lg font-mono font-black text-white uppercase tracking-wide">
                   TEMPAT NONGKRONG
                 </h3>
-
                 <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
-                  Join server Discord Daily Diction buat mabar, berbagi info
-                  gacha, pamer spek PC, atau sekadar gibahin industri pop
-                  culture!
+                  Join server Discord Daily Diction buat ngobrolin film, anime,
+                  musik, dan semua hal pop culture!
                 </p>
-
                 <a
                   href="https://discord.com/invite/DG6Nebkex9"
                   target="_blank"

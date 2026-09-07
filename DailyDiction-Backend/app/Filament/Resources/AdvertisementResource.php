@@ -10,7 +10,6 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-// IMPORT TAMBAHAN
 use Filament\Forms\Get;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -35,7 +34,7 @@ class AdvertisementResource extends Resource
                     ->maxLength(255)
                     ->columnSpanFull(),
 
-                // 1. SELECT POSISI IKLAN
+                // 1. INPUT POSISI IKLAN (PASTIKAN ADA DI SINI)
                 Select::make('position')
                     ->label('Posisi Penempatan Iklan')
                     ->options([
@@ -46,7 +45,7 @@ class AdvertisementResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // 2. SELECT TIPE IKLAN (DIBIKIN LIVE REAKTIF)
+                // 2. TIPE IKLAN
                 Select::make('type')
                     ->label('Tipe Iklan')
                     ->options([
@@ -54,11 +53,11 @@ class AdvertisementResource extends Resource
                         'script' => 'Script / Google Ads',
                     ])
                     ->default('banner')
-                    ->live() // 👈 Trigger ubah form bawahnya realtime
+                    ->live()
                     ->required()
                     ->columnSpanFull(),
 
-                // 3. FIELD KHUSUS BANNER MANUAL
+                // 3. FIELD BANNER MANUAL
                 FileUpload::make('banner_image')
                     ->label('Gambar Banner Iklan')
                     ->image()
@@ -76,7 +75,7 @@ class AdvertisementResource extends Resource
                     ->maxLength(255)
                     ->columnSpanFull(),
 
-                // 4. FIELD KHUSUS SCRIPT / GOOGLE ADS
+                // 4. FIELD SCRIPT / GOOGLE ADS
                 Textarea::make('script_code')
                     ->label('Script Google Ads / HTML')
                     ->rows(6)
@@ -98,7 +97,6 @@ class AdvertisementResource extends Resource
                     ->label('Judul Iklan')
                     ->searchable(),
 
-                // BADGE POSISI IKLAN
                 TextColumn::make('position')
                     ->label('Posisi')
                     ->badge()
@@ -113,7 +111,6 @@ class AdvertisementResource extends Resource
                         default      => $state,
                     }),
 
-                // BADGE TIPE IKLAN
                 TextColumn::make('type')
                     ->label('Tipe')
                     ->badge()
@@ -148,9 +145,7 @@ class AdvertisementResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

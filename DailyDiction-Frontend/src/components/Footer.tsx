@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { FaYoutube, FaTwitter } from "react-icons/fa";
+import { FaYoutube } from "react-icons/fa";
 
-// Icon Instagram kustom (karena Lucide tidak memiliki Instagram native di versi ini)
+// Icon Instagram kustom
 function InstagramIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -15,7 +15,7 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
-// Icon TikTok kustom (karena Lucide tidak memiliki TikTok native)
+// Icon TikTok kustom
 function TiktokIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -35,7 +35,7 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         {/* Main Grid */}
         <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
-          {/* Brand Info (Spans 2 columns on medium+ screens) */}
+          {/* Brand Info */}
           <div className="md:col-span-2 space-y-4">
             <Link
               href="/"
@@ -47,8 +47,8 @@ export default function Footer() {
                 className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
               />
               <div className="flex items-center gap-1">
-                DAILY<span className="text-brand-yellow">DICTION</span>
-                <span className="h-2 w-2 rounded-full bg-brand-yellow animate-pulse" />
+                DAILY<span className="text-[#FFD700]">DICTION</span>
+                <span className="h-2 w-2 rounded-full bg-[#FFD700] animate-pulse" />
               </div>
             </Link>
 
@@ -68,7 +68,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/news"
-                  className="transition-colors hover:text-brand-crimson"
+                  className="transition-colors hover:text-[#FFD700]"
                 >
                   Berita Utama
                 </Link>
@@ -76,21 +76,11 @@ export default function Footer() {
               <li>
                 <Link
                   href="/review"
-                  className="transition-colors hover:text-brand-crimson"
+                  className="transition-colors hover:text-[#FFD700]"
                 >
                   Ulasan Komplit
                 </Link>
               </li>
-              {/* <li>
-                <Link href="/hardware" className="transition-colors hover:text-brand-crimson">
-                  Spesifikasi Hardware
-                </Link>
-              </li>
-              <li>
-                <Link href="/pop-culture" className="transition-colors hover:text-brand-crimson">
-                  Kultur Pop & Anime
-                </Link>
-              </li> */}
             </ul>
           </div>
 
@@ -105,7 +95,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label="YouTube Daily Diction"
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-crimson hover:text-brand-crimson"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700]"
               >
                 <FaYoutube size={20} />
               </a>
@@ -114,7 +104,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Instagram"
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-crimson hover:text-brand-crimson"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700]"
               >
                 <InstagramIcon className="h-5 w-5" />
               </a>
@@ -123,7 +113,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label="TikTok"
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-crimson hover:text-brand-crimson"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700]"
               >
                 <TiktokIcon className="h-4 w-4" />
               </a>
@@ -134,18 +124,6 @@ export default function Footer() {
         {/* Bottom Bar / Copyright */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-dark-border/60 pt-6 text-xs text-text-muted sm:flex-row font-mono">
           <p>© 2026 Daily Diction. All rights reserved.</p>
-
-          {/* <div className="flex gap-6">
-            <Link href="/privacy" className="transition-colors hover:text-text-primary hover:underline">
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="transition-colors hover:text-text-primary hover:underline">
-              Terms of Service
-            </Link>
-            <Link href="/about" className="transition-colors hover:text-text-primary hover:underline">
-              About Us
-            </Link>
-          </div> */}
         </div>
       </div>
     </footer>
