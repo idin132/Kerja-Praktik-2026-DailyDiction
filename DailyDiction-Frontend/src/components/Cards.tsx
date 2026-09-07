@@ -6,7 +6,7 @@ import Link from "next/link";
 
 interface NewsFeedCardProps {
   category: string | string[];
-  categoryColor: string;
+  categoryColor?: string;
   title: string;
   summary: string;
   imageUrl: string;
@@ -35,6 +35,9 @@ export function NewsFeedCard({
     }
   }
 
+  const fallbackImage =
+    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
+
   return (
     <motion.article
       whileHover={{ y: -4 }}
@@ -46,6 +49,9 @@ export function NewsFeedCard({
           src={imageUrl}
           alt={title}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = fallbackImage;
+          }}
         />
 
         {/* Badge Kategori */}
@@ -65,7 +71,10 @@ export function NewsFeedCard({
       <div className="flex flex-1 flex-col justify-between p-5">
         <div>
           <h3 className="text-base font-bold text-text-primary transition-colors group-hover:text-[#FFD700] line-clamp-2 min-h-[3rem] leading-snug">
-            <Link href={`/artikel/${slug}`} className="before:absolute before:inset-0 before:z-10 focus:outline-none">
+            <Link
+              href={`/artikel/${slug}`}
+              className="before:absolute before:inset-0 before:z-10 focus:outline-none"
+            >
               {title}
             </Link>
           </h3>
@@ -110,7 +119,7 @@ interface ReviewCardProps {
   title: string;
   imageUrl: string;
   slug: string;
-  summary: string;
+  summary?: string;
 }
 
 export function ReviewCard({
@@ -132,6 +141,9 @@ export function ReviewCard({
     }
   }
 
+  const fallbackImage =
+    "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800";
+
   return (
     <motion.div
       whileHover={{ x: 4 }}
@@ -141,6 +153,9 @@ export function ReviewCard({
         src={imageUrl}
         alt={title}
         className="h-20 w-24 rounded-lg object-cover shrink-0"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = fallbackImage;
+        }}
       />
 
       <div className="flex-1 min-w-0">
@@ -155,7 +170,10 @@ export function ReviewCard({
           ))}
         </div>
         <h4 className="text-sm font-bold text-text-primary line-clamp-2 leading-snug group-hover:text-[#FFD700] transition-colors">
-          <Link href={`/review/${slug}`} className="before:absolute before:inset-0 before:z-10 focus:outline-none">
+          <Link
+            href={`/review/${slug}`}
+            className="before:absolute before:inset-0 before:z-10 focus:outline-none"
+          >
             {title}
           </Link>
         </h4>

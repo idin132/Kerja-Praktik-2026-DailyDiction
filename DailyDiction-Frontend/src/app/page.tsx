@@ -21,10 +21,7 @@ function formatImageUrl(
   if (!imageUrl) return fallback;
 
   if (imageUrl.includes("dailydiction.id/storage/")) {
-    return imageUrl.replace(
-      "https://dailydiction.id/storage/",
-      "https://dailydiction.id/storage/",
-    );
+    return imageUrl;
   }
 
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
@@ -58,12 +55,13 @@ export default async function Home() {
 
   const adsList: any[] = adsData?.data || (Array.isArray(adsData) ? adsData : []);
 
+  // PEMFILTERAN IKLAN PRESISI BERDASARKAN POSISI
   const horizontalBannerAds = adsList.filter(
-    (ad: any) => ad.position === "horizontal" || ad.type === "banner",
+    (ad: any) => ad.position === "horizontal"
   );
 
   const sidebarAds = adsList.filter(
-    (ad: any) => ad.position === "sidebar" || ad.type === "sidebar",
+    (ad: any) => ad.position === "sidebar"
   );
 
   const isReviewItem = (item: any) => {
@@ -134,7 +132,7 @@ export default async function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-crimson selection:text-white">
+    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
       <Navbar />
       <HeroSection />
 
@@ -145,12 +143,13 @@ export default async function Home() {
           {/* KOLOM KIRI */}
           <div className="lg:col-span-8 2xl:col-span-9 space-y-8 2xl:space-y-12">
             {/* BANNER HORIZONTAL */}
-            <div className="flex h-24 sm:h-28 w-full flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden">
+            <div className="w-full aspect-[4/1] sm:aspect-[6/1] md:aspect-[8/1] max-h-[160px] rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden">
               <AdCarousel
                 ads={horizontalBannerAds}
                 interval={5000}
                 fallbackText="Space Iklan Horizontal"
                 dimensions="1200 x 250 px"
+                objectFit="object-contain"
               />
             </div>
 
@@ -158,7 +157,7 @@ export default async function Home() {
             <section>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
-                  <Flame className="h-5 w-5 text-brand-crimson" />
+                  <Flame className="h-5 w-5 text-[#FFD700]" />
                   <h2 className="text-lg font-black uppercase tracking-wider text-text-primary">
                     News Feed
                   </h2>
@@ -188,7 +187,7 @@ export default async function Home() {
                     <NewsFeedCard
                       key={item.id}
                       category={finalCategory}
-                      categoryColor={item.category_color || "crimson"}
+                      categoryColor="yellow"
                       title={item.title}
                       summary={item.summary}
                       imageUrl={formatImageUrl(
@@ -252,12 +251,13 @@ export default async function Home() {
 
           {/* KOLOM KANAN (SIDEBAR) */}
           <aside className="lg:col-span-4 2xl:col-span-3 space-y-8">
-            <div className="flex h-[250px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
+            <div className="w-full h-[250px] rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
               <AdCarousel
                 ads={sidebarAds}
                 interval={5000}
                 fallbackText="Space Iklan Google Ads"
                 dimensions="300 x 250 px"
+                objectFit="object-cover"
               />
             </div>
 

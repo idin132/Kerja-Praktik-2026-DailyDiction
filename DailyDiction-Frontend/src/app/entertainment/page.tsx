@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import AdCarousel from "@/components/AdCarousel";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar,
@@ -47,7 +48,7 @@ function formatImage(item: ArticleItem): string {
     item.image;
 
   const fallback =
-    "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800"; // fallback bertema entertainment/bioskop
+    "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800";
 
   if (!rawUrl) return fallback;
 
@@ -73,6 +74,7 @@ function formatImage(item: ArticleItem): string {
 
 export default function EntertainmentPage() {
   const [articles, setArticles] = useState<ArticleItem[]>([]);
+  const [sidebarAds, setSidebarAds] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
@@ -89,10 +91,13 @@ export default function EntertainmentPage() {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
-        const res = await fetch(
-          `${apiUrl}/articles?type=entertainment&page=${currentPage}&per_page=${itemsPerPage}`,
-          { cache: "no-store" },
-        );
+        const [res, adsRes] = await Promise.all([
+          fetch(
+            `${apiUrl}/articles?type=entertainment&page=${currentPage}&per_page=${itemsPerPage}`,
+            { cache: "no-store" },
+          ),
+          fetch(`${apiUrl}/advertisements`, { cache: "no-store" }).catch(() => null),
+        ]);
 
         if (res.ok) {
           const json = await res.json();
@@ -105,8 +110,18 @@ export default function EntertainmentPage() {
             );
           }
         }
+
+        if (adsRes && adsRes.ok) {
+          const adsJson = await adsRes.json();
+          const adsList = adsJson.data || (Array.isArray(adsJson) ? adsJson : []);
+          if (isMounted) {
+            setSidebarAds(
+              adsList.filter((ad: any) => ad.position === "sidebar")
+            );
+          }
+        }
       } catch (err) {
-        console.error("Gagal mengambil data entertainment:", err);
+        console.error("Gagal mengambil data entertainment/iklan:", err);
         if (isMounted) setArticles([]);
       } finally {
         if (isMounted) setIsLoading(false);
@@ -268,7 +283,7 @@ export default function EntertainmentPage() {
                                 {itemCategories.map((cat, idx) => (
                                   <span
                                     key={idx}
-                                    className="rounded bg-[#FFD700] px-2 py-0.5 text-[10px] font-bold uppercase text-black shadow-sm"
+                                    className="rounded bg-[#FFD700] px-2 py-0.5 text-[10px] font-bold uppercase text-black shadow-sm font-mono"
                                   >
                                     {cat}
                                   </span>
@@ -377,6 +392,18 @@ export default function EntertainmentPage() {
 
             {/* Sidebar */}
             <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
+              {/* Space Iklan Sidebar */}
+              <div className="w-full h-[250px] rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
+                <AdCarousel
+                  ads={sidebarAds}
+                  interval={5000}
+                  fallbackText="Space Iklan Sidebar"
+                  dimensions="300 x 250 px"
+                  objectFit="object-cover"
+                />
+              </div>
+
+              {/* Widget Discord */}
               <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
                 <svg
                   viewBox="0 0 24 24"
@@ -386,7 +413,7 @@ export default function EntertainmentPage() {
                   <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515c-.213.385-.444.905-.608 1.315a18.27 18.27 0 0 0-5.648 0c-.164-.41-.4-.93-.615-1.315A19.736 19.736 0 0 0 3.67 4.37C.533 9.046-.319 13.608.106 18.11a19.98 19.98 0 0 0 6.002 3.03c.49-.67.924-1.38 1.293-2.13-.71-.27-1.39-.61-2.04-1.01.17-.125.337-.255.5-.39 3.93 1.84 8.18 1.84 12.06 0 .164.135.33.265.5.39-.65.4-1.33.74-2.04 1.01.37.75.8 1.46 1.29 2.13a19.98 19.98 0 0 0 6.006-3.03c.5-5.22-.85-9.74-3.36-13.74ZM8.02 15.33c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Zm7.96 0c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Z" />
                 </svg>
                 <h3 className="text-base lg:text-lg font-mono font-black text-white uppercase tracking-wide">
-                  TEMPAT NONGKRONG
+                  TEMPAT NONGKRONG GAMER
                 </h3>
                 <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
                   Join server Discord Daily Diction buat ngobrolin film, anime,
@@ -396,10 +423,10 @@ export default function EntertainmentPage() {
                   href="https://discord.com/invite/DG6Nebkex9"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex w-full items-center justify-center gap-2 bg-white text-indigo-950 font-mono font-bold text-[10px] lg:text-xs uppercase py-3 px-4 rounded-xl hover:bg-slate-100 transition-all shadow-md relative z-10"
+                  className="inline-flex w-full items-center justify-center gap-2 bg-white text-black font-mono font-bold text-xs uppercase py-3 px-4 rounded-xl hover:bg-white/90 transition-all shadow-md relative z-10"
                 >
                   <Send className="h-3.5 w-3.5 fill-current" />
-                  <span>Join Server</span>
+                  <span>Join Server (Gratis)</span>
                 </a>
               </div>
             </aside>

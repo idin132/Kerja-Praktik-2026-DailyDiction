@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import AdCarousel from "@/components/AdCarousel";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar,
@@ -56,11 +57,11 @@ function formatTechImage(item: TechItem): string {
 
 export default function TechnologyPage() {
   const [techList, setTechList] = useState<TechItem[]>([]);
+  const [sidebarAds, setSidebarAds] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
-  // State Pagination Server-Side
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const itemsPerPage = 8;
@@ -74,11 +75,13 @@ export default function TechnologyPage() {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
-        // Mengambil data dari endpoint backend /technologies
-        const res = await fetch(
-          `${apiUrl}/technologies?page=${currentPage}&per_page=${itemsPerPage}`,
-          { cache: "no-store" }
-        );
+        const [res, adsRes] = await Promise.all([
+          fetch(
+            `${apiUrl}/technologies?page=${currentPage}&per_page=${itemsPerPage}`,
+            { cache: "no-store" }
+          ),
+          fetch(`${apiUrl}/advertisements`, { cache: "no-store" }).catch(() => null),
+        ]);
 
         if (res.ok) {
           const json = await res.json();
@@ -89,8 +92,18 @@ export default function TechnologyPage() {
             );
           }
         }
+
+        if (adsRes && adsRes.ok) {
+          const adsJson = await adsRes.json();
+          const adsList = adsJson.data || (Array.isArray(adsJson) ? adsJson : []);
+          if (isMounted) {
+            setSidebarAds(
+              adsList.filter((ad: any) => ad.position === "sidebar")
+            );
+          }
+        }
       } catch (err) {
-        console.error("Gagal mengambil data teknologi:", err);
+        console.error("Gagal mengambil data teknologi/iklan:", err);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -105,7 +118,6 @@ export default function TechnologyPage() {
     };
   }, [currentPage]);
 
-  // FUNGSI DIUBAH: Mengambil seluruh array kategori dari berbagai sumber API
   const getCategoriesArray = (item: TechItem): string[] => {
     let rawCats: any[] = [];
     
@@ -129,7 +141,6 @@ export default function TechnologyPage() {
     return validCats.length > 0 ? validCats : ["HARDWARE"];
   };
 
-  // Filter Kategori & Pencarian
   const filteredList = techList.filter((item) => {
     const itemCats = getCategoriesArray(item).map((c) =>
       c.toUpperCase()
@@ -156,7 +167,7 @@ export default function TechnologyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-brand-cyan selection:text-black flex flex-col justify-between font-sans">
+    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black flex flex-col justify-between font-sans">
       <div>
         <Navbar />
 
@@ -165,7 +176,7 @@ export default function TechnologyPage() {
           <div className="mb-8 border-b border-dark-border pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="h-6 w-2 rounded-full bg-brand-cyan" />
+                <span className="h-6 w-2 rounded-full bg-[#FFD700]" />
                 <h1 className="text-2xl sm:text-4xl font-black font-mono tracking-tight text-text-primary uppercase">
                   TECHNOLOGY
                 </h1>
@@ -183,7 +194,7 @@ export default function TechnologyPage() {
                 placeholder="Cari periferal, hardware, gadget..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-dark-border bg-dark-card pl-10 pr-4 py-2.5 text-xs text-text-primary placeholder:text-text-muted focus:border-brand-cyan focus:outline-none transition-colors shadow-inner"
+                className="w-full rounded-xl border border-dark-border bg-dark-card pl-10 pr-4 py-2.5 text-xs text-text-primary placeholder:text-text-muted focus:border-[#FFD700] focus:outline-none transition-colors shadow-inner"
               />
             </div>
           </div>
@@ -195,7 +206,7 @@ export default function TechnologyPage() {
               {categoriesList.length > 1 && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none font-mono text-xs">
                   <span className="flex items-center gap-1 text-text-muted mr-2 shrink-0">
-                    <Filter className="h-3.5 w-3.5 text-brand-cyan" />
+                    <Filter className="h-3.5 w-3.5 text-[#FFD700]" />
                     <span>PERANGKAT:</span>
                   </span>
                   {categoriesList.map((cat) => (
@@ -204,8 +215,8 @@ export default function TechnologyPage() {
                       onClick={() => setSelectedCategory(cat)}
                       className={`shrink-0 rounded-lg px-3.5 py-1.5 font-bold uppercase transition-all ${
                         selectedCategory === cat
-                          ? "bg-brand-cyan text-black shadow-[0_0_15px_rgba(0,240,255,0.4)]"
-                          : "border border-dark-border bg-dark-card text-text-muted hover:border-brand-cyan hover:text-text-primary"
+                          ? "bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.4)]"
+                          : "border border-dark-border bg-dark-card text-text-muted hover:border-[#FFD700] hover:text-text-primary"
                       }`}
                     >
                       {cat}
@@ -240,7 +251,7 @@ export default function TechnologyPage() {
                         return (
                           <article
                             key={item.id}
-                            className="group relative flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-brand-cyan/60 hover:-translate-y-1 shadow-lg h-full duration-300 cursor-pointer"
+                            className="group relative flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/60 hover:-translate-y-1 shadow-lg h-full duration-300 cursor-pointer"
                           >
                             <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
                               <img
@@ -257,7 +268,7 @@ export default function TechnologyPage() {
                                 {itemCategories.map((cat, idx) => (
                                   <span
                                     key={idx}
-                                    className="rounded-md border border-brand-cyan/40 bg-dark-bg/80 px-2.5 py-1 text-[10px] font-mono font-bold uppercase text-brand-cyan backdrop-blur-md shadow-md"
+                                    className="rounded bg-[#FFD700] px-2 py-0.5 text-[10px] font-bold uppercase text-black shadow-sm font-mono"
                                   >
                                     {cat}
                                   </span>
@@ -267,7 +278,7 @@ export default function TechnologyPage() {
 
                             <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
                               <div>
-                                <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-brand-cyan line-clamp-2 leading-snug">
+                                <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-[#FFD700] line-clamp-2 leading-snug">
                                   <Link
                                     href={`/artikel/${item.slug}`}
                                     className="before:absolute before:inset-0 before:z-10 focus:outline-none"
@@ -283,7 +294,7 @@ export default function TechnologyPage() {
                               <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4 relative z-20">
                                 <div className="flex items-center gap-3">
                                   <div className="flex items-center gap-1.5">
-                                    <User className="h-3.5 w-3.5 text-brand-cyan" />
+                                    <User className="h-3.5 w-3.5 text-[#FFD700]" />
                                     <span className="truncate max-w-[90px] xl:max-w-[120px] font-semibold text-white">
                                       {item.author || "Redaksi"}
                                     </span>
@@ -310,7 +321,7 @@ export default function TechnologyPage() {
                                   )}
                                 </div>
 
-                                <div className="flex items-center gap-1 font-bold text-brand-cyan group-hover:underline shrink-0 ml-1">
+                                <div className="flex items-center gap-1 font-bold text-[#FFD700] group-hover:underline shrink-0 ml-1">
                                   <span className="hidden sm:inline">
                                     DETAIL
                                   </span>
@@ -330,7 +341,7 @@ export default function TechnologyPage() {
                       <button
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-cyan hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700] disabled:opacity-30 disabled:pointer-events-none"
                         aria-label="Previous Page"
                       >
                         <ChevronLeft className="h-4 w-4" />
@@ -343,8 +354,8 @@ export default function TechnologyPage() {
                             onClick={() => handlePageChange(pageNum)}
                             className={`h-9 min-w-[36px] px-3 rounded-xl font-bold transition-all ${
                               currentPage === pageNum
-                                ? "bg-brand-cyan text-black shadow-[0_0_15px_rgba(0,240,255,0.4)]"
-                                : "border border-dark-border bg-dark-card text-text-muted hover:border-brand-cyan hover:text-text-primary"
+                                ? "bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.4)]"
+                                : "border border-dark-border bg-dark-card text-text-muted hover:border-[#FFD700] hover:text-text-primary"
                             }`}
                           >
                             {pageNum}
@@ -355,7 +366,7 @@ export default function TechnologyPage() {
                       <button
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-brand-cyan hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700] disabled:opacity-30 disabled:pointer-events-none"
                         aria-label="Next Page"
                       >
                         <ChevronRight className="h-4 w-4" />
@@ -376,6 +387,18 @@ export default function TechnologyPage() {
 
             {/* Right Sidebar Column */}
             <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
+              {/* Space Iklan Sidebar */}
+              <div className="w-full h-[250px] rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
+                <AdCarousel
+                  ads={sidebarAds}
+                  interval={5000}
+                  fallbackText="Space Iklan Sidebar"
+                  dimensions="300 x 250 px"
+                  objectFit="object-cover"
+                />
+              </div>
+
+              {/* Widget Discord */}
               <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
                 <svg
                   viewBox="0 0 24 24"
@@ -386,23 +409,21 @@ export default function TechnologyPage() {
                 </svg>
 
                 <h3 className="text-base lg:text-lg font-mono font-black text-white uppercase tracking-wide">
-                  TEMPAT NONGKRONG
+                  TEMPAT NONGKRONG GAMER
                 </h3>
 
                 <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
-                  Join server Discord Daily Diction buat mabar, berbagi info
-                  gacha, pamer spek PC, atau sekadar gibahin industri pop
-                  culture!
+                  Join server Discord Daily Diction buat mabar, berbagi info gacha, pamer spek PC, atau sekadar gibahin industri pop culture!
                 </p>
 
                 <a
                   href="https://discord.com/invite/DG6Nebkex9"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex w-full items-center justify-center gap-2 bg-white text-indigo-950 font-mono font-bold text-[10px] lg:text-xs uppercase py-3 px-4 rounded-xl hover:bg-slate-100 transition-all shadow-md relative z-10"
+                  className="inline-flex w-full items-center justify-center gap-2 bg-white text-black font-mono font-bold text-xs uppercase py-3 px-4 rounded-xl hover:bg-white/90 transition-all shadow-md relative z-10"
                 >
                   <Send className="h-3.5 w-3.5 fill-current" />
-                  <span>Join Server</span>
+                  <span>Join Server (Gratis)</span>
                 </a>
               </div>
             </aside>

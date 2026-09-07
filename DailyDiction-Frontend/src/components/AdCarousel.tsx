@@ -17,6 +17,7 @@ interface AdCarouselProps {
   interval?: number;
   fallbackText?: string;
   dimensions?: string;
+  objectFit?: "object-cover" | "object-contain";
 }
 
 function formatImageUrl(
@@ -50,6 +51,7 @@ export default function AdCarousel({
   interval = 5000,
   fallbackText = "Space Iklan",
   dimensions = "300 x 250 px",
+  objectFit = "object-contain",
 }: AdCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -75,7 +77,7 @@ export default function AdCarousel({
 
   if (!ads || ads.length === 0) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center">
+      <div className="flex h-full w-full flex-col items-center justify-center p-4">
         <span className="absolute top-2 right-3 text-[9px] text-text-muted/50 font-mono border border-text-muted/20 px-1 rounded">
           Ad
         </span>
@@ -92,38 +94,38 @@ export default function AdCarousel({
   const currentAd = ads[currentIndex];
 
   return (
-    <div className="relative w-full h-full group overflow-hidden">
+    <div className="relative w-full h-full group overflow-hidden flex items-center justify-center bg-black/20">
       <a
         href={currentAd?.url_link || "#"}
         target="_blank"
         rel="noopener noreferrer"
-        className="w-full h-full block relative"
+        className="w-full h-full flex items-center justify-center relative"
       >
         <img
           src={formatImageUrl(currentAd?.banner_image, "")}
           alt={currentAd?.title || "Iklan"}
-          className="w-full h-full object-cover transition-all duration-500 ease-in-out group-hover:scale-105"
+          className={`w-full h-full ${objectFit} transition-all duration-500 ease-in-out group-hover:scale-105`}
         />
         
         {/* Label Badge Iklan */}
-        <span className="absolute top-2 right-3 text-[9px] text-white bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded font-mono">
+        <span className="absolute top-2 right-3 text-[9px] text-white bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded font-mono z-10">
           Ad {ads.length > 1 ? `(${currentIndex + 1}/${ads.length})` : ""}
         </span>
       </a>
 
-      {/* Navigasi Prev/Next & Dots (Hanya muncul jika iklan lebih dari 1) */}
+      {/* Navigasi Prev/Next & Dots */}
       {ads.length > 1 && (
         <>
           <button
             onClick={handlePrev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
             aria-label="Previous Ad"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={handleNext}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
             aria-label="Next Ad"
           >
             <ChevronRight className="h-4 w-4" />

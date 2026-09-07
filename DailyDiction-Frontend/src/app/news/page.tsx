@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import AdCarousel from "@/components/AdCarousel";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar,
@@ -73,6 +74,7 @@ function formatNewsImage(item: ArticleItem): string {
 
 export default function NewsPage() {
   const [articles, setArticles] = useState<ArticleItem[]>([]);
+  const [sidebarAds, setSidebarAds] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
@@ -90,10 +92,13 @@ export default function NewsPage() {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
-        const res = await fetch(
-          `${apiUrl}/articles?type=article&page=${currentPage}&per_page=${itemsPerPage}`,
-          { cache: "no-store" }
-        );
+        const [res, adsRes] = await Promise.all([
+          fetch(
+            `${apiUrl}/articles?type=article&page=${currentPage}&per_page=${itemsPerPage}`,
+            { cache: "no-store" }
+          ),
+          fetch(`${apiUrl}/advertisements`, { cache: "no-store" }).catch(() => null),
+        ]);
 
         if (res.ok) {
           const json = await res.json();
@@ -104,11 +109,18 @@ export default function NewsPage() {
             );
           }
         }
-      } catch (err) {
-        console.error("Gagal mengambil data berita:", err);
-        if (isMounted) {
-          setArticles([]);
+
+        if (adsRes && adsRes.ok) {
+          const adsJson = await adsRes.json();
+          const adsList = adsJson.data || (Array.isArray(adsJson) ? adsJson : []);
+          if (isMounted) {
+            setSidebarAds(
+              adsList.filter((ad: any) => ad.position === "sidebar")
+            );
+          }
         }
+      } catch (err) {
+        console.error("Gagal mengambil data berita/iklan:", err);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -300,7 +312,7 @@ export default function NewsPage() {
                                 {itemCategories.map((cat, idx) => (
                                   <span
                                     key={idx}
-                                    className="rounded bg-[#FFD700] px-2 py-0.5 text-[10px] font-bold uppercase text-black shadow-sm"
+                                    className="rounded bg-[#FFD700] px-2 py-0.5 text-[10px] font-bold uppercase text-black shadow-sm font-mono"
                                   >
                                     {cat}
                                   </span>
@@ -417,6 +429,18 @@ export default function NewsPage() {
 
             {/* Right Sidebar Column */}
             <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
+              {/* Space Iklan Sidebar */}
+              <div className="w-full h-[250px] rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
+                <AdCarousel
+                  ads={sidebarAds}
+                  interval={5000}
+                  fallbackText="Space Iklan Sidebar"
+                  dimensions="300 x 250 px"
+                  objectFit="object-cover"
+                />
+              </div>
+
+              {/* Widget Discord */}
               <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
                 <svg
                   viewBox="0 0 24 24"
@@ -427,23 +451,21 @@ export default function NewsPage() {
                 </svg>
 
                 <h3 className="text-base lg:text-lg font-mono font-black text-white uppercase tracking-wide">
-                  TEMPAT NONGKRONG
+                  TEMPAT NONGKRONG GAMER
                 </h3>
 
                 <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
-                  Join server Discord Daily Diction buat mabar, berbagi info
-                  gacha, pamer spek PC, atau sekadar gibahin industri pop
-                  culture!
+                  Join server Discord Daily Diction buat mabar, berbagi info gacha, pamer spek PC, atau sekadar gibahin industri pop culture!
                 </p>
 
                 <a
                   href="https://discord.com/invite/DG6Nebkex9"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex w-full items-center justify-center gap-2 bg-white text-indigo-950 font-mono font-bold text-[10px] lg:text-xs uppercase py-3 px-4 rounded-xl hover:bg-slate-100 transition-all shadow-md relative z-10"
+                  className="inline-flex w-full items-center justify-center gap-2 bg-white text-black font-mono font-bold text-xs uppercase py-3 px-4 rounded-xl hover:bg-white/90 transition-all shadow-md relative z-10"
                 >
                   <Send className="h-3.5 w-3.5 fill-current" />
-                  <span>Join Server</span>
+                  <span>Join Server (Gratis)</span>
                 </a>
               </div>
             </aside>
