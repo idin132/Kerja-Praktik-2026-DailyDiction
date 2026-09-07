@@ -27,5 +27,11 @@ class AppServiceProvider extends ServiceProvider
             PanelsRenderHook::BODY_END,
             fn(): string => Blade::render('@include("filament.hooks.tiptap-scroll-fix")'),
         );
+
+        // Autosave draft ke localStorage
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::BODY_END,
+            fn(): string => Blade::render('@include("filament.hooks.autosave-draft")'),
+        );
     }
 }
