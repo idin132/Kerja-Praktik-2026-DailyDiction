@@ -4,7 +4,7 @@ import YoutubeHero from "@/components/YoutubeHero";
 import YoutubeShorts from "@/components/YoutubeShorts";
 import TechSection from "@/components/TechSection";
 import EntertainmentSection from "@/components/EntertainmentSection";
-import HorizontalAdBanner from "@/components/HorizontalAdBanner";
+import AdCarousel from "@/components/AdCarousel";
 import { NewsFeedCard, ReviewCard } from "@/components/Cards";
 import { DiscordWidget } from "@/components/Sidebar";
 import Footer from "@/components/Footer";
@@ -56,17 +56,15 @@ export default async function Home() {
     ? reviewsData
     : reviewsData?.data || [];
 
-  const adsList = adsData?.data || (Array.isArray(adsData) ? adsData : []);
+  const adsList: any[] = adsData?.data || (Array.isArray(adsData) ? adsData : []);
 
-  const horizontalBannerAd =
-    adsList.find((ad: any) => ad.position === "horizontal") ||
-    adsList.find((ad: any) => ad.type === "banner") ||
-    adsList[0] ||
-    null;
+  const horizontalBannerAds = adsList.filter(
+    (ad: any) => ad.position === "horizontal" || ad.type === "banner",
+  );
 
-  const sidebarAd =
-    adsList.find((ad: any) => ad.position === "sidebar") ||
-    (adsList.length > 1 ? adsList[1] : null);
+  const sidebarAds = adsList.filter(
+    (ad: any) => ad.position === "sidebar" || ad.type === "sidebar",
+  );
 
   const isReviewItem = (item: any) => {
     if (
@@ -143,12 +141,18 @@ export default async function Home() {
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
         <YoutubeHero videos={longVideosList} />
 
-        {/* Buka Grid di sini */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12 mt-8">
-          {/* KOLOM KIRI (LEBIH LEBAR) */}
+          {/* KOLOM KIRI */}
           <div className="lg:col-span-8 2xl:col-span-9 space-y-8 2xl:space-y-12">
-            {/* BANNER KANAN / HORIZONTAL */}
-            <HorizontalAdBanner adData={horizontalBannerAd} />
+            {/* BANNER HORIZONTAL */}
+            <div className="flex h-24 sm:h-28 w-full flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden">
+              <AdCarousel
+                ads={horizontalBannerAds}
+                interval={5000}
+                fallbackText="Space Iklan Horizontal"
+                dimensions="1200 x 250 px"
+              />
+            </div>
 
             {/* News Feed Section */}
             <section>
@@ -249,35 +253,12 @@ export default async function Home() {
           {/* KOLOM KANAN (SIDEBAR) */}
           <aside className="lg:col-span-4 2xl:col-span-3 space-y-8">
             <div className="flex h-[250px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
-              {sidebarAd ? (
-                <a
-                  href={sidebarAd.url_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full h-full block"
-                >
-                  <img
-                    src={formatImageUrl(sidebarAd.banner_image, "")}
-                    alt={sidebarAd.title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <span className="absolute top-2 right-3 text-[9px] text-white bg-black/50 px-1 rounded">
-                    Ad
-                  </span>
-                </a>
-              ) : (
-                <>
-                  <span className="absolute top-2 right-3 text-[9px] text-text-muted/50 font-mono border border-text-muted/20 px-1 rounded">
-                    Ad
-                  </span>
-                  <span className="text-xs font-mono text-text-muted">
-                    Space Iklan Google Ads
-                  </span>
-                  <span className="text-[10px] font-mono text-brand-crimson/50 mt-1">
-                    300 x 250 px
-                  </span>
-                </>
-              )}
+              <AdCarousel
+                ads={sidebarAds}
+                interval={5000}
+                fallbackText="Space Iklan Google Ads"
+                dimensions="300 x 250 px"
+              />
             </div>
 
             <DiscordWidget />
