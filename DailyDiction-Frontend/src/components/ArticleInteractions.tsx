@@ -309,14 +309,16 @@ export default function ArticleInteractions({
         {/* List Komentar */}
         <div className="space-y-4 pt-4">
           {comments.map((c) => {
-            // 1. Normalisasi pengecekan pemilik & role Superadmin
+            // Normalisasi id dan role
+            const currentUserId = Number(currentUser?.id || 0);
+            const commentUserId = Number(c.user_id || c.user?.id || 0);
+            const userRole = (currentUser?.role || "").toLowerCase().trim();
+
             const isOwner =
-              currentUser && Number(currentUser.id) === Number(c.user_id);
-            const userRole = (currentUser?.role || "").toLowerCase();
+              currentUserId > 0 && currentUserId === commentUserId;
             const isSuperAdmin =
               userRole === "superadmin" || userRole === "admin";
-
-            const canDelete = Boolean(currentUser && (isOwner || isSuperAdmin));
+            const canDelete = isOwner || isSuperAdmin;
 
             return (
               <div
@@ -344,17 +346,17 @@ export default function ArticleInteractions({
                       })}
                     </span>
 
-                    {/* Tombol Trash muncul untuk pemilik komentar MAUPUN superadmin */}
+                    {/* Tombol Hapus */}
                     {canDelete && (
                       <button
                         onClick={() => handleDeleteComment(c.id)}
                         disabled={deletingId === c.id}
                         title={
                           isSuperAdmin && !isOwner
-                            ? "Hapus komentar (Superadmin)"
+                            ? "Hapus komentar (Admin)"
                             : "Hapus komentar"
                         }
-                        className="text-text-muted hover:text-brand-crimson transition-colors p-1 rounded"
+                        className="rounded p-1 text-text-muted transition-colors hover:bg-brand-crimson/10 hover:text-brand-crimson"
                       >
                         {deletingId === c.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -365,6 +367,7 @@ export default function ArticleInteractions({
                     )}
                   </div>
                 </div>
+
                 <p className="text-sm text-text-primary leading-relaxed">
                   {c.comment}
                 </p>
