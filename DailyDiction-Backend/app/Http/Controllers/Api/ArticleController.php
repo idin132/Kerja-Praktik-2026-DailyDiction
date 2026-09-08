@@ -30,7 +30,7 @@ class ArticleController extends Controller
         });
     }
 
-    // Get detail artikel/review berdasarkan slug
+    // Get detail artikel/review/tech/entertainment berdasarkan slug
     public function show($slug)
     {
         // 1. Cari konten utama beserta kategorinya
@@ -48,23 +48,37 @@ class ArticleController extends Controller
 
         $type = $article->type ?? 'article';
 
-        // 2. Cari Konten Sebelumnya (Hanya kolom yang ada di DB: image_url & image_path)
+        // 2. Cari Konten Sebelumnya (Pakai kolom yang PASTI ADA di DB)
         $prevArticle = Article::where('is_published', true)
+            ->where('id', '<', $article->id)
             ->where(function ($q) use ($type) {
                 $q->where('type', $type)->orWhereNull('type');
             })
-            ->where('id', '<', $article->id)
             ->orderBy('id', 'desc')
             ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
 
+        if (!$prevArticle) {
+            $prevArticle = Article::where('is_published', true)
+                ->where('id', '<', $article->id)
+                ->orderBy('id', 'desc')
+                ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
+        }
+
         // 3. Cari Konten Selanjutnya
         $nextArticle = Article::where('is_published', true)
+            ->where('id', '>', $article->id)
             ->where(function ($q) use ($type) {
                 $q->where('type', $type)->orWhereNull('type');
             })
-            ->where('id', '>', $article->id)
             ->orderBy('id', 'asc')
             ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
+
+        if (!$nextArticle) {
+            $nextArticle = Article::where('is_published', true)
+                ->where('id', '>', $article->id)
+                ->orderBy('id', 'asc')
+                ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
+        }
 
         // 4. Ubah object jadi array
         $articleData = $article->toArray();

@@ -34,7 +34,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* AdSense HTML murni untuk menghindari atribut data-nscript bawaan Next/Script */}
+        {/* AdSense HTML murni tanpa atribut data-nscript bawaan Next.js */}
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9670478748166310"
