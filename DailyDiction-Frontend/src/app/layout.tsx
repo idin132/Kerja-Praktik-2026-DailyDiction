@@ -33,34 +33,31 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        {/* Google AdSense */}
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9670478748166310"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
-
-        {/* Twitter / X Widget */}
-        <Script
-          async
-          src="https://platform.twitter.com/widgets.js"
-          charSet="utf-8"
-          strategy="afterInteractive"
-        />
-      </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         {children}
 
-        {/* Google Analytics — taruh di luar <head>, pakai next/script */}
+        {/* Google AdSense — Dimuat aman saat browser idle */}
+        <Script
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9670478748166310"
+          crossOrigin="anonymous"
+          strategy="lazyOnload"
+        />
+
+        {/* Twitter / X Widget — Dimuat aman tanpa mengganggu re-hydration React */}
+        <Script
+          src="https://platform.twitter.com/widgets.js"
+          charSet="utf-8"
+          strategy="lazyOnload"
+        />
+
+        {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-P9HSCRGS84"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
         <Script
           id="google-analytics"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
