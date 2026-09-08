@@ -18,7 +18,6 @@ class ArticleController extends Controller
         $page = $request->get('page', 1);
         $cacheKey = "articles_index_{$type}_page_{$page}";
 
-        // Cache hasil query selama 5 menit biar ga sering dipukul ke DB
         return Cache::remember($cacheKey, 300, function () use ($request) {
             $query = Article::with('categories')
                 ->where('is_published', true);
@@ -50,19 +49,25 @@ class ArticleController extends Controller
                 ], 404);
             }
 
-            // 2. Cari Konten Sebelumnya (Satu tipe)
+            $type = $article->type ?? 'article';
+
+            // 2. Cari Konten Sebelumnya (Hanya select kolom yang pasti ada di DB)
             $prevArticle = Article::where('is_published', true)
-                ->where('type', $article->type)
+                ->where(function ($q) use ($type) {
+                    $q->where('type', $type)->orWhereNull('type');
+                })
                 ->where('id', '<', $article->id)
                 ->orderBy('id', 'desc')
-                ->first(['id', 'slug', 'title', 'image_url', 'image_full_url', 'image']);
+                ->first(['id', 'slug', 'title', 'image_url', 'image']);
 
-            // 3. Cari Konten Selanjutnya (Satu tipe)
+            // 3. Cari Konten Selanjutnya (Hanya select kolom yang pasti ada di DB)
             $nextArticle = Article::where('is_published', true)
-                ->where('type', $article->type)
+                ->where(function ($q) use ($type) {
+                    $q->where('type', $type)->orWhereNull('type');
+                })
                 ->where('id', '>', $article->id)
                 ->orderBy('id', 'asc')
-                ->first(['id', 'slug', 'title', 'image_url', 'image_full_url', 'image']);
+                ->first(['id', 'slug', 'title', 'image_url', 'image']);
 
             // 4. Ubah object jadi array
             $articleData = $article->toArray();
@@ -71,13 +76,13 @@ class ArticleController extends Controller
             $articleData['prev'] = $prevArticle ? [
                 'slug' => $prevArticle->slug,
                 'title' => $prevArticle->title,
-                'thumbnail' => $prevArticle->image_url ?? $prevArticle->image_full_url ?? $prevArticle->image ?? null,
+                'thumbnail' => $prevArticle->image_url ?? $prevArticle->image ?? null,
             ] : null;
 
             $articleData['next'] = $nextArticle ? [
                 'slug' => $nextArticle->slug,
                 'title' => $nextArticle->title,
-                'thumbnail' => $nextArticle->image_url ?? $nextArticle->image_full_url ?? $nextArticle->image ?? null,
+                'thumbnail' => $nextArticle->image_url ?? $nextArticle->image ?? null,
             ] : null;
 
             return response()->json([
@@ -129,7 +134,6 @@ class ArticleController extends Controller
         $article = Article::findOrFail($id);
         $article->increment('likes_count');
 
-        // Forget cache detail artikel ini biar angka like terupdate
         Cache::forget("article_detail_{$article->slug}");
 
         return response()->json([
