@@ -22,7 +22,7 @@ class ArticleController extends Controller
             $query = Article::with('categories')
                 ->where('is_published', true);
 
-            if ($request->has('type')) {
+            if ($request->has('type') && $request->type !== 'all') {
                 $query->where('type', $request->type);
             }
 
@@ -33,63 +33,59 @@ class ArticleController extends Controller
     // Get detail artikel/review berdasarkan slug
     public function show($slug)
     {
-        $cacheKey = "article_detail_{$slug}";
+        // 1. Cari konten utama beserta kategorinya
+        $article = Article::with('categories')
+            ->where('slug', $slug)
+            ->where('is_published', true)
+            ->first();
 
-        return Cache::remember($cacheKey, 300, function () use ($slug) {
-            // 1. Cari konten utama beserta kategorinya
-            $article = Article::with('categories')
-                ->where('slug', $slug)
-                ->where('is_published', true)
-                ->first();
-
-            if (!$article) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Konten tidak ditemukan'
-                ], 404);
-            }
-
-            $type = $article->type ?? 'article';
-
-            // 2. Cari Konten Sebelumnya (Hanya select kolom yang pasti ada di DB)
-            $prevArticle = Article::where('is_published', true)
-                ->where(function ($q) use ($type) {
-                    $q->where('type', $type)->orWhereNull('type');
-                })
-                ->where('id', '<', $article->id)
-                ->orderBy('id', 'desc')
-                ->first(['id', 'slug', 'title', 'image_url', 'image']);
-
-            // 3. Cari Konten Selanjutnya (Hanya select kolom yang pasti ada di DB)
-            $nextArticle = Article::where('is_published', true)
-                ->where(function ($q) use ($type) {
-                    $q->where('type', $type)->orWhereNull('type');
-                })
-                ->where('id', '>', $article->id)
-                ->orderBy('id', 'asc')
-                ->first(['id', 'slug', 'title', 'image_url', 'image']);
-
-            // 4. Ubah object jadi array
-            $articleData = $article->toArray();
-
-            // 5. Selipin data prev dan next
-            $articleData['prev'] = $prevArticle ? [
-                'slug' => $prevArticle->slug,
-                'title' => $prevArticle->title,
-                'thumbnail' => $prevArticle->image_url ?? $prevArticle->image ?? null,
-            ] : null;
-
-            $articleData['next'] = $nextArticle ? [
-                'slug' => $nextArticle->slug,
-                'title' => $nextArticle->title,
-                'thumbnail' => $nextArticle->image_url ?? $nextArticle->image ?? null,
-            ] : null;
-
+        if (!$article) {
             return response()->json([
-                'status' => 'success',
-                'data' => $articleData
-            ]);
-        });
+                'status' => 'error',
+                'message' => 'Konten tidak ditemukan'
+            ], 404);
+        }
+
+        $type = $article->type ?? 'article';
+
+        // 2. Cari Konten Sebelumnya (Hanya kolom yang ada di DB: image_url & image_path)
+        $prevArticle = Article::where('is_published', true)
+            ->where(function ($q) use ($type) {
+                $q->where('type', $type)->orWhereNull('type');
+            })
+            ->where('id', '<', $article->id)
+            ->orderBy('id', 'desc')
+            ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
+
+        // 3. Cari Konten Selanjutnya
+        $nextArticle = Article::where('is_published', true)
+            ->where(function ($q) use ($type) {
+                $q->where('type', $type)->orWhereNull('type');
+            })
+            ->where('id', '>', $article->id)
+            ->orderBy('id', 'asc')
+            ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
+
+        // 4. Ubah object jadi array
+        $articleData = $article->toArray();
+
+        // 5. Selipin data prev dan next
+        $articleData['prev'] = $prevArticle ? [
+            'slug' => $prevArticle->slug,
+            'title' => $prevArticle->title,
+            'thumbnail' => $prevArticle->image_url ?? $prevArticle->image_path ?? null,
+        ] : null;
+
+        $articleData['next'] = $nextArticle ? [
+            'slug' => $nextArticle->slug,
+            'title' => $nextArticle->title,
+            'thumbnail' => $nextArticle->image_url ?? $nextArticle->image_path ?? null,
+        ] : null;
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $articleData
+        ]);
     }
 
     // Get featured articles (untuk Hero Section)
@@ -128,7 +124,7 @@ class ArticleController extends Controller
         });
     }
 
-    // 1. Endpoint Like Anonim (Siapa Saja)
+    // Endpoint Like Anonim (Siapa Saja)
     public function like($id)
     {
         $article = Article::findOrFail($id);
@@ -142,7 +138,7 @@ class ArticleController extends Controller
         ]);
     }
 
-    // 2. Ambil Komentar Berdasarkan Artikel
+    // Ambil Komentar Berdasarkan Artikel
     public function getComments($id)
     {
         $comments = Comment::with(['user:id,name,role'])
@@ -156,7 +152,7 @@ class ArticleController extends Controller
         ]);
     }
 
-    // 3. Post Komentar (Wajib Token / Auth Login)
+    // Post Komentar (Wajib Token / Auth Login)
     public function storeComment(Request $request, $id)
     {
         $request->validate([
@@ -190,7 +186,7 @@ class ArticleController extends Controller
         });
     }
 
-    // 1. Toggle Like / Unlike (Anonim / Siapa Saja)
+    // Toggle Like / Unlike (Anonim / Siapa Saja)
     public function toggleLike(Request $request, $id)
     {
         $request->validate([
@@ -215,7 +211,7 @@ class ArticleController extends Controller
         ]);
     }
 
-    // 2. Hapus Komentar
+    // Hapus Komentar
     public function destroyComment(Request $request, $id)
     {
         $comment = Comment::findOrFail($id);
