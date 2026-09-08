@@ -55,6 +55,10 @@ export function formatImageUrl(
   }
 
   const cleanPath = clean.replace(/^\/+/, "");
+  if (cleanPath.startsWith("storage/")) {
+    return `https://dailydiction.id/${cleanPath}`;
+  }
+
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
@@ -119,7 +123,16 @@ export async function getArticleBySlug(slug: string): Promise<ArticleItem | null
 
     if (!res.ok) return null;
     const json = await res.json();
-    return json.data || json || null;
+    
+    // Unbox data dari json.data jika ada
+    const result = json.data || json;
+
+    if (!result || !result.title) return null;
+
+    return {
+      ...result,
+      image_url: formatImageUrl(result.image_url || result.image_full_url || result.image || result.thumbnail),
+    };
   } catch (error) {
     console.error("Gagal mengambil article detail:", error);
     return null;
@@ -170,7 +183,12 @@ export async function getGameReviewBySlug(slug: string): Promise<ArticleItem | n
     if (res.ok) {
       const json = await res.json();
       const result = json.data || json;
-      if (result && result.title) return result;
+      if (result && result.title) {
+        return {
+          ...result,
+          image_url: formatImageUrl(result.image_url || result.image_full_url || result.image || result.thumbnail),
+        };
+      }
     }
 
     const fallbackRes = await fetch(`${API_BASE_URL}/articles/${slug}`, {
@@ -180,7 +198,13 @@ export async function getGameReviewBySlug(slug: string): Promise<ArticleItem | n
 
     if (fallbackRes.ok) {
       const fbJson = await fallbackRes.json();
-      return fbJson.data || fbJson || null;
+      const result = fbJson.data || fbJson;
+      if (result && result.title) {
+        return {
+          ...result,
+          image_url: formatImageUrl(result.image_url || result.image_full_url || result.image || result.thumbnail),
+        };
+      }
     }
 
     return null;
