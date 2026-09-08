@@ -6,17 +6,27 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::table('advertisements', function (Blueprint $table) {
-            $table->string('position')->default('sidebar')->after('title');
+            if (!Schema::hasColumn('advertisements', 'position')) {
+                $table->string('position')->default('sidebar')->after('title');
+            }
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::table('advertisements', function (Blueprint $table) {
-            $table->dropColumn('position');
+            if (Schema::hasColumn('advertisements', 'position')) {
+                $table->dropColumn('position');
+            }
         });
     }
 };
