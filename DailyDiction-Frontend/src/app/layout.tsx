@@ -33,20 +33,20 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        {/* AdSense HTML murni untuk menghindari atribut data-nscript bawaan Next/Script */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9670478748166310"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         {children}
 
-        {/* Google AdSense — Dimuat aman saat browser idle */}
-        <Script
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9670478748166310"
-          crossOrigin="anonymous"
-          strategy="lazyOnload"
-        />
-
-        {/* Twitter / X Widget — Dimuat aman tanpa mengganggu re-hydration React */}
+        {/* Twitter / X Widget */}
         <Script
           src="https://platform.twitter.com/widgets.js"
-          charSet="utf-8"
           strategy="lazyOnload"
         />
 
