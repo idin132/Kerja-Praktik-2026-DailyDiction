@@ -34,7 +34,7 @@ class AdvertisementResource extends Resource
                     ->maxLength(255)
                     ->columnSpanFull(),
 
-                // 1. POSISI IKLAN (Hapus ->default('sidebar') biar ga overwrite data asli saat edit)
+                // 1. POSISI IKLAN
                 Select::make('position')
                     ->label('Posisi Penempatan Iklan')
                     ->options([
