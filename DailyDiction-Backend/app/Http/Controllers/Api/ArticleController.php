@@ -7,26 +7,30 @@ use App\Models\Article;
 use App\Models\Comment;
 use App\Models\Reel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class ArticleController extends Controller
 {
     // Get all published articles (Bisa filter Berita atau Review)
     public function index(Request $request)
     {
-        $query = Article::with('categories')
-            ->where('is_published', true);
+        $type = $request->get('type', 'all');
+        $page = $request->get('page', 1);
+        $cacheKey = "articles_index_{$type}_page_{$page}";
 
-        // Filter berdasarkan parameter '?type=' yang dikirim dari Next.js
-        if ($request->has('type')) {
-            $query->where('type', $request->type);
-        }
+        return Cache::remember($cacheKey, 300, function () use ($request) {
+            $query = Article::with('categories')
+                ->where('is_published', true);
 
-        $articles = $query->latest()->paginate(10);
+            if ($request->has('type') && $request->type !== 'all') {
+                $query->where('type', $request->type);
+            }
 
-        return response()->json($articles);
+            return response()->json($query->latest()->paginate(10));
+        });
     }
 
-    // Get detail artikel/review berdasarkan slug
+    // Get detail artikel/review/tech/entertainment berdasarkan slug
     public function show($slug)
     {
         // 1. Cari konten utama beserta kategorinya
@@ -42,19 +46,39 @@ class ArticleController extends Controller
             ], 404);
         }
 
-        // 2. Cari Konten Sebelumnya (Penting: Harus satu tipe! Berita sama Berita, Review sama Review)
-        $prevArticle = Article::where('is_published', true)
-            ->where('type', $article->type)
-            ->where('id', '<', $article->id)
-            ->orderBy('id', 'desc')
-            ->first();
+        $type = $article->type ?? 'article';
 
-        // 3. Cari Konten Selanjutnya (Harus satu tipe)
+        // 2. Cari Konten Sebelumnya (Pakai kolom yang PASTI ADA di DB)
+        $prevArticle = Article::where('is_published', true)
+            ->where('id', '<', $article->id)
+            ->where(function ($q) use ($type) {
+                $q->where('type', $type)->orWhereNull('type');
+            })
+            ->orderBy('id', 'desc')
+            ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
+
+        if (!$prevArticle) {
+            $prevArticle = Article::where('is_published', true)
+                ->where('id', '<', $article->id)
+                ->orderBy('id', 'desc')
+                ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
+        }
+
+        // 3. Cari Konten Selanjutnya
         $nextArticle = Article::where('is_published', true)
-            ->where('type', $article->type)
             ->where('id', '>', $article->id)
+            ->where(function ($q) use ($type) {
+                $q->where('type', $type)->orWhereNull('type');
+            })
             ->orderBy('id', 'asc')
-            ->first();
+            ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
+
+        if (!$nextArticle) {
+            $nextArticle = Article::where('is_published', true)
+                ->where('id', '>', $article->id)
+                ->orderBy('id', 'asc')
+                ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
+        }
 
         // 4. Ubah object jadi array
         $articleData = $article->toArray();
@@ -63,13 +87,13 @@ class ArticleController extends Controller
         $articleData['prev'] = $prevArticle ? [
             'slug' => $prevArticle->slug,
             'title' => $prevArticle->title,
-            'thumbnail' => $prevArticle->image_url ?? $prevArticle->image_full_url ?? $prevArticle->image ?? null,
+            'thumbnail' => $prevArticle->image_url ?? $prevArticle->image_path ?? null,
         ] : null;
 
         $articleData['next'] = $nextArticle ? [
             'slug' => $nextArticle->slug,
             'title' => $nextArticle->title,
-            'thumbnail' => $nextArticle->image_url ?? $nextArticle->image_full_url ?? $nextArticle->image ?? null,
+            'thumbnail' => $nextArticle->image_url ?? $nextArticle->image_path ?? null,
         ] : null;
 
         return response()->json([
@@ -81,37 +105,46 @@ class ArticleController extends Controller
     // Get featured articles (untuk Hero Section)
     public function featured()
     {
-        $featured = Article::with('categories')
-            ->where('is_published', true)
-            ->where('is_featured', true)
-            ->where('type', 'article') // Pastikan cuma artikel berita yang masuk featured
-            ->latest()
-            ->take(5)
-            ->get();
+        return Cache::remember('articles_featured', 600, function () {
+            $featured = Article::with('categories')
+                ->where('is_published', true)
+                ->where('is_featured', true)
+                ->where('type', 'article')
+                ->latest()
+                ->take(5)
+                ->get();
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $featured
-        ]);
+            return response()->json([
+                'status' => 'success',
+                'data' => $featured
+            ]);
+        });
     }
 
     // Get list of Technology & Hardware
     public function technologies(Request $request)
     {
-        $technologies = Article::with('categories')
-            ->where('is_published', true)
-            ->where('type', 'technology')
-            ->latest()
-            ->paginate($request->get('per_page', 8));
+        $page = $request->get('page', 1);
+        $perPage = $request->get('per_page', 8);
 
-        return response()->json($technologies);
+        return Cache::remember("articles_tech_p{$page}_l{$perPage}", 300, function () use ($perPage) {
+            $technologies = Article::with('categories')
+                ->where('is_published', true)
+                ->where('type', 'technology')
+                ->latest()
+                ->paginate($perPage);
+
+            return response()->json($technologies);
+        });
     }
 
-    // 1. Endpoint Like Anonim (Siapa Saja)
+    // Endpoint Like Anonim (Siapa Saja)
     public function like($id)
     {
         $article = Article::findOrFail($id);
         $article->increment('likes_count');
+
+        Cache::forget("article_detail_{$article->slug}");
 
         return response()->json([
             'status' => 'success',
@@ -119,11 +152,10 @@ class ArticleController extends Controller
         ]);
     }
 
-    // 2. Ambil Komentar Berdasarkan Artikel
+    // Ambil Komentar Berdasarkan Artikel
     public function getComments($id)
     {
-        $comments = Comment::with('user')
-            ->with(['user:id,name,role']) // Wajib include id, name, role
+        $comments = Comment::with(['user:id,name,role'])
             ->where('article_id', $id)
             ->latest()
             ->get();
@@ -134,7 +166,7 @@ class ArticleController extends Controller
         ]);
     }
 
-    // 3. Post Komentar (Wajib Token / Auth Login)
+    // Post Komentar (Wajib Token / Auth Login)
     public function storeComment(Request $request, $id)
     {
         $request->validate([
@@ -143,32 +175,32 @@ class ArticleController extends Controller
 
         $comment = Comment::create([
             'article_id' => $id,
-            'user_id' => auth()->id(), // didapat dari middleware auth:sanctum
+            'user_id' => auth()->id(),
             'comment' => $request->comment
         ]);
 
         return response()->json([
             'status' => 'success',
-            'data' => $comment->load('user')
+            'data' => $comment->load('user:id,name,role')
         ], 201);
     }
-
-
 
     // Get list of Reels
     public function reels()
     {
-        $reels = Reel::where('is_published', true)
-            ->latest()
-            ->get();
+        return Cache::remember('articles_reels', 300, function () {
+            $reels = Reel::where('is_published', true)
+                ->latest()
+                ->get();
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $reels
-        ]);
+            return response()->json([
+                'status' => 'success',
+                'data' => $reels
+            ]);
+        });
     }
 
-    // 1. Toggle Like / Unlike (Anonim / Siapa Saja)
+    // Toggle Like / Unlike (Anonim / Siapa Saja)
     public function toggleLike(Request $request, $id)
     {
         $request->validate([
@@ -180,11 +212,12 @@ class ArticleController extends Controller
         if ($request->action === 'like') {
             $article->increment('likes_count');
         } else {
-            // Cegah like bernilai minus
             if ($article->likes_count > 0) {
                 $article->decrement('likes_count');
             }
         }
+
+        Cache::forget("article_detail_{$article->slug}");
 
         return response()->json([
             'status' => 'success',
@@ -192,16 +225,14 @@ class ArticleController extends Controller
         ]);
     }
 
-    // 2. Hapus Komentar (Hanya Pemilik Komentar atau Superadmin)
+    // Hapus Komentar
     public function destroyComment(Request $request, $id)
     {
         $comment = Comment::findOrFail($id);
-        $user = $request->user(); // Ambil user dari token Sanctum
+        $user = $request->user();
 
-        // Cek apakah pemilik komentar
         $isOwner = (int) $comment->user_id === (int) $user->id;
 
-        // Cek apakah Superadmin / Admin
         $role = strtolower($user->role ?? '');
         $isSuperAdmin = in_array($role, ['superadmin', 'admin'])
             || (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin());
@@ -223,21 +254,26 @@ class ArticleController extends Controller
 
     public function reviews(Request $request)
     {
-        $reviews = Article::query()
-            ->where('type', 'review')
-            ->where('is_published', true)
-            ->with('categories')
-            ->latest()
-            ->paginate($request->get('limit', 12));
+        $limit = $request->get('limit', 12);
+        $page = $request->get('page', 1);
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $reviews->items(),
-            'meta' => [
-                'current_page' => $reviews->currentPage(),
-                'last_page' => $reviews->lastPage(),
-                'total' => $reviews->total(),
-            ],
-        ]);
+        return Cache::remember("articles_reviews_p{$page}_l{$limit}", 300, function () use ($limit) {
+            $reviews = Article::query()
+                ->where('type', 'review')
+                ->where('is_published', true)
+                ->with('categories')
+                ->latest()
+                ->paginate($limit);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $reviews->items(),
+                'meta' => [
+                    'current_page' => $reviews->currentPage(),
+                    'last_page' => $reviews->lastPage(),
+                    'total' => $reviews->total(),
+                ],
+            ]);
+        });
     }
 }

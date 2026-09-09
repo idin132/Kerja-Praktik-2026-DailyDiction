@@ -15,11 +15,16 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'storage/*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000'],
+    // Izinkan localhost dan domain live kamu
+    'allowed_origins' => [
+        'http://localhost:3000',
+        'https://dailydiction.id',
+        'https://www.dailydiction.id',
+    ],
 
     'allowed_origins_patterns' => [],
 
@@ -27,7 +32,7 @@ return [
 
     'exposed_headers' => [],
 
-    'max_age' => 0,
+    'max_age' => 86400,
 
     'supports_credentials' => true,
 

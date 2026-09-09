@@ -89,7 +89,6 @@ export default function AdCarousel({
 
   const currentAd = ads[currentIndex];
 
-  // FIX UTAMA: Ambil dari banner_image ATAU image_url
   const rawImage = currentAd?.banner_image || currentAd?.image_url;
   const targetUrl = currentAd?.url_link || currentAd?.link_url || "#";
 
@@ -107,13 +106,11 @@ export default function AdCarousel({
           className={`w-full h-full ${objectFit} transition-all duration-500 ease-in-out group-hover:scale-105`}
         />
         
-        {/* Label Badge Iklan */}
         <span className="absolute top-2 right-3 text-[9px] text-white bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded font-mono z-10">
           Ad {ads.length > 1 ? `(${currentIndex + 1}/${ads.length})` : ""}
         </span>
       </a>
 
-      {/* Navigasi Prev/Next & Dots */}
       {ads.length > 1 && (
         <>
           <button
@@ -131,7 +128,6 @@ export default function AdCarousel({
             <ChevronRight className="h-4 w-4" />
           </button>
 
-          {/* Indikator Titik (Dots) */}
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
             {ads.map((_, idx) => (
               <button

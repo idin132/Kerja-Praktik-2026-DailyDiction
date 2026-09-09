@@ -40,7 +40,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           source: "DailyDiction-Backend"
-          target: "/home/dailydic/daily-backend/"
+          target: "/home/dailydic/Daily-Diction/"
           strip_components: 1
 
       - name: Run Optimize & Migration di Server
@@ -53,7 +53,7 @@ jobs:
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             set -e
-            cd /home/dailydic/daily-backend/
+            cd /home/dailydic/Daily-Diction/
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache

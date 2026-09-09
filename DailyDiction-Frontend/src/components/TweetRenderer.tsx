@@ -1,7 +1,37 @@
 "use client";
 
-import React from "react";
+import React, { Component, ReactNode } from "react";
 import { Tweet } from "react-tweet";
+
+// Component ErrorBoundary khusus untuk menangkap crash dari library react-tweet
+class SafeTweetBoundary extends Component<
+  { children: ReactNode; fallbackUrl?: string },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode; fallbackUrl?: string }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any) {
+    console.warn("React-Tweet error caught safely:", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 my-4 rounded-lg border border-dark-border bg-dark-card/50 text-center text-xs font-mono text-text-muted">
+          Gagal memuat Tweet (Embed diblokir atau Tweet telah dihapus)
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function TweetRenderer({ htmlContent }: { htmlContent: string }) {
   if (!htmlContent) return null;
@@ -47,7 +77,9 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
               className="tweet-container my-10 flex w-full justify-center dark not-prose"
             >
               <div className="w-full max-w-lg">
-                <Tweet id={tweetId} />
+                <SafeTweetBoundary>
+                  <Tweet id={tweetId} />
+                </SafeTweetBoundary>
               </div>
             </div>
           );
