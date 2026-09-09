@@ -208,7 +208,6 @@ class ArticleResource extends Resource
                         'tabindex' => '0',
                     ])
                     ->disableBubbleMenus()
-                    ->disableFloatingMenus()
                     ->tools([
                         'heading',
                         'blockquote',
