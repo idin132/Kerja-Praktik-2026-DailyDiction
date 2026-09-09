@@ -56,14 +56,14 @@ class ArticleResource extends Resource
                     }),
 
                 (auth()->user()?->role === 'superadmin' || (auth()->user() && method_exists(auth()->user(), 'isSuperAdmin') && auth()->user()->isSuperAdmin()))
-                    ? Forms\Components\Select::make('author')
+                ? Forms\Components\Select::make('author')
                     ->label('Author (Penulis)')
                     ->options(fn() => User::pluck('name', 'name')->toArray())
                     ->searchable()
                     ->preload()
                     ->default(fn() => auth()->user()?->name)
                     ->required()
-                    : Forms\Components\TextInput::make('author')
+                : Forms\Components\TextInput::make('author')
                     ->label('Author (Penulis)')
                     ->required()
                     ->readOnly()
@@ -200,7 +200,6 @@ class ArticleResource extends Resource
                         'x-on:focusout.stop' => '',
                         'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static',
                         'style' => 'min-height: 450px;',
-                        // Tambahkan ini:
                         'x-data' => '{}',
                         'x-on:click.outside' => '$el.querySelector(".ProseMirror")?.blur()',
                     ])
@@ -208,6 +207,17 @@ class ArticleResource extends Resource
                         'tabindex' => '0',
                     ])
                     ->disableBubbleMenus()
+                    // Floating Menu di posisi kursor
+                    ->floatingMenuTools([
+                        'heading',
+                        'media',        // Upload / Pilih Foto
+                        'oembed',       // Insert Video (YouTube, Vimeo, dll)
+                        'bullet-list',
+                        'ordered-list',
+                        'bold',
+                        'italic',
+                        'strike',
+                    ])
                     ->tools([
                         'heading',
                         'blockquote',
@@ -216,7 +226,7 @@ class ArticleResource extends Resource
                         'strike',
                         'link',
                         'media',
-                        'oembed',
+                        'oembed',       // Toolbar Atas: Embed Video
                         'bullet-list',
                         'ordered-list',
                         'code-block',
