@@ -210,13 +210,18 @@ class ArticleResource extends Resource
                     // Floating Menu di posisi kursor
                     ->floatingMenuTools([
                         'heading',
-                        'media',        // Upload / Pilih Foto
-                        'oembed',       // Insert Video (YouTube, Vimeo, dll)
-                        'bullet-list',
-                        'ordered-list',
+                        'blockquote',
                         'bold',
                         'italic',
                         'strike',
+                        'link',
+                        'media',
+                        'oembed',       // Toolbar Atas: Embed Video
+                        'bullet-list',
+                        'ordered-list',
+                        'code-block',
+                        'undo',
+                        'redo',
                     ])
                     ->tools([
                         'heading',
