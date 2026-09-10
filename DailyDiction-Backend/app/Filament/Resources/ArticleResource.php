@@ -190,12 +190,12 @@ class ArticleResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // TIPTAP EDITOR: FULL FITUR, GAK ADA YANG DIBUANG, FIX UI CRASH KURSOR
+                // TIPTAP EDITOR: FULL FITUR LENGKAP + FIX POPUP OVERLAY STUTTER
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
                     ->extraAttributes([
-                        // wire:ignore dihapus karena justru ini yang bikin UI tombol floating menu hancur (numpuk) & bikin kursor stuttering
-                        'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static [&_.tiptap-floating-menu]:!w-max [&_.tiptap-floating-menu]:!flex-nowrap',
+                        'wire:ignore' => true,
+                        'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static [&_.tiptap-floating-menu]:!transition-none [&_.tiptap-floating-menu]:!flex [&_.tiptap-floating-menu]:!items-center [&_.tiptap-floating-menu]:!gap-1 [&_.tiptap-bubble-menu]:!transition-none',
                         'style' => 'min-height: 450px;',
                     ])
                     ->tools([
