@@ -1,5 +1,11 @@
 <script>
     (function() {
+        // 1. CEGAH SCRIPT TER-LOAD BERKALI-KALI (SINGLETON PATTERN)
+        if (window.HasDraftScriptLoaded) return;
+        window.HasDraftScriptLoaded = true;
+
+        let draftInterval = null; // Pindahkan ke luar agar interval bisa dimatikan
+
         document.addEventListener('livewire:navigated', init);
         document.addEventListener('DOMContentLoaded', init);
 
@@ -9,7 +15,11 @@
                 path.includes('/admin/articles/create') ||
                 path.match(/\/admin\/articles\/\d+\/edit/);
 
-            if (!isArticlePage) return;
+            // 2. MATIKAN INTERVAL JIKA KELUAR DARI HALAMAN ARTIKEL
+            if (!isArticlePage) {
+                if (draftInterval) clearInterval(draftInterval);
+                return;
+            }
 
             const editMatch = path.match(/\/admin\/articles\/(\d+)\/edit/);
             const DRAFT_KEY = editMatch ?
@@ -34,8 +44,6 @@
                 if (!component) return null;
 
                 const state = component.get('data') || {};
-
-                // Ambil HTML Tiptap secara pasif tanpa merusak kursor/DOM
                 const proseMirror = document.querySelector('.tiptap.ProseMirror');
                 const content = proseMirror ? proseMirror.innerHTML : null;
 
@@ -193,35 +201,27 @@
                 setTimeout(() => { toast.remove(); }, 2600);
             }
 
-            // ─── SETUP LISTENER PASIF (INTERVAL 1 MENIT & TRIGGER PINDAH HALAMAN) ───
+            // ─── SETUP LISTENER PASIF ──────────────────────────────────────────
 
             function setupListeners() {
-                // 1. Auto-save berkala setiap 1 MENIT (60.000 ms)
-                setInterval(function() {
+                // 3. BERSIHKAN INTERVAL LAMA (KALAU ADA) SEBELUM BIKIN YANG BARU
+                if (draftInterval) clearInterval(draftInterval);
+                
+                draftInterval = setInterval(function() {
                     saveDraft();
                 }, 60000);
 
-                // 2. Simpan draft saat user menekan tombol Back / Forward di browser
-                window.addEventListener('popstate', function() {
-                    saveDraft();
-                });
-
-                // 3. Simpan draft saat user menutup tab, refresh, atau pindah URL
-                window.addEventListener('beforeunload', function() {
-                    saveDraft();
-                });
-
-                // 4. Simpan draft saat user klik link navigasi internal (SPA Livewire)
-                document.addEventListener('livewire:navigate', function() {
-                    saveDraft();
-                });
-
-                // 5. Bersihkan draft lokal jika artikel berhasil di-save resmi di server Filament
-                document.addEventListener('filament::saved', clearDraft);
+                // 4. PASTIKAN LISTENER WINDOW HANYA DIBUAT 1 KALI
+                if (!window.DraftEventListenersAdded) {
+                    window.addEventListener('popstate', function() { saveDraft(); });
+                    window.addEventListener('beforeunload', function() { saveDraft(); });
+                    document.addEventListener('livewire:navigate', function() { saveDraft(); });
+                    document.addEventListener('filament::saved', clearDraft);
+                    window.DraftEventListenersAdded = true;
+                }
             }
 
             // ─── ENTRY POINT ───────────────────────────────────────────────────
-
             const existingDraft = localStorage.getItem(DRAFT_KEY);
             if (existingDraft) {
                 try {
