@@ -190,7 +190,7 @@ class ArticleResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // TIPTAP EDITOR YANG AMAN DARI BENTROK KURSOR
+                // TIPTAP EDITOR FIX FULL: POPUP LENGKAP & KURSOR GA LONCAT
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
                     ->extraAttributes([
@@ -198,7 +198,6 @@ class ArticleResource extends Resource
                         'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static',
                         'style' => 'min-height: 450px;',
                     ])
-                    ->disableBubbleMenus()
                     ->tools([
                         'heading',
                         'blockquote',
@@ -213,6 +212,16 @@ class ArticleResource extends Resource
                         'code-block',
                         'undo',
                         'redo',
+                    ])
+                    ->bubbleMenuTools([
+                        'heading',
+                        'blockquote',
+                        'bold',
+                        'italic',
+                        'strike',
+                        'link',
+                        'bullet-list',
+                        'ordered-list',
                     ])
                     ->mediaAction(CustomMediaAction::class)
                     ->columnSpanFull()
