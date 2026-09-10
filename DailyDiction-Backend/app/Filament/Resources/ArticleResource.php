@@ -190,7 +190,7 @@ class ArticleResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // TIPTAP EDITOR: HANYA TOOLBAR ATAS (BEBAS POPUP NYAPAM & BEBAS KURSOR LOCK)
+                // TIPTAP EDITOR DENGAN BUBBLE MENU POPUP LENGKAP
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
                     ->extraAttributes([
@@ -198,8 +198,6 @@ class ArticleResource extends Resource
                         'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static',
                         'style' => 'min-height: 450px;',
                     ])
-                    ->disableBubbleMenus()
-                    ->disableFloatingMenus()
                     ->tools([
                         'heading',
                         'blockquote',
@@ -214,6 +212,19 @@ class ArticleResource extends Resource
                         'code-block',
                         'undo',
                         'redo',
+                    ])
+                    ->bubbleMenuTools([
+                        'heading',
+                        'blockquote',
+                        'bold',
+                        'italic',
+                        'strike',
+                        'link',
+                        'media',
+                        'oembed',
+                        'bullet-list',
+                        'ordered-list',
+                        'code-block',
                     ])
                     ->mediaAction(CustomMediaAction::class)
                     ->columnSpanFull()
