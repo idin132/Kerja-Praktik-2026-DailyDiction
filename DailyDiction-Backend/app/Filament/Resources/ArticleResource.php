@@ -190,7 +190,7 @@ class ArticleResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // TIPTAP EDITOR YANG SUDAH DIBERSIHKAN
+                // TIPTAP EDITOR YANG AMAN DARI BENTROK KURSOR
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
                     ->extraAttributes([
@@ -199,7 +199,6 @@ class ArticleResource extends Resource
                         'style' => 'min-height: 450px;',
                     ])
                     ->disableBubbleMenus()
-                    ->disableFloatingMenus()
                     ->tools([
                         'heading',
                         'blockquote',
