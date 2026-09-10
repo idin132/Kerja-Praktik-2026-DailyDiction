@@ -48,7 +48,7 @@ class ArticleResource extends Resource
                     ->label('Title')
                     ->required()
                     ->maxLength(255)
-                    ->lazy()
+                    ->lazy() // JANGAN GUNAKAN live(onBlur: true)
                     ->afterStateUpdated(function (string $operation, ?string $state, Set $set) {
                         if ($operation === 'create') {
                             $set('slug', Str::slug($state));
@@ -131,11 +131,12 @@ class ArticleResource extends Resource
                     ->dehydrated(false)
                     ->columnSpanFull(),
 
+                // UBAH IMAGE URL DARI ->live(onBlur: true) MENJADI ->lazy()
                 Forms\Components\TextInput::make('image_url')
                     ->label('Thumbnail Artikel (URL Gambar)')
                     ->url()
                     ->placeholder('https://example.com/image.jpg')
-                    ->lazy()
+                    ->lazy() // JANGAN GUNAKAN live(onBlur: true)
                     ->maxLength(2000)
                     ->visible(fn(Get $get) => $get('thumbnail_mode') !== 'file')
                     ->required(fn(Get $get) => $get('thumbnail_mode') !== 'file')
@@ -161,11 +162,13 @@ class ArticleResource extends Resource
                     ->required(fn(Get $get) => $get('thumbnail_mode') === 'file')
                     ->dehydrated(fn(Get $get) => $get('thumbnail_mode') === 'file'),
 
+
                 Forms\Components\Placeholder::make('image_preview')
                     ->label('Preview Thumbnail')
                     ->content(function (Get $get) {
                         $mode = $get('thumbnail_mode');
 
+                        // Mode file: preview sudah ditangani oleh FileUpload component di atas
                         if ($mode === 'file') {
                             return new HtmlString('<span class="text-xs text-gray-400">Preview tersedia di area upload di atas.</span>');
                         }
@@ -190,14 +193,22 @@ class ArticleResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // TIPTAP EDITOR DENGAN BUBBLE MENU POPUP LENGKAP
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
                     ->extraAttributes([
-                        'wire:ignore' => true,
+                        'wire:ignore.self' => true,
+                        'x-on:focusout.stop' => '',
                         'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static',
                         'style' => 'min-height: 450px;',
+                        // Tambahkan ini:
+                        'x-data' => '{}',
+                        'x-on:click.outside' => '$el.querySelector(".ProseMirror")?.blur()',
                     ])
+                    ->extraInputAttributes([
+                        'tabindex' => '0',
+                    ])
+                    ->disableBubbleMenus()
+                    ->disableFloatingMenus()
                     ->tools([
                         'heading',
                         'blockquote',
@@ -212,19 +223,6 @@ class ArticleResource extends Resource
                         'code-block',
                         'undo',
                         'redo',
-                    ])
-                    ->bubbleMenuTools([
-                        'heading',
-                        'blockquote',
-                        'bold',
-                        'italic',
-                        'strike',
-                        'link',
-                        'media',
-                        'oembed',
-                        'bullet-list',
-                        'ordered-list',
-                        'code-block',
                     ])
                     ->mediaAction(CustomMediaAction::class)
                     ->columnSpanFull()
