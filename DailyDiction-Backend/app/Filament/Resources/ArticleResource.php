@@ -190,12 +190,12 @@ class ArticleResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // TIPTAP EDITOR: BUBBLE MENU POPUP LENGKAP & STABLE
+                // TIPTAP EDITOR: BUBBLE MENU POPUP LENGKAP SAAT BLOK TEKS
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
                     ->extraAttributes([
                         'wire:ignore' => true,
-                        'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static [&_.tiptap-bubble-menu:not(:has(.is-active))]:!hidden',
+                        'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static',
                         'style' => 'min-height: 450px;',
                     ])
                     ->tools([
@@ -211,6 +211,16 @@ class ArticleResource extends Resource
                         'code-block',
                         'undo',
                         'redo',
+                    ])
+                    ->bubbleMenuTools([
+                        'heading',
+                        'blockquote',
+                        'bold',
+                        'italic',
+                        'strike',
+                        'link',
+                        'bullet-list',
+                        'ordered-list',
                     ])
                     ->mediaAction(CustomMediaAction::class)
                     ->columnSpanFull()
