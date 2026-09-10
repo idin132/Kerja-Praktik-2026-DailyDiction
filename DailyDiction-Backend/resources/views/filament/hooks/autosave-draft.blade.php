@@ -1,11 +1,9 @@
 <script>
     (function() {
-        // Tunggu sampai Livewire + Alpine siap
         document.addEventListener('livewire:navigated', init);
         document.addEventListener('DOMContentLoaded', init);
 
         function init() {
-            // Hanya jalan di halaman create/edit article
             const path = window.location.pathname;
             const isArticlePage =
                 path.includes('/admin/articles/create') ||
@@ -13,14 +11,10 @@
 
             if (!isArticlePage) return;
 
-            // Tentukan key unik
             const editMatch = path.match(/\/admin\/articles\/(\d+)\/edit/);
             const DRAFT_KEY = editMatch ?
                 `article_draft_edit_${editMatch[1]}` :
                 'article_draft_create';
-
-            let debounceTimer = null;
-            const DEBOUNCE_MS = 8000; // Tingkatkan ke 8 detik agar tidak memberatkan browser saat ngetik
 
             // ─── FUNGSI BACA SEMUA FIELD ───────────────────────────────────────
             function getLivewireComponent() {
@@ -41,7 +35,7 @@
 
                 const state = component.get('data') || {};
 
-                // Ambil HTML Tiptap tanpa merebut fokus / re-render Livewire
+                // Ambil HTML Tiptap secara pasif tanpa merusak kursor/DOM
                 const proseMirror = document.querySelector('.tiptap.ProseMirror');
                 const content = proseMirror ? proseMirror.innerHTML : null;
 
@@ -61,12 +55,9 @@
                 };
             }
 
-            // ─── FUNGSI SAVE ───────────────────────────────────────────────────
-
             function saveDraft() {
                 const data = collectFormData();
                 if (!data) return;
-                // Jangan simpan kalau Judul & Isi masih kosong
                 if (!data.title && (!data.content || data.content === '<p></p>')) return;
                 
                 localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
@@ -76,8 +67,6 @@
             function clearDraft() {
                 localStorage.removeItem(DRAFT_KEY);
             }
-
-            // ─── FUNGSI RESTORE ────────────────────────────────────────────────
 
             function restoreDraft(draft) {
                 const component = getLivewireComponent();
@@ -111,8 +100,6 @@
                     setTimeout(() => waitForTiptap(callback, attempts + 1), 100);
                 }
             }
-
-            // ─── BANNER NOTIFIKASI ─────────────────────────────────────────────
 
             function showRestoreBanner(draft) {
                 if (document.getElementById('draft-restore-banner')) return;
@@ -172,7 +159,7 @@
 
                     restoreDraft(draft);
                     dialog.remove();
-                    showToast('Draft berhasil dipulihkan ✓');
+                    showToast('Draft dipulihkan ✓');
                 });
 
                 dialog.querySelector('#draft-discard-btn').addEventListener('click', function(e) {
@@ -206,32 +193,31 @@
                 setTimeout(() => { toast.remove(); }, 2600);
             }
 
-            // ─── DETEKSI PERUBAHAN RINGAN (RINGAN TANPA BENTROK KURSOR) ────────
+            // ─── SETUP LISTENER PASIF (INTERVAL 1 MENIT & TRIGGER PINDAH HALAMAN) ───
 
             function setupListeners() {
-                const formRoot = document.querySelector('form');
-                if (!formRoot) return;
+                // 1. Auto-save berkala setiap 1 MENIT (60.000 ms)
+                setInterval(function() {
+                    saveDraft();
+                }, 60000);
 
-                // Hanya dengarkan input biasa (Judul, Summary, dsb)
-                formRoot.addEventListener('input', triggerDebounce);
-                formRoot.addEventListener('change', triggerDebounce);
+                // 2. Simpan draft saat user menekan tombol Back / Forward di browser (popstate)
+                window.addEventListener('popstate', function() {
+                    saveDraft();
+                });
 
-                // DENGARKAN TIPTAP SAAT KURSOR KELUAR/LEPAS SAJA (BLUR) - JAUH LEBIH RINGAN!
-                const proseMirror = document.querySelector('.tiptap.ProseMirror');
-                if (proseMirror) {
-                    proseMirror.addEventListener('focusout', function() {
-                        setTimeout(saveDraft, 500);
-                    });
-                }
+                // 3. Simpan draft saat user menutup tab, refresh, atau pindah URL eksternal
+                window.addEventListener('beforeunload', function() {
+                    saveDraft();
+                });
 
-                // Clear draft saat berhasil disimpan ke server
-                document.addEventListener('livewire:navigated', clearDraft);
+                // 4. Simpan draft saat user klik link navigasi internal (SPA Livewire)
+                document.addEventListener('livewire:navigate', function() {
+                    saveDraft();
+                });
+
+                // 5. Bersihkan draft lokal jika artikel berhasil di-save resmi di server Filament
                 document.addEventListener('filament::saved', clearDraft);
-            }
-
-            function triggerDebounce() {
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(saveDraft, DEBOUNCE_MS);
             }
 
             // ─── ENTRY POINT ───────────────────────────────────────────────────
