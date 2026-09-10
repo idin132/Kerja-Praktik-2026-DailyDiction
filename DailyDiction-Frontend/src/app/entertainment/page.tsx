@@ -16,6 +16,7 @@ import {
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
+  Eye,
 } from "lucide-react";
 
 interface ArticleItem {
@@ -37,6 +38,7 @@ interface ArticleItem {
   created_at?: string;
   author?: string;
   type?: string;
+  views?: number;
 }
 
 function formatImage(item: ArticleItem): string {
@@ -72,6 +74,10 @@ function formatImage(item: ArticleItem): string {
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
+function formatViews(n: number): string {
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+}
+
 export default function EntertainmentPage() {
   const [articles, setArticles] = useState<ArticleItem[]>([]);
   const [sidebarAds, setSidebarAds] = useState<any[]>([]);
@@ -96,7 +102,9 @@ export default function EntertainmentPage() {
             `${apiUrl}/articles?type=entertainment&page=${currentPage}&per_page=${itemsPerPage}`,
             { cache: "no-store" },
           ),
-          fetch(`${apiUrl}/advertisements`, { cache: "no-store" }).catch(() => null),
+          fetch(`${apiUrl}/advertisements`, { cache: "no-store" }).catch(
+            () => null,
+          ),
         ]);
 
         if (res.ok) {
@@ -113,10 +121,11 @@ export default function EntertainmentPage() {
 
         if (adsRes && adsRes.ok) {
           const adsJson = await adsRes.json();
-          const adsList = adsJson.data || (Array.isArray(adsJson) ? adsJson : []);
+          const adsList =
+            adsJson.data || (Array.isArray(adsJson) ? adsJson : []);
           if (isMounted) {
             setSidebarAds(
-              adsList.filter((ad: any) => ad.position === "sidebar")
+              adsList.filter((ad: any) => ad.position === "sidebar"),
             );
           }
         }
@@ -333,6 +342,20 @@ export default function EntertainmentPage() {
                                       </div>
                                     </>
                                   )}
+                                  {item.views !== undefined &&
+                                    item.views > 0 && (
+                                      <>
+                                        <span className="text-dark-border hidden sm:inline-block">
+                                          •
+                                        </span>
+                                        <div className="items-center gap-1.5 hidden sm:flex">
+                                          <Eye className="h-3.5 w-3.5 text-text-muted" />
+                                          <span>
+                                            {formatViews(item.views)} views
+                                          </span>
+                                        </div>
+                                      </>
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-1 font-bold text-[#FFD700] group-hover:underline shrink-0 ml-1">
                                   <span className="hidden sm:inline">BACA</span>

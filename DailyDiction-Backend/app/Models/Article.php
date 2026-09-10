@@ -27,6 +27,8 @@ class Article extends Model
         'type',
         'platform',
         'category_input',
+        'views',
+        'last_viewed_at'
     ];
     protected static function booted()
     {
@@ -50,6 +52,7 @@ class Article extends Model
         'is_published' => 'boolean',
         'platform' => 'array', // <--- Tambahin ini biar ngebaca multiple select
         'category_input' => 'array',
+        'last_viewed_at' => 'datetime',
     ];
 
     // Menyertakan 'image_full_url' secara otomatis saat dipanggil sebagai JSON/API

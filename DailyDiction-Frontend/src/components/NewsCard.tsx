@@ -1,8 +1,8 @@
 "use client";
 
-import Link from 'next/link';
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Flame, User, Calendar, Clock } from "lucide-react";
+import { ArrowUpRight, Flame, User, Calendar, Clock, Eye } from "lucide-react"; // tambah Eye
 
 interface NewsCardProps {
   category: string;
@@ -11,16 +11,21 @@ interface NewsCardProps {
   slug: string;
   author?: string;
   createdAt?: string;
+  views?: number; // BARU
 }
 
-export default function NewsCard({ 
-  category, 
-  title, 
-  readTime, 
-  slug, 
-  author, 
-  createdAt 
+export default function NewsCard({
+  category,
+  title,
+  readTime,
+  slug,
+  author,
+  createdAt,
+  views, // BARU
 }: NewsCardProps) {
+  const formatViews = (n: number) =>
+    n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+
   return (
     <Link href={`/artikel/${slug}`} className="block h-full cursor-pointer">
       <motion.article
@@ -49,9 +54,7 @@ export default function NewsCard({
               {author || "Redaksi"}
             </span>
           </div>
-
           <span className="text-dark-border hidden sm:inline-block">•</span>
-
           {createdAt && (
             <>
               <div className="flex items-center gap-1.5">
@@ -67,11 +70,23 @@ export default function NewsCard({
               <span className="text-dark-border hidden sm:inline-block">•</span>
             </>
           )}
-
           <div className="flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
-            <span className="uppercase tracking-wider">{readTime || "3 MIN READ"}</span>
+            <span className="uppercase tracking-wider">
+              {readTime || "3 MIN READ"}
+            </span>
           </div>
+
+          {/* Views — hanya muncul kalau ada datanya */}
+          {views !== undefined && views > 0 && (
+            <>
+              <span className="text-dark-border hidden sm:inline-block">•</span>
+              <div className="flex items-center gap-1.5">
+                <Eye className="h-3.5 w-3.5" />
+                <span>{formatViews(views)} views</span>
+              </div>
+            </>
+          )}
         </div>
       </motion.article>
     </Link>

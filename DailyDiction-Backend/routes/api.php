@@ -18,6 +18,8 @@ Route::prefix('v1')->group(function () {
     // Cuma butuh 3 baris ini untuk artikel & review!
     Route::get('/articles', [ArticleController::class, 'index']);
     Route::get('/articles/featured', [ArticleController::class, 'featured']);
+    Route::get('/articles/trending', [ArticleController::class, 'trending']);  // ← HARUS di atas ini
+    Route::post('/articles/{slug}/view', [ArticleController::class, 'trackView']);
     Route::get('/articles/{slug}', [ArticleController::class, 'show']);
 
     Route::get('/reviews', [ArticleController::class, 'reviews']);

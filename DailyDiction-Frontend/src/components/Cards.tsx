@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { User, Calendar } from "lucide-react";
+import { User, Calendar, Eye } from "lucide-react"; // tambah Eye
 import Link from "next/link";
 
 interface NewsFeedCardProps {
@@ -13,6 +13,7 @@ interface NewsFeedCardProps {
   slug: string;
   author?: string;
   createdAt?: string;
+  views?: number; // BARU
 }
 
 export function NewsFeedCard({
@@ -23,6 +24,7 @@ export function NewsFeedCard({
   slug,
   author,
   createdAt,
+  views, // BARU
 }: NewsFeedCardProps) {
   let catList: string[] = [];
   if (Array.isArray(category)) {
@@ -38,12 +40,14 @@ export function NewsFeedCard({
   const fallbackImage =
     "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
 
+  const formatViews = (n: number) =>
+    n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+
   return (
     <motion.article
       whileHover={{ y: -4 }}
       className="group relative flex flex-col h-full overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/50 hover:shadow-[0_4px_20px_rgba(0,0,0,0.5)] cursor-pointer"
     >
-      {/* Gambar dengan rasio tetap */}
       <div className="relative aspect-video w-full overflow-hidden border-b border-dark-border/50 shrink-0">
         <img
           src={imageUrl}
@@ -53,8 +57,6 @@ export function NewsFeedCard({
             (e.target as HTMLImageElement).src = fallbackImage;
           }}
         />
-
-        {/* Badge Kategori */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-20">
           {catList.map((cat, idx) => (
             <span
@@ -65,9 +67,18 @@ export function NewsFeedCard({
             </span>
           ))}
         </div>
+
+        {/* Views badge di pojok kanan bawah gambar */}
+        {views !== undefined && views > 0 && (
+          <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1 rounded-md bg-black/60 px-2 py-1 backdrop-blur-sm">
+            <Eye className="h-3 w-3 text-[#FFD700]" />
+            <span className="text-[10px] font-mono font-bold text-white">
+              {formatViews(views)}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Konten Text */}
       <div className="flex flex-1 flex-col justify-between p-5">
         <div>
           <h3 className="text-base font-bold text-text-primary transition-colors group-hover:text-[#FFD700] line-clamp-2 min-h-[3rem] leading-snug">
@@ -83,7 +94,6 @@ export function NewsFeedCard({
           </p>
         </div>
 
-        {/* Footer Card */}
         <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-dark-border/60 pt-4 text-[10px] md:text-xs font-mono text-text-muted">
           <div className="flex items-center gap-1.5 relative z-20">
             <User className="h-3.5 w-3.5 text-[#FFD700]" />
@@ -91,9 +101,7 @@ export function NewsFeedCard({
               {author || "Redaksi"}
             </span>
           </div>
-
           <span className="text-dark-border hidden sm:inline-block">•</span>
-
           {createdAt ? (
             <div className="flex items-center gap-1.5 relative z-20">
               <Calendar className="h-3.5 w-3.5" />
@@ -120,6 +128,7 @@ interface ReviewCardProps {
   imageUrl: string;
   slug: string;
   summary?: string;
+  views?: number; // BARU
 }
 
 export function ReviewCard({
@@ -127,6 +136,7 @@ export function ReviewCard({
   title,
   imageUrl,
   slug,
+  views, // BARU
 }: ReviewCardProps) {
   let platformList: string[] = [];
   if (Array.isArray(platform)) {
@@ -143,6 +153,9 @@ export function ReviewCard({
 
   const fallbackImage =
     "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800";
+
+  const formatViews = (n: number) =>
+    n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
 
   return (
     <motion.div
@@ -177,6 +190,16 @@ export function ReviewCard({
             {title}
           </Link>
         </h4>
+
+        {/* Views di bawah judul */}
+        {views !== undefined && views > 0 && (
+          <div className="flex items-center gap-1 mt-1.5 relative z-20">
+            <Eye className="h-3 w-3 text-text-muted" />
+            <span className="text-[10px] font-mono text-text-muted">
+              {formatViews(views)} views
+            </span>
+          </div>
+        )}
       </div>
     </motion.div>
   );

@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Cache;
 
 class ArticleController extends Controller
 {
-    // Get all published articles (Bisa filter Berita atau Review)
     public function index(Request $request)
     {
         $type = $request->get('type', 'all');
@@ -30,10 +29,8 @@ class ArticleController extends Controller
         });
     }
 
-    // Get detail artikel/review/tech/entertainment berdasarkan slug
     public function show($slug)
     {
-        // 1. Cari konten utama beserta kategorinya
         $article = Article::with('categories')
             ->where('slug', $slug)
             ->where('is_published', true)
@@ -48,7 +45,6 @@ class ArticleController extends Controller
 
         $type = $article->type ?? 'article';
 
-        // 2. Cari Konten Sebelumnya (Pakai kolom yang PASTI ADA di DB)
         $prevArticle = Article::where('is_published', true)
             ->where('id', '<', $article->id)
             ->where(function ($q) use ($type) {
@@ -64,7 +60,6 @@ class ArticleController extends Controller
                 ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
         }
 
-        // 3. Cari Konten Selanjutnya
         $nextArticle = Article::where('is_published', true)
             ->where('id', '>', $article->id)
             ->where(function ($q) use ($type) {
@@ -80,10 +75,8 @@ class ArticleController extends Controller
                 ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
         }
 
-        // 4. Ubah object jadi array
         $articleData = $article->toArray();
 
-        // 5. Selipin data prev dan next
         $articleData['prev'] = $prevArticle ? [
             'slug' => $prevArticle->slug,
             'title' => $prevArticle->title,
@@ -102,7 +95,6 @@ class ArticleController extends Controller
         ]);
     }
 
-    // Get featured articles (untuk Hero Section)
     public function featured()
     {
         return Cache::remember('articles_featured', 600, function () {
@@ -121,7 +113,6 @@ class ArticleController extends Controller
         });
     }
 
-    // Get list of Technology & Hardware
     public function technologies(Request $request)
     {
         $page = $request->get('page', 1);
@@ -138,7 +129,61 @@ class ArticleController extends Controller
         });
     }
 
-    // Endpoint Like Anonim (Siapa Saja)
+    // Increment views saat artikel dibuka
+    public function trackView(string $slug)
+    {
+        $article = Article::where('slug', $slug)
+            ->where('is_published', true)
+            ->first();
+
+        if (!$article) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Konten tidak ditemukan'
+            ], 404);
+        }
+
+        $article->increment('views');
+        $article->update(['last_viewed_at' => now()]);
+
+        // Bust cache trending supaya data fresh
+        Cache::forget('articles_trending');
+
+        return response()->json([
+            'status' => 'success',
+            'views' => $article->views
+        ]);
+    }
+
+    // =============================================
+    // BARU: Top 5 trending (views terbanyak, 7 hari terakhir)
+    // =============================================
+    public function trending()
+    {
+        return Cache::remember('articles_trending', 300, function () {
+            $articles = Article::with('categories')
+                ->where('is_published', true)
+                ->where('last_viewed_at', '>=', now()->subDays(7))
+                ->orderBy('views', 'desc')
+                ->limit(5)
+                ->get();
+
+            // Fallback: belum ada views sama sekali → pakai artikel terbaru
+            if ($articles->isEmpty()) {
+                $articles = Article::with('categories')
+                    ->where('is_published', true)
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get();
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $articles
+            ]);
+        });
+    }
+
     public function like($id)
     {
         $article = Article::findOrFail($id);
@@ -152,7 +197,6 @@ class ArticleController extends Controller
         ]);
     }
 
-    // Ambil Komentar Berdasarkan Artikel
     public function getComments($id)
     {
         $comments = Comment::with(['user:id,name,role'])
@@ -166,7 +210,6 @@ class ArticleController extends Controller
         ]);
     }
 
-    // Post Komentar (Wajib Token / Auth Login)
     public function storeComment(Request $request, $id)
     {
         $request->validate([
@@ -185,7 +228,6 @@ class ArticleController extends Controller
         ], 201);
     }
 
-    // Get list of Reels
     public function reels()
     {
         return Cache::remember('articles_reels', 300, function () {
@@ -200,7 +242,6 @@ class ArticleController extends Controller
         });
     }
 
-    // Toggle Like / Unlike (Anonim / Siapa Saja)
     public function toggleLike(Request $request, $id)
     {
         $request->validate([
@@ -225,7 +266,6 @@ class ArticleController extends Controller
         ]);
     }
 
-    // Hapus Komentar
     public function destroyComment(Request $request, $id)
     {
         $comment = Comment::findOrFail($id);

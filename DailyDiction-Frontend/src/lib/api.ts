@@ -228,3 +228,32 @@ export async function getSponsors(): Promise<{ data: any[] }> {
     return { data: [] };
   }
 }
+
+// Dipanggil saat artikel/review dibuka
+export async function trackArticleView(slug: string): Promise<void> {
+  try {
+    await fetch(`${API_BASE_URL}/articles/${slug}/view`, {
+      method: "POST",
+      headers: { Accept: "application/json" },
+    });
+  } catch {
+    // Silent fail — jangan sampai ganggu UX kalau endpoint gagal
+  }
+}
+
+// Ambil trending articles
+export async function getTrendingArticles(): Promise<ArticleItem[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/articles/trending`, {
+      headers: { Accept: "application/json" },
+      next: { revalidate: 300 }, // cache 5 menit, bukan no-store
+    });
+
+    if (!res.ok) return [];
+    const json = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
+  } catch (error) {
+    console.error("Gagal mengambil trending articles:", error);
+    return [];
+  }
+}

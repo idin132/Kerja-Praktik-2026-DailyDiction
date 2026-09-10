@@ -53,16 +53,15 @@ export default async function Home() {
     ? reviewsData
     : reviewsData?.data || [];
 
-  const adsList: any[] = adsData?.data || (Array.isArray(adsData) ? adsData : []);
+  const adsList: any[] =
+    adsData?.data || (Array.isArray(adsData) ? adsData : []);
 
   // PEMFILTERAN IKLAN PRESISI BERDASARKAN POSISI
   const horizontalBannerAds = adsList.filter(
-    (ad: any) => ad.position === "horizontal"
+    (ad: any) => ad.position === "horizontal",
   );
 
-  const sidebarAds = adsList.filter(
-    (ad: any) => ad.position === "sidebar"
-  );
+  const sidebarAds = adsList.filter((ad: any) => ad.position === "sidebar");
 
   const isReviewItem = (item: any) => {
     if (
@@ -191,12 +190,17 @@ export default async function Home() {
                       title={item.title}
                       summary={item.summary}
                       imageUrl={formatImageUrl(
-                        item.image_url || item.image_full_url || item.thumbnail || item.thumbnail_url || item.image,
+                        item.image_url ||
+                          item.image_full_url ||
+                          item.thumbnail ||
+                          item.thumbnail_url ||
+                          item.image,
                         "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                       )}
                       slug={item.slug}
                       author={item.author}
                       createdAt={item.created_at}
+                      views={item.views}
                     />
                   );
                 })}
@@ -230,10 +234,15 @@ export default async function Home() {
                       title={review.title}
                       platform={review.platform || review.category || ["PC"]}
                       imageUrl={formatImageUrl(
-                        review.image_url || review.image_full_url || review.thumbnail || review.thumbnail_url || review.image,
+                        review.image_url ||
+                          review.image_full_url ||
+                          review.thumbnail ||
+                          review.thumbnail_url ||
+                          review.image,
                         "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
                       )}
                       slug={review.slug}
+                      views={review.views}
                     />
                   ))
                 ) : (

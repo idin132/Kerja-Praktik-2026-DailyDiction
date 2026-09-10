@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Send,
+  Eye,
 } from "lucide-react";
 
 interface TechItem {
@@ -33,6 +34,7 @@ interface TechItem {
   created_at: string;
   author?: string;
   type?: string;
+  views?: number;
 }
 
 function formatTechImage(item: TechItem): string {
@@ -46,13 +48,17 @@ function formatTechImage(item: TechItem): string {
     if (imageUrl.includes("https://dailydiction.id/storage/http")) {
       return imageUrl.replace(
         /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
-        "$1"
+        "$1",
       );
     }
     return imageUrl;
   }
 
   return `https://dailydiction.id/storage/${imageUrl}`;
+}
+
+function formatViews(n: number): string {
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
 }
 
 export default function TechnologyPage() {
@@ -78,9 +84,11 @@ export default function TechnologyPage() {
         const [res, adsRes] = await Promise.all([
           fetch(
             `${apiUrl}/technologies?page=${currentPage}&per_page=${itemsPerPage}`,
-            { cache: "no-store" }
+            { cache: "no-store" },
           ),
-          fetch(`${apiUrl}/advertisements`, { cache: "no-store" }).catch(() => null),
+          fetch(`${apiUrl}/advertisements`, { cache: "no-store" }).catch(
+            () => null,
+          ),
         ]);
 
         if (res.ok) {
@@ -88,17 +96,20 @@ export default function TechnologyPage() {
           if (isMounted) {
             setTechList(json.data || []);
             setTotalPages(
-              json.last_page || Math.ceil((json.total || 0) / itemsPerPage) || 1
+              json.last_page ||
+                Math.ceil((json.total || 0) / itemsPerPage) ||
+                1,
             );
           }
         }
 
         if (adsRes && adsRes.ok) {
           const adsJson = await adsRes.json();
-          const adsList = adsJson.data || (Array.isArray(adsJson) ? adsJson : []);
+          const adsList =
+            adsJson.data || (Array.isArray(adsJson) ? adsJson : []);
           if (isMounted) {
             setSidebarAds(
-              adsList.filter((ad: any) => ad.position === "sidebar")
+              adsList.filter((ad: any) => ad.position === "sidebar"),
             );
           }
         }
@@ -120,20 +131,24 @@ export default function TechnologyPage() {
 
   const getCategoriesArray = (item: TechItem): string[] => {
     let rawCats: any[] = [];
-    
+
     if (item.categories && item.categories.length > 0) {
       rawCats = item.categories.map((c: any) => c.name);
     } else if (item.category_input) {
-      rawCats = Array.isArray(item.category_input) ? item.category_input : [item.category_input];
+      rawCats = Array.isArray(item.category_input)
+        ? item.category_input
+        : [item.category_input];
     } else if (item.category) {
       if (typeof item.category === "string" && item.category.startsWith("[")) {
-        try { 
-          rawCats = JSON.parse(item.category); 
-        } catch { 
-          rawCats = [item.category]; 
+        try {
+          rawCats = JSON.parse(item.category);
+        } catch {
+          rawCats = [item.category];
         }
       } else {
-        rawCats = Array.isArray(item.category) ? item.category : [item.category];
+        rawCats = Array.isArray(item.category)
+          ? item.category
+          : [item.category];
       }
     }
 
@@ -142,9 +157,7 @@ export default function TechnologyPage() {
   };
 
   const filteredList = techList.filter((item) => {
-    const itemCats = getCategoriesArray(item).map((c) =>
-      c.toUpperCase()
-    );
+    const itemCats = getCategoriesArray(item).map((c) => c.toUpperCase());
 
     const matchCategory =
       selectedCategory === "ALL" || itemCats.includes(selectedCategory);
@@ -157,7 +170,7 @@ export default function TechnologyPage() {
   });
 
   const allCategories = techList.flatMap((item) =>
-    getCategoriesArray(item).map((cat) => cat.toUpperCase())
+    getCategoriesArray(item).map((cat) => cat.toUpperCase()),
   );
   const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
 
@@ -309,7 +322,7 @@ export default function TechnologyPage() {
                                         <Calendar className="h-3.5 w-3.5 text-text-muted" />
                                         <span>
                                           {new Date(
-                                            item.created_at
+                                            item.created_at,
                                           ).toLocaleDateString("id-ID", {
                                             day: "numeric",
                                             month: "short",
@@ -319,6 +332,20 @@ export default function TechnologyPage() {
                                       </div>
                                     </>
                                   )}
+                                  {item.views !== undefined &&
+                                    item.views > 0 && (
+                                      <>
+                                        <span className="text-dark-border hidden sm:inline-block">
+                                          •
+                                        </span>
+                                        <div className="items-center gap-1.5 hidden sm:flex">
+                                          <Eye className="h-3.5 w-3.5 text-text-muted" />
+                                          <span>
+                                            {formatViews(item.views)} views
+                                          </span>
+                                        </div>
+                                      </>
+                                    )}
                                 </div>
 
                                 <div className="flex items-center gap-1 font-bold text-[#FFD700] group-hover:underline shrink-0 ml-1">
@@ -360,7 +387,7 @@ export default function TechnologyPage() {
                           >
                             {pageNum}
                           </button>
-                        )
+                        ),
                       )}
 
                       <button
@@ -413,7 +440,9 @@ export default function TechnologyPage() {
                 </h3>
 
                 <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
-                  Join server Discord Daily Diction buat mabar, berbagi info gacha, pamer spek PC, atau sekadar gibahin industri pop culture!
+                  Join server Discord Daily Diction buat mabar, berbagi info
+                  gacha, pamer spek PC, atau sekadar gibahin industri pop
+                  culture!
                 </p>
 
                 <a
