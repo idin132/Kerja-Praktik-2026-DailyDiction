@@ -190,7 +190,7 @@ class ArticleResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // TIPTAP EDITOR FIX FULL: POPUP LENGKAP & KURSOR GA LONCAT
+                // TIPTAP EDITOR FIX CLEAN
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
                     ->extraAttributes([
@@ -213,7 +213,7 @@ class ArticleResource extends Resource
                         'undo',
                         'redo',
                     ])
-                    ->bubbleMenuTools([
+                    ->floatingMenuTools([
                         'heading',
                         'blockquote',
                         'bold',
