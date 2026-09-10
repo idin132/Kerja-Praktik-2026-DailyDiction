@@ -190,10 +190,11 @@ class ArticleResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // TIPTAP EDITOR: POPUP BUBBLE MENU KEMBALI LENGKAP KAP
+                // TIPTAP EDITOR CLEAN (TANPA OEMBED EMBEDDER YANG NGE-SPAM REQUEST)
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
                     ->extraAttributes([
+                        'wire:ignore' => true,
                         'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static',
                         'style' => 'min-height: 450px;',
                     ])
@@ -205,7 +206,6 @@ class ArticleResource extends Resource
                         'strike',
                         'link',
                         'media',
-                        'oembed',
                         'bullet-list',
                         'ordered-list',
                         'code-block',
@@ -220,7 +220,6 @@ class ArticleResource extends Resource
                         'strike',
                         'link',
                         'media',
-                        'oembed',
                         'bullet-list',
                         'ordered-list',
                         'code-block',
