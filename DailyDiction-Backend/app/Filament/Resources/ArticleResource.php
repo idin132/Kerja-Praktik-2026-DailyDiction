@@ -190,10 +190,9 @@ class ArticleResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // TIPTAP EDITOR FIX FULL: POPUP LENGKAP & NO AUTOSAVE SPAM
+                // TIPTAP EDITOR CLEAN
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
-                    ->disableAutosave() // Mematikan popup draft otomatis yang ganggu pas enter/backspace
                     ->extraAttributes([
                         'wire:ignore' => true,
                         'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static',
