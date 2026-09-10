@@ -190,12 +190,12 @@ class ArticleResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // TIPTAP EDITOR: FULL FITUR & BEBAS BUG KURSOR
+                // TIPTAP EDITOR: FULL FITUR, GAK ADA YANG DIBUANG, FIX UI CRASH KURSOR
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
                     ->extraAttributes([
-                        'wire:ignore' => true,
-                        'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static',
+                        // wire:ignore dihapus karena justru ini yang bikin UI tombol floating menu hancur (numpuk) & bikin kursor stuttering
+                        'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static [&_.tiptap-floating-menu]:!w-max [&_.tiptap-floating-menu]:!flex-nowrap',
                         'style' => 'min-height: 450px;',
                     ])
                     ->tools([
@@ -203,11 +203,9 @@ class ArticleResource extends Resource
                         'media', 'oembed', 'table', 'grid-builder', 'details',
                         'bullet-list', 'ordered-list', 'code-block', 'undo', 'redo',
                     ])
-                    // 1. POPUP SAAT BLOK TEKS (Bubble Menu)
                     ->bubbleMenuTools([
                         'heading', 'bold', 'italic', 'strike', 'link', 'blockquote', 'bullet-list', 'ordered-list',
                     ])
-                    // 2. POPUP SAAT ENTER / BARIS KOSONG (Floating Menu)
                     ->floatingMenuTools([
                         'media', 'table', 'grid-builder', 'details', 'code-block', 'oembed',
                     ])
