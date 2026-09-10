@@ -190,7 +190,7 @@ class ArticleResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // TIPTAP EDITOR FIX CLEAN
+                // TIPTAP EDITOR: HANYA TOOLBAR ATAS (BEBAS POPUP NYAPAM & BEBAS KURSOR LOCK)
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
                     ->extraAttributes([
@@ -198,6 +198,8 @@ class ArticleResource extends Resource
                         'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static',
                         'style' => 'min-height: 450px;',
                     ])
+                    ->disableBubbleMenus()
+                    ->disableFloatingMenus()
                     ->tools([
                         'heading',
                         'blockquote',
@@ -212,16 +214,6 @@ class ArticleResource extends Resource
                         'code-block',
                         'undo',
                         'redo',
-                    ])
-                    ->floatingMenuTools([
-                        'heading',
-                        'blockquote',
-                        'bold',
-                        'italic',
-                        'strike',
-                        'link',
-                        'bullet-list',
-                        'ordered-list',
                     ])
                     ->mediaAction(CustomMediaAction::class)
                     ->columnSpanFull()
