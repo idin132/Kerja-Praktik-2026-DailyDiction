@@ -190,12 +190,12 @@ class ArticleResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // TIPTAP EDITOR CLEAN
+                // TIPTAP EDITOR: BUBBLE MENU AKTIF UNTUK SELEKSI TEKS + CSS SMOOTH NO-STUTTER
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
                     ->extraAttributes([
                         'wire:ignore' => true,
-                        'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static',
+                        'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static [&_.tiptap-bubble-menu]:transition-none',
                         'style' => 'min-height: 450px;',
                     ])
                     ->tools([
@@ -214,15 +214,12 @@ class ArticleResource extends Resource
                     ])
                     ->bubbleMenuTools([
                         'heading',
-                        'blockquote',
                         'bold',
                         'italic',
                         'strike',
                         'link',
-                        'media',
                         'bullet-list',
                         'ordered-list',
-                        'code-block',
                     ])
                     ->mediaAction(CustomMediaAction::class)
                     ->columnSpanFull()
