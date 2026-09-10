@@ -190,38 +190,26 @@ class ArticleResource extends Resource
                     ->required()
                     ->columnSpanFull(),
 
-                // TIPTAP EDITOR: DISABLE FLOATING MENU (PENYEBAB POPUP ENTER), BUBBLE MENU TEXT TETAP AKTIF
+                // TIPTAP EDITOR: FULL FITUR & BEBAS BUG KURSOR
                 TiptapEditor::make('content')
                     ->label('Konten Artikel')
-                    ->disableFloatingMenus() // MATIKAN POPUP MELAYANG DI BARIS KOSONG / PAS ENTER
                     ->extraAttributes([
                         'wire:ignore' => true,
                         'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static',
                         'style' => 'min-height: 450px;',
                     ])
                     ->tools([
-                        'heading',
-                        'blockquote',
-                        'bold',
-                        'italic',
-                        'strike',
-                        'link',
-                        'media',
-                        'bullet-list',
-                        'ordered-list',
-                        'code-block',
-                        'undo',
-                        'redo',
+                        'heading', 'blockquote', 'bold', 'italic', 'strike', 'link',
+                        'media', 'oembed', 'table', 'grid-builder', 'details',
+                        'bullet-list', 'ordered-list', 'code-block', 'undo', 'redo',
                     ])
+                    // 1. POPUP SAAT BLOK TEKS (Bubble Menu)
                     ->bubbleMenuTools([
-                        'heading',
-                        'blockquote',
-                        'bold',
-                        'italic',
-                        'strike',
-                        'link',
-                        'bullet-list',
-                        'ordered-list',
+                        'heading', 'bold', 'italic', 'strike', 'link', 'blockquote', 'bullet-list', 'ordered-list',
+                    ])
+                    // 2. POPUP SAAT ENTER / BARIS KOSONG (Floating Menu)
+                    ->floatingMenuTools([
+                        'media', 'table', 'grid-builder', 'details', 'code-block', 'oembed',
                     ])
                     ->mediaAction(CustomMediaAction::class)
                     ->columnSpanFull()
