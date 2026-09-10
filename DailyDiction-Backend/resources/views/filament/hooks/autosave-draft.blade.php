@@ -59,7 +59,7 @@
                 const data = collectFormData();
                 if (!data) return;
                 if (!data.title && (!data.content || data.content === '<p></p>')) return;
-                
+
                 localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
                 showToast('Draft tersimpan otomatis ✓');
             }
@@ -201,12 +201,12 @@
                     saveDraft();
                 }, 60000);
 
-                // 2. Simpan draft saat user menekan tombol Back / Forward di browser (popstate)
+                // 2. Simpan draft saat user menekan tombol Back / Forward di browser
                 window.addEventListener('popstate', function() {
                     saveDraft();
                 });
 
-                // 3. Simpan draft saat user menutup tab, refresh, atau pindah URL eksternal
+                // 3. Simpan draft saat user menutup tab, refresh, atau pindah URL
                 window.addEventListener('beforeunload', function() {
                     saveDraft();
                 });
