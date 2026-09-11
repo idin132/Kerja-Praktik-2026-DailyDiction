@@ -18,6 +18,7 @@ import {
   Send,
   Eye,
 } from "lucide-react";
+import TrendingSection from "@/components/TrendingSection";
 
 interface TechItem {
   id: number;
@@ -455,6 +456,7 @@ export default function TechnologyPage() {
                   <span>Join Server (Gratis)</span>
                 </a>
               </div>
+              <TrendingSection />
             </aside>
           </div>
         </main>

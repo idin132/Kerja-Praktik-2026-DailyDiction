@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import TrendingSection from "@/components/TrendingSection";
 
 interface ArticleItem {
   id: number;
@@ -58,7 +59,7 @@ function formatNewsImage(item: ArticleItem): string {
     if (clean.includes("https://dailydiction.id/storage/http")) {
       return clean.replace(
         /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
-        "$1"
+        "$1",
       );
     }
     return clean;
@@ -95,9 +96,11 @@ export default function NewsPage() {
         const [res, adsRes] = await Promise.all([
           fetch(
             `${apiUrl}/articles?type=article&page=${currentPage}&per_page=${itemsPerPage}`,
-            { cache: "no-store" }
+            { cache: "no-store" },
           ),
-          fetch(`${apiUrl}/advertisements`, { cache: "no-store" }).catch(() => null),
+          fetch(`${apiUrl}/advertisements`, { cache: "no-store" }).catch(
+            () => null,
+          ),
         ]);
 
         if (res.ok) {
@@ -105,17 +108,20 @@ export default function NewsPage() {
           if (isMounted) {
             setArticles(json.data || []);
             setTotalPages(
-              json.last_page || Math.ceil((json.total || 0) / itemsPerPage) || 1
+              json.last_page ||
+                Math.ceil((json.total || 0) / itemsPerPage) ||
+                1,
             );
           }
         }
 
         if (adsRes && adsRes.ok) {
           const adsJson = await adsRes.json();
-          const adsList = adsJson.data || (Array.isArray(adsJson) ? adsJson : []);
+          const adsList =
+            adsJson.data || (Array.isArray(adsJson) ? adsJson : []);
           if (isMounted) {
             setSidebarAds(
-              adsList.filter((ad: any) => ad.position === "sidebar")
+              adsList.filter((ad: any) => ad.position === "sidebar"),
             );
           }
         }
@@ -139,7 +145,9 @@ export default function NewsPage() {
     let rawCats: any[] = [];
 
     if (item.categories && item.categories.length > 0) {
-      rawCats = item.categories.map((c: any) => (typeof c === "string" ? c : c.name));
+      rawCats = item.categories.map((c: any) =>
+        typeof c === "string" ? c : c.name,
+      );
     } else if (item.category_input) {
       rawCats = Array.isArray(item.category_input)
         ? item.category_input
@@ -188,7 +196,7 @@ export default function NewsPage() {
   const pureNewsArticles = articles.filter((item) => !isReviewItem(item));
 
   const allCategories = pureNewsArticles.flatMap((item) =>
-    getCategoriesArray(item).map((cat) => cat.toUpperCase())
+    getCategoriesArray(item).map((cat) => cat.toUpperCase()),
   );
   const categoriesList = ["ALL", ...Array.from(new Set(allCategories))];
 
@@ -353,7 +361,7 @@ export default function NewsPage() {
                                         <Calendar className="h-3.5 w-3.5 text-text-muted" />
                                         <span>
                                           {new Date(
-                                            item.created_at
+                                            item.created_at,
                                           ).toLocaleDateString("id-ID", {
                                             day: "numeric",
                                             month: "short",
@@ -402,7 +410,7 @@ export default function NewsPage() {
                           >
                             {pageNum}
                           </button>
-                        )
+                        ),
                       )}
 
                       <button
@@ -455,7 +463,9 @@ export default function NewsPage() {
                 </h3>
 
                 <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
-                  Join server Discord Daily Diction buat mabar, berbagi info gacha, pamer spek PC, atau sekadar gibahin industri pop culture!
+                  Join server Discord Daily Diction buat mabar, berbagi info
+                  gacha, pamer spek PC, atau sekadar gibahin industri pop
+                  culture!
                 </p>
 
                 <a
@@ -468,11 +478,11 @@ export default function NewsPage() {
                   <span>Join Server (Gratis)</span>
                 </a>
               </div>
+              <TrendingSection />
             </aside>
           </div>
         </main>
       </div>
-
       <Footer />
     </div>
   );

@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Eye,
 } from "lucide-react";
+import TrendingSection from "@/components/TrendingSection";
 
 interface ArticleItem {
   id: number;
@@ -452,6 +453,7 @@ export default function EntertainmentPage() {
                   <span>Join Server (Gratis)</span>
                 </a>
               </div>
+              <TrendingSection />
             </aside>
           </div>
         </main>
