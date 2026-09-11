@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import TrendingSection from "@/components/TrendingSection";
 
 interface ReviewItem {
   id: number;
@@ -243,229 +244,237 @@ export default function ReviewPage() {
               />
             </div>
           </div>
-
-          {/* Featured Review */}
-          {isLoading ? (
-            <div className="h-80 md:h-96 rounded-2xl border border-dark-border bg-dark-card/50 animate-pulse mb-12" />
-          ) : featuredReview ? (
-            <div className="mb-12">
-              <Link
-                href={`/review/${featuredReview.slug}`}
-                className="group block overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-colors hover:border-[#FFD700]/50 shadow-xl"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
-                  <div className="relative aspect-video md:aspect-auto lg:col-span-3 overflow-hidden">
-                    <img
-                      src={formatImageUrl(
-                        featuredReview.image_url ||
-                          featuredReview.image_full_url ||
-                          featuredReview.thumbnail_url ||
-                          featuredReview.thumbnail,
-                      )}
-                      alt={featuredReview.title}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <span className="absolute left-4 top-4 rounded bg-[#FFD700] px-3 py-1 text-[10px] font-black uppercase tracking-widest text-black shadow-lg font-mono">
-                      Featured Review
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col justify-center p-6 md:p-8 lg:col-span-2 lg:p-12">
-                    <div className="flex flex-wrap items-center gap-2 mb-4 font-mono">
-                      {getPlatformsArray(featuredReview).map((plat, idx) => (
-                        <span
-                          key={idx}
-                          className="flex items-center gap-1.5 rounded bg-[#FFD700]/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#FFD700] border border-[#FFD700]/30"
-                        >
-                          <Gamepad2 className="h-3.5 w-3.5" />
-                          {plat}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12">
+            <div className="lg:col-span-8 2xl:col-span-9">
+              {/* Featured Review */}
+              {isLoading ? (
+                <div className="h-80 md:h-96 rounded-2xl border border-dark-border bg-dark-card/50 animate-pulse mb-12" />
+              ) : featuredReview ? (
+                <div className="mb-12">
+                  <Link
+                    href={`/review/${featuredReview.slug}`}
+                    className="group block overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-colors hover:border-[#FFD700]/50 shadow-xl"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
+                      <div className="relative aspect-video md:aspect-auto lg:col-span-3 overflow-hidden">
+                        <img
+                          src={formatImageUrl(
+                            featuredReview.image_url ||
+                              featuredReview.image_full_url ||
+                              featuredReview.thumbnail_url ||
+                              featuredReview.thumbnail,
+                          )}
+                          alt={featuredReview.title}
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <span className="absolute left-4 top-4 rounded bg-[#FFD700] px-3 py-1 text-[10px] font-black uppercase tracking-widest text-black shadow-lg font-mono">
+                          Featured Review
                         </span>
-                      ))}
-                    </div>
+                      </div>
 
-                    <h2 className="text-2xl md:text-3xl font-black text-white group-hover:text-[#FFD700] transition-colors line-clamp-2">
-                      {featuredReview.title}
-                    </h2>
-                    <p className="mt-4 text-text-muted text-xs line-clamp-3 leading-relaxed">
-                      {featuredReview.summary}
-                    </p>
-
-                    <div className="mt-8 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#FFD700] transition-colors font-mono">
-                      BACA ULASAN LENGKAP &rarr;
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </div>
-          ) : null}
-
-          {/* Filter Buttons */}
-          <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-2 font-mono">
-            <span className="flex items-center gap-2 text-xs text-text-muted uppercase tracking-widest mr-2 shrink-0">
-              FILTER:
-            </span>
-            {platforms.length === 1 ? (
-              <>
-                {[1, 2, 3, 4].map((n) => (
-                  <div
-                    key={n}
-                    className="h-8 w-20 rounded-lg bg-dark-card border border-dark-border animate-pulse shrink-0"
-                  />
-                ))}
-              </>
-            ) : (
-              platforms.map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setSelectedPlatform(filter)}
-                  className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
-                    selectedPlatform === filter
-                      ? "bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.4)]"
-                      : "bg-dark-card border border-dark-border text-text-muted hover:border-[#FFD700]/50 hover:text-white"
-                  }`}
-                >
-                  {filter}
-                </button>
-              ))
-            )}
-          </div>
-
-          {/* Grid Reviews */}
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                <div
-                  key={n}
-                  className="h-64 rounded-xl border border-dark-border bg-dark-card/50 animate-pulse"
-                />
-              ))}
-            </div>
-          ) : currentReviews.length > 0 ? (
-            <>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`review-page-${currentPage}-${selectedPlatform}`}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -16 }}
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-                >
-                  {currentReviews.map((review) => {
-                    const platforms = getPlatformsArray(review);
-
-                    return (
-                      <Link
-                        key={review.id}
-                        href={`/review/${review.slug}`}
-                        className="group flex flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/50 hover:-translate-y-1 hover:shadow-lg duration-300"
-                      >
-                        <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-dark-border/50 shrink-0">
-                          <img
-                            src={formatImageUrl(
-                              review.image_url ||
-                                review.image_full_url ||
-                                review.thumbnail_url ||
-                                review.thumbnail,
-                            )}
-                            alt={review.title}
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                          <div className="absolute left-3 top-3 flex flex-wrap gap-1.5 font-mono">
-                            {platforms.map((plat, idx) => (
+                      <div className="flex flex-col justify-center p-6 md:p-8 lg:col-span-2 lg:p-12">
+                        <div className="flex flex-wrap items-center gap-2 mb-4 font-mono">
+                          {getPlatformsArray(featuredReview).map(
+                            (plat, idx) => (
                               <span
                                 key={idx}
-                                className="rounded bg-black/60 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-[#FFD700] backdrop-blur-sm border border-[#FFD700]/30"
+                                className="flex items-center gap-1.5 rounded bg-[#FFD700]/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#FFD700] border border-[#FFD700]/30"
                               >
+                                <Gamepad2 className="h-3.5 w-3.5" />
                                 {plat}
                               </span>
-                            ))}
-                          </div>
+                            ),
+                          )}
                         </div>
 
-                        <div className="flex flex-1 flex-col justify-between p-5">
-                          <div>
-                            <h3 className="text-base font-bold text-white group-hover:text-[#FFD700] transition-colors line-clamp-2">
-                              {review.title}
-                            </h3>
-                            <p className="mt-2 text-xs text-text-muted line-clamp-3 leading-relaxed">
-                              {review.summary}
-                            </p>
-                          </div>
+                        <h2 className="text-2xl md:text-3xl font-black text-white group-hover:text-[#FFD700] transition-colors line-clamp-2">
+                          {featuredReview.title}
+                        </h2>
+                        <p className="mt-4 text-text-muted text-xs line-clamp-3 leading-relaxed">
+                          {featuredReview.summary}
+                        </p>
 
-                          <div className="mt-4 flex items-center justify-between border-t border-dark-border/60 pt-4 font-mono">
-                            <span className="text-[10px] text-text-muted">
-                              {review.created_at
-                                ? new Date(
-                                    review.created_at,
-                                  ).toLocaleDateString("id-ID", {
-                                    day: "numeric",
-                                    month: "short",
-                                    year: "numeric",
-                                  })
-                                : "-"}
-                            </span>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#FFD700]">
-                              Baca Review &rarr;
-                            </span>
-                          </div>
+                        <div className="mt-8 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#FFD700] transition-colors font-mono">
+                          BACA ULASAN LENGKAP &rarr;
                         </div>
-                      </Link>
-                    );
-                  })}
-                </motion.div>
-              </AnimatePresence>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              ) : null}
 
-              {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 pt-12 font-mono text-xs">
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700] disabled:opacity-30 disabled:pointer-events-none"
-                    aria-label="Previous Page"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
+              {/* Filter Buttons */}
+              <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-2 font-mono">
+                <span className="flex items-center gap-2 text-xs text-text-muted uppercase tracking-widest mr-2 shrink-0">
+                  FILTER:
+                </span>
+                {platforms.length === 1 ? (
+                  <>
+                    {[1, 2, 3, 4].map((n) => (
+                      <div
+                        key={n}
+                        className="h-8 w-20 rounded-lg bg-dark-card border border-dark-border animate-pulse shrink-0"
+                      />
+                    ))}
+                  </>
+                ) : (
+                  platforms.map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => setSelectedPlatform(filter)}
+                      className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
+                        selectedPlatform === filter
+                          ? "bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.4)]"
+                          : "bg-dark-card border border-dark-border text-text-muted hover:border-[#FFD700]/50 hover:text-white"
+                      }`}
+                    >
+                      {filter}
+                    </button>
+                  ))
+                )}
+              </div>
 
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (pageNum) => (
+              {/* Grid Reviews */}
+              {isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                    <div
+                      key={n}
+                      className="h-64 rounded-xl border border-dark-border bg-dark-card/50 animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : currentReviews.length > 0 ? (
+                <>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`review-page-${currentPage}-${selectedPlatform}`}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -16 }}
+                      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                    >
+                      {currentReviews.map((review) => {
+                        const platforms = getPlatformsArray(review);
+
+                        return (
+                          <Link
+                            key={review.id}
+                            href={`/review/${review.slug}`}
+                            className="group flex flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/50 hover:-translate-y-1 hover:shadow-lg duration-300"
+                          >
+                            <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-dark-border/50 shrink-0">
+                              <img
+                                src={formatImageUrl(
+                                  review.image_url ||
+                                    review.image_full_url ||
+                                    review.thumbnail_url ||
+                                    review.thumbnail,
+                                )}
+                                alt={review.title}
+                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              />
+                              <div className="absolute left-3 top-3 flex flex-wrap gap-1.5 font-mono">
+                                {platforms.map((plat, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="rounded bg-black/60 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-[#FFD700] backdrop-blur-sm border border-[#FFD700]/30"
+                                  >
+                                    {plat}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-1 flex-col justify-between p-5">
+                              <div>
+                                <h3 className="text-base font-bold text-white group-hover:text-[#FFD700] transition-colors line-clamp-2">
+                                  {review.title}
+                                </h3>
+                                <p className="mt-2 text-xs text-text-muted line-clamp-3 leading-relaxed">
+                                  {review.summary}
+                                </p>
+                              </div>
+
+                              <div className="mt-4 flex items-center justify-between border-t border-dark-border/60 pt-4 font-mono">
+                                <span className="text-[10px] text-text-muted">
+                                  {review.created_at
+                                    ? new Date(
+                                        review.created_at,
+                                      ).toLocaleDateString("id-ID", {
+                                        day: "numeric",
+                                        month: "short",
+                                        year: "numeric",
+                                      })
+                                    : "-"}
+                                </span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[#FFD700]">
+                                  Baca Review &rarr;
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </motion.div>
+                  </AnimatePresence>
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 pt-12 font-mono text-xs">
                       <button
-                        key={pageNum}
-                        onClick={() => handlePageChange(pageNum)}
-                        className={`h-9 min-w-[36px] px-3 rounded-xl font-bold transition-all ${
-                          currentPage === pageNum
-                            ? "bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.4)]"
-                            : "border border-dark-border bg-dark-card text-text-muted hover:border-[#FFD700] hover:text-text-primary"
-                        }`}
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700] disabled:opacity-30 disabled:pointer-events-none"
+                        aria-label="Previous Page"
                       >
-                        {pageNum}
+                        <ChevronLeft className="h-4 w-4" />
                       </button>
-                    ),
-                  )}
 
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700] disabled:opacity-30 disabled:pointer-events-none"
-                    aria-label="Next Page"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (pageNum) => (
+                          <button
+                            key={pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`h-9 min-w-[36px] px-3 rounded-xl font-bold transition-all ${
+                              currentPage === pageNum
+                                ? "bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.4)]"
+                                : "border border-dark-border bg-dark-card text-text-muted hover:border-[#FFD700] hover:text-text-primary"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        ),
+                      )}
+
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700] disabled:opacity-30 disabled:pointer-events-none"
+                        aria-label="Next Page"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="rounded-2xl border border-dark-border bg-dark-card p-12 text-center font-mono">
+                  <p className="text-sm text-text-muted">
+                    Tidak ada ulasan game yang ditemukan untuk filter "
+                    {selectedPlatform}".
+                  </p>
                 </div>
               )}
-            </>
-          ) : (
-            <div className="rounded-2xl border border-dark-border bg-dark-card p-12 text-center font-mono">
-              <p className="text-sm text-text-muted">
-                Tidak ada ulasan game yang ditemukan untuk filter "
-                {selectedPlatform}".
-              </p>
             </div>
-          )}
+            {/* Kolom kanan - sidebar */}
+            <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
+              <TrendingSection />
+            </aside>
+          </div>
         </main>
       </div>
-
       <Footer />
     </div>
   );
