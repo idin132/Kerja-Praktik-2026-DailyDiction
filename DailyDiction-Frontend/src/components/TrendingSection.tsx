@@ -1,23 +1,72 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { TrendingUp, Eye, ArrowRight } from "lucide-react";
-import { getTrendingArticles, formatImageUrl } from "@/lib/api";
 
-export default async function TrendingSection() {
-  const articles = await getTrendingArticles();
+function formatImageUrl(imageUrl: string | null | undefined): string {
+  const fallback =
+    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
+  if (!imageUrl || typeof imageUrl !== "string") return fallback;
+  const clean = imageUrl.trim();
+  if (clean.startsWith("http://") || clean.startsWith("https://")) return clean;
+  const cleanPath = clean.replace(/^\/+/, "");
+  return cleanPath.startsWith("storage/")
+    ? `https://dailydiction.id/${cleanPath}`
+    : `https://dailydiction.id/storage/${cleanPath}`;
+}
 
-  if (articles.length === 0) return null;
+function formatViews(n: number): string {
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+}
 
-  const formatViews = (n: number): string =>
-    n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+export default function TrendingSection() {
+  const [articles, setArticles] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
+
+    fetch(`${apiUrl}/articles/trending`, {
+      headers: { Accept: "application/json" },
+    })
+      .then((res) => (res.ok ? res.json() : { data: [] }))
+      .then((json) => setArticles(Array.isArray(json.data) ? json.data : []))
+      .catch(() => setArticles([]))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const getArticleHref = (item: any): string => {
     if (item.type === "review") return `/review/${item.slug}`;
     return `/artikel/${item.slug}`;
   };
 
+  if (isLoading) {
+    return (
+      <section>
+        <div className="flex items-center gap-2 mb-6">
+          <TrendingUp className="h-5 w-5 text-[#FFD700]" />
+          <h2 className="text-lg font-black uppercase tracking-wider text-text-primary">
+            Trending Minggu Ini
+          </h2>
+        </div>
+        <div className="flex flex-col gap-3">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <div
+              key={n}
+              className="h-20 rounded-xl border border-dark-border bg-dark-card/50 animate-pulse"
+            />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (articles.length === 0) return null;
+
   return (
     <section>
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-[#FFD700]" />
@@ -30,7 +79,6 @@ export default async function TrendingSection() {
         </span>
       </div>
 
-      {/* List */}
       <div className="flex flex-col gap-3">
         {articles.map((item: any, index: number) => (
           <Link
