@@ -4,9 +4,17 @@ import { getArticleBySlug, getAdvertisements } from "@/lib/api";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ShareWidget from "@/components/ShareWidget";
-import { User, Clock, ChevronLeft, ChevronRight, Calendar, Send } from "lucide-react";
+import {
+  User,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  Send,
+} from "lucide-react";
 import ArticleInteractions from "@/components/ArticleInteractions";
 import TweetRenderer from "@/components/TweetRenderer";
+import ViewTracker from "@/components/ViewTracker";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -47,13 +55,16 @@ interface ArticleDetailItem {
 
 function formatImageUrl(
   imageUrl: string | null | undefined,
-  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
+  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
 ): string {
   if (!imageUrl || typeof imageUrl !== "string") return fallback;
 
   const clean = imageUrl.trim();
 
-  if (clean.includes("/storage/http://") || clean.includes("/storage/https://")) {
+  if (
+    clean.includes("/storage/http://") ||
+    clean.includes("/storage/https://")
+  ) {
     return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
   }
 
@@ -94,8 +105,8 @@ export default async function DetailArtikel({
     adsData?.data && Array.isArray(adsData.data)
       ? adsData.data[0]
       : Array.isArray(adsData)
-      ? adsData[0]
-      : null;
+        ? adsData[0]
+        : null;
 
   const prevArticle = article.prev || null;
   const nextArticle = article.next || null;
@@ -117,7 +128,7 @@ export default async function DetailArtikel({
     }
   } else if (article.categories && article.categories.length > 0) {
     categoryList = article.categories.map((c: any) =>
-      typeof c === "string" ? c : c.name
+      typeof c === "string" ? c : c.name,
     );
   }
 
@@ -125,12 +136,13 @@ export default async function DetailArtikel({
     typeof article.content === "string"
       ? article.content
       : Array.isArray(article.content)
-      ? article.content.map((b: any) => b.content ?? "").join("")
-      : "";
+        ? article.content.map((b: any) => b.content ?? "").join("")
+        : "";
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
       <Navbar />
+      <ViewTracker slug={slug} />
 
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
@@ -181,7 +193,7 @@ export default async function DetailArtikel({
                               day: "numeric",
                               month: "long",
                               year: "numeric",
-                            }
+                            },
                           )}
                         </span>
                       </div>
@@ -205,7 +217,7 @@ export default async function DetailArtikel({
                           article.thumbnail_url ||
                           article.banner_image ||
                           article.image_full_url,
-                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
+                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
                       )}
                       alt={article.title}
                       className="w-full aspect-[16/9] object-cover"
@@ -213,7 +225,8 @@ export default async function DetailArtikel({
                   </div>
 
                   <p className="text-base sm:text-lg text-text-muted text-justify font-medium border-l-4 border-[#FFD700] pl-4 bg-dark-card/30 p-4 rounded-r-lg">
-                    {article.summary || "Simak berita selengkapnya di bawah ini."}
+                    {article.summary ||
+                      "Simak berita selengkapnya di bawah ini."}
                   </p>
                 </div>
 
@@ -251,7 +264,7 @@ export default async function DetailArtikel({
                           prevArticle.thumbnail ||
                             prevArticle.image ||
                             prevArticle.image_url,
-                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
+                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                         )}
                         alt={prevArticle.title}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -273,7 +286,7 @@ export default async function DetailArtikel({
                           nextArticle.thumbnail ||
                             nextArticle.image ||
                             nextArticle.image_url,
-                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
+                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
                         )}
                         alt={nextArticle.title}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -350,7 +363,9 @@ export default async function DetailArtikel({
                     </h3>
 
                     <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
-                      Join server Discord Daily Diction buat mabar, berbagi info gacha, pamer spek PC, atau sekadar gibahin industri pop culture!
+                      Join server Discord Daily Diction buat mabar, berbagi info
+                      gacha, pamer spek PC, atau sekadar gibahin industri pop
+                      culture!
                     </p>
 
                     <a

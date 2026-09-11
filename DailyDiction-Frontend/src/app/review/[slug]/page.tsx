@@ -7,10 +7,19 @@ import {
 } from "@/lib/api";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Gamepad2, User, Calendar, Clock, Send } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Gamepad2,
+  User,
+  Calendar,
+  Clock,
+  Send,
+} from "lucide-react";
 import ShareWidget from "@/components/ShareWidget";
 import ArticleInteractions from "@/components/ArticleInteractions";
 import TweetRenderer from "@/components/TweetRenderer";
+import ViewTracker from "@/components/ViewTracker";
 
 export const revalidate = 0;
 
@@ -45,13 +54,16 @@ interface ReviewItem {
 
 function formatImageUrl(
   imageUrl: string | null | undefined,
-  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
+  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
 ): string {
   if (!imageUrl || typeof imageUrl !== "string") return fallback;
 
   const clean = imageUrl.trim();
 
-  if (clean.includes("/storage/http://") || clean.includes("/storage/https://")) {
+  if (
+    clean.includes("/storage/http://") ||
+    clean.includes("/storage/https://")
+  ) {
     return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
   }
 
@@ -95,13 +107,15 @@ export default async function DetailReview({
     adsData?.data && Array.isArray(adsData.data)
       ? adsData.data[0]
       : Array.isArray(adsData)
-      ? adsData[0]
-      : null;
+        ? adsData[0]
+        : null;
 
   const prevReview = review.prev || null;
   const nextReview = review.next || null;
 
-  const parsePlatforms = (platform: string | string[] | undefined): string[] => {
+  const parsePlatforms = (
+    platform: string | string[] | undefined,
+  ): string[] => {
     if (!platform) return [];
     if (Array.isArray(platform)) return platform;
     if (typeof platform === "string") {
@@ -120,13 +134,13 @@ export default async function DetailReview({
     typeof review.content === "string"
       ? review.content
       : Array.isArray(review.content)
-      ? review.content.map((b: any) => b.content ?? "").join("")
-      : "";
+        ? review.content.map((b: any) => b.content ?? "").join("")
+        : "";
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
       <Navbar />
-
+      <ViewTracker slug={slug} />
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
@@ -158,17 +172,22 @@ export default async function DetailReview({
                   <div className="flex flex-wrap items-center gap-6 text-sm font-mono text-text-muted border-y border-dark-border py-4">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-[#FFD700]" />
-                      <span className="font-bold text-white">{review.author || "Redaksi"}</span>
+                      <span className="font-bold text-white">
+                        {review.author || "Redaksi"}
+                      </span>
                     </div>
                     {review.created_at && (
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         <span>
-                          {new Date(review.created_at).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })}
+                          {new Date(review.created_at).toLocaleDateString(
+                            "id-ID",
+                            {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            },
+                          )}
                         </span>
                       </div>
                     )}
@@ -198,7 +217,7 @@ export default async function DetailReview({
                           review.image ||
                           review.thumbnail_url ||
                           review.thumbnail,
-                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
+                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
                       )}
                       alt={review.title}
                       className="h-full w-full object-cover"
@@ -241,7 +260,7 @@ export default async function DetailReview({
                             prevReview.thumbnail ||
                             prevReview.image_url ||
                             prevReview.image,
-                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
+                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                         )}
                         alt={prevReview.title}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -264,7 +283,7 @@ export default async function DetailReview({
                             nextReview.thumbnail ||
                             nextReview.image_url ||
                             nextReview.image,
-                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
+                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
                         )}
                         alt={nextReview.title}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -341,7 +360,9 @@ export default async function DetailReview({
                     </h3>
 
                     <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
-                      Join server Discord Daily Diction buat mabar, berbagi info gacha, pamer spek PC, atau sekadar gibahin industri pop culture!
+                      Join server Discord Daily Diction buat mabar, berbagi info
+                      gacha, pamer spek PC, atau sekadar gibahin industri pop
+                      culture!
                     </p>
 
                     <a

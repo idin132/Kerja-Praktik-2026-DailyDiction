@@ -8,9 +8,15 @@ import AdCarousel from "@/components/AdCarousel";
 import { NewsFeedCard, ReviewCard } from "@/components/Cards";
 import { DiscordWidget } from "@/components/Sidebar";
 import Footer from "@/components/Footer";
-import { getArticles, getGameReviews, getAdvertisements } from "@/lib/api";
+import {
+  getArticles,
+  getGameReviews,
+  getAdvertisements,
+  getTrendingArticles,
+} from "@/lib/api";
 import { getYouTubeVideos } from "@/lib/youtube";
 import { Flame, Star, ArrowRight } from "lucide-react";
+import TrendingSection from "@/components/TrendingSection";
 
 export const revalidate = 0;
 
@@ -271,6 +277,7 @@ export default async function Home() {
             </div>
 
             <DiscordWidget />
+            <TrendingSection />
           </aside>
         </div>
       </main>

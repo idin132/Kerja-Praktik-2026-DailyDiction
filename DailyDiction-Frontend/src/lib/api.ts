@@ -36,17 +36,21 @@ export interface AdvertisementItem {
   is_active?: boolean;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
 export function formatImageUrl(
   imageUrl: string | null | undefined,
-  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
+  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
 ): string {
   if (!imageUrl || typeof imageUrl !== "string") return fallback;
 
   const clean = imageUrl.trim();
 
-  if (clean.includes("/storage/http://") || clean.includes("/storage/https://")) {
+  if (
+    clean.includes("/storage/http://") ||
+    clean.includes("/storage/https://")
+  ) {
     return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
   }
 
@@ -62,7 +66,9 @@ export function formatImageUrl(
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-export async function getAdvertisements(): Promise<{ data: AdvertisementItem[] }> {
+export async function getAdvertisements(): Promise<{
+  data: AdvertisementItem[];
+}> {
   try {
     const res = await fetch(`${API_BASE_URL}/advertisements`, {
       headers: { Accept: "application/json" },
@@ -74,12 +80,14 @@ export async function getAdvertisements(): Promise<{ data: AdvertisementItem[] }
     const rawData = Array.isArray(json.data)
       ? json.data
       : Array.isArray(json)
-      ? json
-      : [];
+        ? json
+        : [];
 
     const formattedData = rawData.map((item: any) => ({
       ...item,
-      image_url: formatImageUrl(item.banner_image || item.image_url || item.image),
+      image_url: formatImageUrl(
+        item.banner_image || item.image_url || item.image,
+      ),
       link_url: item.url_link || item.link_url || "#",
     }));
 
@@ -102,8 +110,8 @@ export async function getArticles(): Promise<{ data: ArticleItem[] }> {
     const allData: ArticleItem[] = Array.isArray(json.data)
       ? json.data
       : Array.isArray(json)
-      ? json
-      : [];
+        ? json
+        : [];
 
     return {
       data: allData.filter((item) => !item.type || item.type === "article"),
@@ -114,7 +122,9 @@ export async function getArticles(): Promise<{ data: ArticleItem[] }> {
   }
 }
 
-export async function getArticleBySlug(slug: string): Promise<ArticleItem | null> {
+export async function getArticleBySlug(
+  slug: string,
+): Promise<ArticleItem | null> {
   try {
     const res = await fetch(`${API_BASE_URL}/articles/${slug}`, {
       headers: { Accept: "application/json" },
@@ -123,7 +133,7 @@ export async function getArticleBySlug(slug: string): Promise<ArticleItem | null
 
     if (!res.ok) return null;
     const json = await res.json();
-    
+
     // Unbox data dari json.data jika ada
     const result = json.data || json;
 
@@ -131,7 +141,12 @@ export async function getArticleBySlug(slug: string): Promise<ArticleItem | null
 
     return {
       ...result,
-      image_url: formatImageUrl(result.image_url || result.image_full_url || result.image || result.thumbnail),
+      image_url: formatImageUrl(
+        result.image_url ||
+          result.image_full_url ||
+          result.image ||
+          result.thumbnail,
+      ),
     };
   } catch (error) {
     console.error("Gagal mengambil article detail:", error);
@@ -148,7 +163,11 @@ export async function getGameReviews(): Promise<ArticleItem[]> {
 
     if (res.ok) {
       const json = await res.json();
-      const data = Array.isArray(json.data) ? json.data : Array.isArray(json) ? json : [];
+      const data = Array.isArray(json.data)
+        ? json.data
+        : Array.isArray(json)
+          ? json
+          : [];
       if (data.length > 0) return data;
     }
 
@@ -162,8 +181,8 @@ export async function getGameReviews(): Promise<ArticleItem[]> {
       return Array.isArray(fbJson.data)
         ? fbJson.data
         : Array.isArray(fbJson)
-        ? fbJson
-        : [];
+          ? fbJson
+          : [];
     }
 
     return [];
@@ -173,7 +192,9 @@ export async function getGameReviews(): Promise<ArticleItem[]> {
   }
 }
 
-export async function getGameReviewBySlug(slug: string): Promise<ArticleItem | null> {
+export async function getGameReviewBySlug(
+  slug: string,
+): Promise<ArticleItem | null> {
   try {
     const res = await fetch(`${API_BASE_URL}/reviews/${slug}`, {
       headers: { Accept: "application/json" },
@@ -186,7 +207,12 @@ export async function getGameReviewBySlug(slug: string): Promise<ArticleItem | n
       if (result && result.title) {
         return {
           ...result,
-          image_url: formatImageUrl(result.image_url || result.image_full_url || result.image || result.thumbnail),
+          image_url: formatImageUrl(
+            result.image_url ||
+              result.image_full_url ||
+              result.image ||
+              result.thumbnail,
+          ),
         };
       }
     }
@@ -202,7 +228,12 @@ export async function getGameReviewBySlug(slug: string): Promise<ArticleItem | n
       if (result && result.title) {
         return {
           ...result,
-          image_url: formatImageUrl(result.image_url || result.image_full_url || result.image || result.thumbnail),
+          image_url: formatImageUrl(
+            result.image_url ||
+              result.image_full_url ||
+              result.image ||
+              result.thumbnail,
+          ),
         };
       }
     }
@@ -222,7 +253,13 @@ export async function getSponsors(): Promise<{ data: any[] }> {
     });
     if (!res.ok) return { data: [] };
     const json = await res.json();
-    return { data: Array.isArray(json.data) ? json.data : Array.isArray(json) ? json : [] };
+    return {
+      data: Array.isArray(json.data)
+        ? json.data
+        : Array.isArray(json)
+          ? json
+          : [],
+    };
   } catch (error) {
     console.error("Gagal mengambil data sponsors:", error);
     return { data: [] };
@@ -241,12 +278,11 @@ export async function trackArticleView(slug: string): Promise<void> {
   }
 }
 
-// Ambil trending articles
 export async function getTrendingArticles(): Promise<ArticleItem[]> {
   try {
     const res = await fetch(`${API_BASE_URL}/articles/trending`, {
       headers: { Accept: "application/json" },
-      next: { revalidate: 300 }, // cache 5 menit, bukan no-store
+      next: { revalidate: 300 }, // cache 5 menit
     });
 
     if (!res.ok) return [];
