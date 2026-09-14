@@ -8,6 +8,8 @@ export default {
         './resources/**/*.blade.php',
         './resources/**/*.js',
         './resources/**/*.vue',
+        './app/Filament/**/*.php',
+        './vendor/awcodes/filament-tiptap-editor/resources/**/*.blade.php',
     ],
     theme: {
         extend: {
@@ -17,6 +19,6 @@ export default {
         },
     },
     plugins: [
-        require('@tailwindcss/typography'), // <-- Tempel di sini
+        require('@tailwindcss/typography'),
     ],
 };

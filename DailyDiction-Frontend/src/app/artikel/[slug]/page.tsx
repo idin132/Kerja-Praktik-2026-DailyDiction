@@ -80,6 +80,32 @@ function formatImageUrl(
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
+// HELPER: Konversi otomatis tag <oembed> lama dari CKEditor menjadi <iframe> YouTube
+function parseContentMedia(content: string): string {
+  if (!content) return "";
+
+  return content.replace(
+    /<oembed\s+url=["']([^"']+)["']\s*><\/oembed>/gi,
+    (match, url) => {
+      let embedUrl = url;
+
+      if (url.includes("youtube.com") || url.includes("youtu.be")) {
+        const regExp =
+          /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const matches = url.match(regExp);
+
+        if (matches && matches[2].length === 11) {
+          embedUrl = `https://www.youtube.com/embed/${matches[2]}`;
+        }
+      }
+
+      return `<div className="aspect-w-16 aspect-h-9 my-6 overflow-hidden rounded-xl">
+        <iframe src="${embedUrl}" class="w-full aspect-video border-0 rounded-xl" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+      </div>`;
+    },
+  );
+}
+
 export default async function DetailArtikel({
   params,
 }: {
@@ -132,12 +158,15 @@ export default async function DetailArtikel({
     );
   }
 
-  const rawContentString =
+  let rawContentString =
     typeof article.content === "string"
       ? article.content
       : Array.isArray(article.content)
         ? article.content.map((b: any) => b.content ?? "").join("")
         : "";
+
+  // DIUBAH: Parse tag <oembed> lama agar otomatis menjadi <iframe> YouTube
+  rawContentString = parseContentMedia(rawContentString);
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
@@ -442,6 +471,13 @@ export default async function DetailArtikel({
           }
           .rich-text-content a:hover { text-decoration: underline; }
           .rich-text-content strong { color: white; }
+          
+          /* DIUBAH: Tambahan styling khusus wrapper <figure class="media"> dari CKEditor */
+          .rich-text-content figure.media {
+            width: 100%;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+          }
           .rich-text-content iframe {
             width: 100%;
             aspect-ratio: 16/9;

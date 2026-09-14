@@ -41,6 +41,30 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn(): string => Blade::render('
+                    <style>
+                        /* OVERRIDE ABSOLUT: ISOLASI FLOATING MENU TIPTAP TANPA JS POPPER */
+                        .tiptap-floating-menu {
+                            position: sticky !important;
+                            top: 10px !important;
+                            left: 10px !important;
+                            transform: none !important;
+                            transition: none !important;
+                            z-index: 30 !important;
+                            float: left !important;
+                            margin-right: 0.75rem !important;
+                            margin-bottom: 0.5rem !important;
+                        }
+
+                        /* CEGAH PROSEMIRROR MEMBEGAL FOKUS KURSOR FORM LAIN */
+                        .fi-fo-component-container:has(.ProseMirror-focused) {
+                            contain: layout;
+                        }
+                    </style>
+                ')
+            )
+            ->renderHook(
                 PanelsRenderHook::USER_MENU_BEFORE,
                 fn(): string => Blade::render('
                     @if(auth()->check())
@@ -50,37 +74,6 @@ class AdminPanelProvider extends PanelProvider
                     @endif
                 ')
             )
-            ->renderHook(
-                PanelsRenderHook::BODY_END,
-                fn(): string => Blade::render('
-                    <script>
-                        (function () {
-                            // 1. Matikan scroll-anchoring bawaan browser
-                            const style = document.createElement("style");
-                            style.innerHTML = `
-                                html, body, .fi-body, .fi-main, .ProseMirror {
-                                    overflow-anchor: none !important;
-                                }
-                            `;
-                            document.head.appendChild(style);
-
-                            // 2. Lepaskan seleksi kursor Tiptap secara mulus saat user klik input lain
-                            document.addEventListener("mousedown", function (e) {
-                                const activeEl = document.activeElement;
-                                if (
-                                    activeEl && 
-                                    activeEl.closest(".ProseMirror") && 
-                                    !e.target.closest(".ProseMirror")
-                                ) {
-                                    // Blur editor agar tidak mempertahankan focus-trap
-                                    activeEl.blur();
-                                }
-                            }, true);
-                        })();
-                    </script>
-                ')
-            )
-
             ->pages([
                 Pages\Dashboard::class,
             ])

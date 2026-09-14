@@ -5,8 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ArticleResource\Pages;
 use App\Models\Article;
 use App\Models\User;
-use FilamentTiptapEditor\TiptapEditor;
-use App\Filament\Actions\CustomMediaAction;
+use Kahusoftware\FilamentCkeditorField\CKEditor;
 use Filament\Forms\Set;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -48,7 +47,7 @@ class ArticleResource extends Resource
                     ->label('Title')
                     ->required()
                     ->maxLength(255)
-                    ->lazy()
+                    ->extraInputAttributes(['autocomplete' => 'off'])
                     ->afterStateUpdated(function (string $operation, ?string $state, Set $set) {
                         if ($operation === 'create') {
                             $set('slug', Str::slug($state));
@@ -135,7 +134,6 @@ class ArticleResource extends Resource
                     ->label('Thumbnail Artikel (URL Gambar)')
                     ->url()
                     ->placeholder('https://example.com/image.jpg')
-                    ->lazy()
                     ->maxLength(2000)
                     ->visible(fn(Get $get) => $get('thumbnail_mode') !== 'file')
                     ->required(fn(Get $get) => $get('thumbnail_mode') !== 'file')
@@ -188,28 +186,32 @@ class ArticleResource extends Resource
 
                 Forms\Components\Textarea::make('summary')
                     ->required()
+                    ->rows(3)
                     ->columnSpanFull(),
 
-                // TIPTAP EDITOR: FULL FITUR LENGKAP + FIX POPUP OVERLAY STUTTER
-                TiptapEditor::make('content')
+                // CKEDITOR DENGAN TOMBOL ACTION UPLOAD LOKAL DI POJOK KANAN ATAS LABEL
+                CKEditor::make('content')
                     ->label('Konten Artikel')
-                    ->extraAttributes([
-                        'wire:ignore' => true,
-                        'class' => '[&_.ProseMirror]:!caret-color-white [&_.tiptap-editor-toolbar]:!static [&_.tiptap-floating-menu]:!transition-none [&_.tiptap-floating-menu]:!flex [&_.tiptap-floating-menu]:!items-center [&_.tiptap-floating-menu]:!gap-1 [&_.tiptap-bubble-menu]:!transition-none',
-                        'style' => 'min-height: 450px;',
-                    ])
-                    ->tools([
-                        'heading', 'blockquote', 'bold', 'italic', 'strike', 'link',
-                        'media', 'oembed', 'table', 'grid-builder', 'details',
-                        'bullet-list', 'ordered-list', 'code-block', 'undo', 'redo',
-                    ])
-                    ->bubbleMenuTools([
-                        'heading', 'bold', 'italic', 'strike', 'link', 'blockquote', 'bullet-list', 'ordered-list',
-                    ])
-                    ->floatingMenuTools([
-                        'media', 'table', 'grid-builder', 'details', 'code-block', 'oembed',
-                    ])
-                    ->mediaAction(CustomMediaAction::class)
+                    ->hintAction(
+                        Forms\Components\Actions\Action::make('upload_local_image')
+                            ->label('Upload Foto dari Komputer')
+                            ->icon('heroicon-o-photo')
+                            ->form([
+                                Forms\Components\FileUpload::make('image')
+                                    ->label('Pilih File Gambar dari Komputer')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('articles/content-images')
+                                    ->required(),
+                            ])
+                            ->action(function (array $data, CKEditor $component) {
+                                $url = asset('storage/' . $data['image']);
+                                $imgTag = '<p><img src="' . $url . '" alt="Gambar Artikel" class="rounded-lg max-w-full my-4"/></p>';
+                                
+                                $currentContent = $component->getState();
+                                $component->state($currentContent . $imgTag);
+                            })
+                    )
                     ->columnSpanFull()
                     ->dehydrated(true)
                     ->required(),
