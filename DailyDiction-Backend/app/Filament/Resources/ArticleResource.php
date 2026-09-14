@@ -189,29 +189,10 @@ class ArticleResource extends Resource
                     ->rows(3)
                     ->columnSpanFull(),
 
-                // CKEDITOR DENGAN TOMBOL ACTION UPLOAD LOKAL DI POJOK KANAN ATAS LABEL
+                // CKEDITOR DENGAN UPLOAD LOKAL PRESISI DI POSISI KURSOR (MENGGUNAKAN TOOLBAR NATIVE)
                 CKEditor::make('content')
                     ->label('Konten Artikel')
-                    ->hintAction(
-                        Forms\Components\Actions\Action::make('upload_local_image')
-                            ->label('Upload Foto dari Komputer')
-                            ->icon('heroicon-o-photo')
-                            ->form([
-                                Forms\Components\FileUpload::make('image')
-                                    ->label('Pilih File Gambar dari Komputer')
-                                    ->image()
-                                    ->disk('public')
-                                    ->directory('articles/content-images')
-                                    ->required(),
-                            ])
-                            ->action(function (array $data, CKEditor $component) {
-                                $url = asset('storage/' . $data['image']);
-                                $imgTag = '<p><img src="' . $url . '" alt="Gambar Artikel" class="rounded-lg max-w-full my-4"/></p>';
-                                
-                                $currentContent = $component->getState();
-                                $component->state($currentContent . $imgTag);
-                            })
-                    )
+                    ->uploadUrl(route('ckeditor.upload'))
                     ->columnSpanFull()
                     ->dehydrated(true)
                     ->required(),

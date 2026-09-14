@@ -99,8 +99,8 @@ function parseContentMedia(content: string): string {
         }
       }
 
-      return `<div className="aspect-w-16 aspect-h-9 my-6 overflow-hidden rounded-xl">
-        <iframe src="${embedUrl}" class="w-full aspect-video border-0 rounded-xl" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+      return `<div class="aspect-video w-full my-6 overflow-hidden rounded-xl">
+        <iframe src="${embedUrl}" class="w-full h-full border-0 rounded-xl" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
       </div>`;
     },
   );
@@ -165,7 +165,7 @@ export default async function DetailArtikel({
         ? article.content.map((b: any) => b.content ?? "").join("")
         : "";
 
-  // DIUBAH: Parse tag <oembed> lama agar otomatis menjadi <iframe> YouTube
+  // Parse tag <oembed> lama agar otomatis menjadi <iframe> YouTube
   rawContentString = parseContentMedia(rawContentString);
 
   return (
@@ -442,6 +442,7 @@ export default async function DetailArtikel({
             animation: cinematicFadeUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
           }
 
+          /* TEKS ARTIKEL RATA KIRI-KANAN (JUSTIFIED) */
           .rich-text-content {
             font-size: 1.125rem;
             line-height: 1.75;
@@ -457,14 +458,47 @@ export default async function DetailArtikel({
             margin-bottom: 0.75em;
             text-align: justify;
           }
-          .rich-text-content img {
-            width: 100%;
-            height: auto;
-            border-radius: 0.75rem;
+
+          /* MEMAKSA PARAGRAF YANG BERISI GAMBAR RATA TENGAH */
+          .rich-text-content p:has(img) {
+            text-align: center !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
             margin-top: 2rem;
             margin-bottom: 2rem;
+          }
+
+          /* STYLING GAMBAR: TERPOSISI PRESISI DI TENGAH */
+          .rich-text-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.75rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            display: block !important;
             border: 1px solid rgba(255, 255, 255, 0.1);
           }
+
+          /* WRAPPER FIGURE DARI CKEDITOR (JIKA ADA) */
+          .rich-text-content figure.image {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            text-align: center !important;
+          }
+
+          .rich-text-content figure.image img {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+          }
+
           .rich-text-content a {
             color: #FFD700;
             text-decoration: none;
@@ -472,18 +506,21 @@ export default async function DetailArtikel({
           .rich-text-content a:hover { text-decoration: underline; }
           .rich-text-content strong { color: white; }
           
-          /* DIUBAH: Tambahan styling khusus wrapper <figure class="media"> dari CKEditor */
+          /* STYLING YOUTUBE & EMBED MEDIA (TETAP 100% LEBAR & GEDE) */
           .rich-text-content figure.media {
-            width: 100%;
-            margin-top: 1.5rem;
-            margin-bottom: 1.5rem;
+            width: 100% !important;
+            display: block !important;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
           }
+
           .rich-text-content iframe {
-            width: 100%;
+            width: 100% !important;
             aspect-ratio: 16/9;
             border-radius: 0.75rem;
             margin-top: 1.5rem;
             margin-bottom: 1.5rem;
+            display: block !important;
           }
         `,
         }}
