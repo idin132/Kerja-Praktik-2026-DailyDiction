@@ -21,6 +21,8 @@ import ArticleInteractions from "@/components/ArticleInteractions";
 import TweetRenderer from "@/components/TweetRenderer";
 import ViewTracker from "@/components/ViewTracker";
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
 interface NavReviewItem {
@@ -79,6 +81,32 @@ function formatImageUrl(
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
+// HELPER: Konversi otomatis tag <oembed> lama dari CKEditor menjadi <iframe> YouTube
+function parseContentMedia(content: string): string {
+  if (!content) return "";
+
+  return content.replace(
+    /<oembed\s+url=["']([^"']+)["']\s*><\/oembed>/gi,
+    (match, url) => {
+      let embedUrl = url;
+
+      if (url.includes("youtube.com") || url.includes("youtu.be")) {
+        const regExp =
+          /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const matches = url.match(regExp);
+
+        if (matches && matches[2].length === 11) {
+          embedUrl = `https://www.youtube.com/embed/${matches[2]}`;
+        }
+      }
+
+      return `<div class="aspect-video w-full my-6 overflow-hidden rounded-xl">
+        <iframe src="${embedUrl}" class="w-full h-full border-0 rounded-xl" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+      </div>`;
+    },
+  );
+}
+
 export default async function DetailReview({
   params,
 }: {
@@ -94,6 +122,7 @@ export default async function DetailReview({
 
   let review: ReviewItem | null = (reviewRes as any)?.data || reviewRes;
 
+  // Jika gagal di game review, coba ambil lewat API artikel umum (karena backend kamu menyatukan post dalam satu resource)
   if (!review || !review.title) {
     const articleRes = await getArticleBySlug(slug).catch(() => null);
     review = (articleRes as any)?.data || articleRes;
@@ -130,12 +159,14 @@ export default async function DetailReview({
 
   const platforms = parsePlatforms(review.platform);
 
-  const rawContentString =
+  let rawContentString =
     typeof review.content === "string"
       ? review.content
       : Array.isArray(review.content)
         ? review.content.map((b: any) => b.content ?? "").join("")
         : "";
+
+  rawContentString = parseContentMedia(rawContentString);
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
@@ -149,7 +180,6 @@ export default async function DetailReview({
               <article>
                 {/* Header Review */}
                 <div className="mb-8 space-y-6">
-                  {/* Badge Platform */}
                   {platforms.length > 0 && (
                     <div className="flex flex-wrap items-center gap-2">
                       {platforms.map((plat: string, idx: number) => (
@@ -402,13 +432,38 @@ export default async function DetailReview({
             margin-bottom: 0.75em;
             text-align: justify;
           }
-          .rich-text-content img {
-            width: 100%;
-            height: auto;
-            border-radius: 0.75rem;
+          .rich-text-content p:has(img) {
+            text-align: center !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
             margin-top: 2rem;
             margin-bottom: 2rem;
-            border: 1px solid rgba(255,255,255,0.1);
+          }
+          .rich-text-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.75rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            display: block !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+          }
+          .rich-text-content figure.image {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            text-align: center !important;
+          }
+          .rich-text-content figure.image img {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
           }
           .rich-text-content a {
             color: #FFD700;
@@ -416,12 +471,19 @@ export default async function DetailReview({
           }
           .rich-text-content a:hover { text-decoration: underline; }
           .rich-text-content strong { color: white; }
+          .rich-text-content figure.media {
+            width: 100% !important;
+            display: block !important;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+          }
           .rich-text-content iframe {
-            width: 100%;
+            width: 100% !important;
             aspect-ratio: 16/9;
             border-radius: 0.75rem;
             margin-top: 1.5rem;
             margin-bottom: 1.5rem;
+            display: block !important;
           }
         `,
         }}
