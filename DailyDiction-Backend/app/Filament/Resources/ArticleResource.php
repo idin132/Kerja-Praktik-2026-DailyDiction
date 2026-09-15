@@ -189,13 +189,12 @@ class ArticleResource extends Resource
                     ->rows(3)
                     ->columnSpanFull(),
 
-                // CKEDITOR DENGAN OPTIMASI DEFER UNTUK MENGURANGI BEBAN LOADING LIVEWIRE
+                // CKEDITOR DENGAN UPLOAD LOKAL DI TITIK KURSOR (AMANA TANPA METHOD UN-SUPPORTED)
                 CKEditor::make('content')
                     ->label('Konten Artikel')
                     ->uploadUrl(route('ckeditor.upload'))
                     ->columnSpanFull()
                     ->dehydrated(true)
-                    ->defer()
                     ->required(),
 
                 Forms\Components\TextInput::make('read_time')
