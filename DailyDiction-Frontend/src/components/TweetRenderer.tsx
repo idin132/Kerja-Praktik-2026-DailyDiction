@@ -35,15 +35,19 @@ class SafeTweetBoundary extends Component<
 export default function TweetRenderer({ htmlContent }: { htmlContent: string }) {
   if (!htmlContent) return null;
 
-  // 1. Bersihkan sisa string atribut iframe terpotong/bocor dari database
+  // 1. Bersihkan sisa string iframe bocor
   let cleaned = htmlContent.replace(
     /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
     ""
   );
 
-  // 2. Hapus tag <p> kosong yang membungkus URL Tweet agar tidak menghasilkan spasi raksasa
+  // 2. POTONG TAG <p> YANG MEMBUNGKUS LINK TWITTER (Mencegah gap/spacing raksasa)
   cleaned = cleaned.replace(
     /<p[^>]*>\s*(https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\s<]+)\s*<\/p>/gi,
+    "$1"
+  );
+  cleaned = cleaned.replace(
+    /<p[^>]*>\s*(<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/\d+"[^>]*>.*?<\/a>)\s*<\/p>/gi,
     "$1"
   );
 
@@ -96,24 +100,49 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           );
         }
 
-        const cleanPart = part
-          .replace(/^(\s*<p>\s*<\/p>\s*)+|(\s*<p>\s*<\/p>\s*)+$/gi, "")
-          .trim();
+        // Abaikan fragmen HTML yang hanya berisi whitespace / tag p kosong
+        const cleanPart = part.replace(/^(\s*<p>\s*<\/p>\s*)+|(\s*<p>\s*<\/p>\s*)+$/gi, "").trim();
+        if (!cleanPart) return null;
 
-        if (cleanPart) {
-          return (
-            <div
-              key={`html-${index}`}
-              dangerouslySetInnerHTML={{ __html: cleanPart }}
-            />
-          );
-        }
-
-        return null;
+        return (
+          <div
+            key={`html-${index}`}
+            dangerouslySetInnerHTML={{ __html: cleanPart }}
+          />
+        );
       })}
 
-      {/* OVERRIDE HANYA UNTUK MEDIA TWEET EMBED & SPACING */}
       <style jsx global>{`
+        /* MATIKAN COLOR PROSE-INVERT & GUNAKAN STYLE DARI CKEDITOR (TERMASUK SPAN COLOR) */
+        .rich-text-content.prose h1,
+        .rich-text-content.prose h2,
+        .rich-text-content.prose h3,
+        .rich-text-content.prose h4,
+        .rich-text-content.prose h5,
+        .rich-text-content.prose h6 {
+          color: inherit;
+          font-weight: 900;
+          line-height: 1.2 !important;
+          margin-top: 1.5em !important;
+          margin-bottom: 0.5em !important;
+          text-align: justify;
+        }
+
+        .rich-text-content h1 span[style*="color"],
+        .rich-text-content h2 span[style*="color"],
+        .rich-text-content h3 span[style*="color"],
+        .rich-text-content h4 span[style*="color"] {
+          color: inherit !important;
+        }
+
+        .rich-text-content p {
+          line-height: 1.2 !important;
+          text-align: justify !important;
+          margin-bottom: 0.85em !important;
+          margin-top: 0 !important;
+        }
+
+        /* HILANGKAN MARGIN DAN SPASI EXTRA TWITTER EMBED */
         .tweet-container {
           pointer-events: auto !important;
           margin-top: 0.5rem !important;
