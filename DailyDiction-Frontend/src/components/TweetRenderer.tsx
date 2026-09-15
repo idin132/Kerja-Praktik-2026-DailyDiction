@@ -44,26 +44,24 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
   const marker = "___TWEET_BLOCK_";
   const markerEnd = "___";
 
-  // 2. REGEX SUPER: Hancurkan seluruh tag <p> atau <figure> pembungkus Tweet sampai ke akar
-  // Agar tidak meninggalkan sisa baris kosong yang bikin spasi raksasa
-  cleaned = cleaned.replace(
-    /<p[^>]*>\s*<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"]*"[^>]*>.*?<\/a>\s*<\/p>/gi,
-    (match, tweetId) => `${marker}${tweetId}${markerEnd}`
-  );
-  cleaned = cleaned.replace(
-    /<p[^>]*>\s*https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*\s*<\/p>/gi,
-    (match, tweetId) => `${marker}${tweetId}${markerEnd}`
-  );
+  // 2. REGEX PEMBUNUH SPASI GAIB
+  // Telan seluruh tag <figure> atau <p> jika hanya berisi link Twitter.
+  // Ini mencegah terpecahnya tag pembuka <p> dan penutup </p> yang bikin spasi raksasa.
   cleaned = cleaned.replace(
     /<figure[^>]*>\s*<oembed[^>]*url=["']https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>\s*<\/oembed>\s*<\/figure>/gi,
-    (match, tweetId) => `${marker}${tweetId}${markerEnd}`
+    `${marker}$1${markerEnd}`
   );
   cleaned = cleaned.replace(
-    /<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"]*"[^>]*>.*?<\/a>|https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*/gi,
-    (match, tweetId1, tweetId2) => `${marker}${tweetId1 || tweetId2}${markerEnd}`
+    /<p[^>]*>\s*(?:<a[^>]*>)?\s*https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*(?:<\/a>)?\s*<\/p>/gi,
+    `${marker}$1${markerEnd}`
+  );
+  // Fallback jika URL berdiri sendiri
+  cleaned = cleaned.replace(
+    /(?:<a[^>]*>)?https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*(?:<\/a>)?/gi,
+    (match, tweetId) => (tweetId ? `${marker}${tweetId}${markerEnd}` : match)
   );
 
-  // 3. Pisahkan HTML dan Tweet dengan aman
+  // 3. Split HTML dengan aman
   const regexSplit = new RegExp(`${marker}(\\d+)${markerEnd}`, "g");
   const parts: string[] = [];
   let lastIndex = 0;
@@ -86,7 +84,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
         if (part.startsWith("TWEET_ID:")) {
           const tweetId = part.split(":")[1];
           return (
-            <div key={`tweet-${index}`} className="flex justify-center w-full my-2 not-prose">
+            <div key={`tweet-${index}`} className="flex justify-center w-full my-0 py-0 not-prose">
               <div className="w-full max-w-lg">
                 <SafeTweetBoundary>
                   <Tweet id={tweetId} />
@@ -96,13 +94,13 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           );
         }
 
-        // Sapu bersih tag <p></p> kosong yang mungkin masih nyempil
-        const cleanPart = part.replace(/^(\s*<p>\s*<\/p>\s*)+|(\s*<p>\s*<\/p>\s*)+$/gi, "").trim();
+        const cleanPart = part.trim();
         if (!cleanPart) return null;
 
         return (
           <div
             key={`html-${index}`}
+            className="contents" 
             dangerouslySetInnerHTML={{ __html: cleanPart }}
           />
         );
@@ -110,11 +108,15 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
 
       <style jsx global>{`
         /* --- KUNCI WARNA HEADING --- */
-        /* Hapus !important pada color agar span style dari CKEditor BISA MENANG */
-        .rich-text-content.prose-invert h1,
-        .rich-text-content.prose-invert h2,
-        .rich-text-content.prose-invert h3,
-        .rich-text-content.prose-invert h4 {
+        /* H1-H6 default Kuning.
+           JIKA dari CKEditor user set warna (misal merah: <h2 style="color: red">), 
+           maka browser akan otomatis memenangkan inline style CKEditor! */
+        .rich-text-content h1,
+        .rich-text-content h2,
+        .rich-text-content h3,
+        .rich-text-content h4,
+        .rich-text-content h5,
+        .rich-text-content h6 {
           color: #FFD700; 
           font-weight: 900 !important;
           line-height: 1.2 !important;
@@ -128,14 +130,14 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           margin-bottom: 1em !important;
         }
 
-        /* --- PAKSA EMBED TWEET RAPAT --- */
-        .tweet-container {
-          margin-top: 0 !important;
-          margin-bottom: 0 !important;
-        }
-        
+        /* --- ABSOLUTE SPACING KILLER --- */
+        /* Matikan semua margin bawaan dari react-tweet */
         .react-tweet-theme {
+          margin: 0 !important;
           --tweet-container-margin: 0 !important;
+        }
+        [class*="react-tweet-container"] {
+          margin: 0 !important;
         }
       `}</style>
     </div>
