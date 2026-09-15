@@ -23,7 +23,7 @@ class SafeTweetBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="p-4 my-4 rounded-lg border border-dark-border bg-dark-card/50 text-center text-xs font-mono text-text-muted">
+        <div className="p-4 my-2 rounded-lg border border-dark-border bg-dark-card/50 text-center text-xs font-mono text-text-muted">
           Gagal memuat Tweet (Embed diblokir atau Tweet telah dihapus)
         </div>
       );
@@ -36,21 +36,24 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
   if (!htmlContent) return null;
 
   // 1. Bersihkan sisa string atribut iframe terpotong/bocor dari database
-  let sanitizedContent = htmlContent.replace(
+  let cleaned = htmlContent.replace(
     /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
     ""
   );
 
-  // 2. Bersihkan tag <p> kosong hasil sisa pembungkusan URL Tweet di CKEditor
-  sanitizedContent = sanitizedContent.replace(/<p>\s*<\/p>/gi, "");
+  // 2. Hapus tag <p> kosong yang membungkus URL Tweet agar tidak menghasilkan spasi raksasa
+  cleaned = cleaned.replace(
+    /<p[^>]*>\s*(https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\s<]+)\s*<\/p>/gi,
+    "$1"
+  );
 
   const marker = "___TWEET_BLOCK_";
   const markerEnd = "___";
 
-  const replacedHtml = sanitizedContent.replace(
-    /<p[^>]*>\s*<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"]*"[^>]*>.*?<\/a>\s*<\/p>|<p[^>]*>\s*https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*\s*<\/p>|<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"]*"[^>]*>.*?<\/a>|https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*/gi,
-    (match, id1, id2, id3, id4) => {
-      const tweetId = id1 || id2 || id3 || id4;
+  const replacedHtml = cleaned.replace(
+    /<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"]*"[^>]*>.*?<\/a>|https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*/gi,
+    (match, id1, id2) => {
+      const tweetId = id1 || id2;
       return `${marker}${tweetId}${markerEnd}`;
     }
   );
@@ -82,7 +85,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           return (
             <div
               key={`tweet-${index}-${tweetId}`}
-              className="tweet-container my-4 flex w-full justify-center dark not-prose"
+              className="tweet-container my-2 flex w-full justify-center dark not-prose"
             >
               <div className="w-full max-w-lg">
                 <SafeTweetBoundary>
@@ -93,8 +96,10 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           );
         }
 
-        // Jangan render jika bagian HTML hanya berisi whitespace/paragraf kosong sisa pemisahan
-        const cleanPart = part.replace(/^(\s*<p>\s*<\/p>\s*)+|(\s*<p>\s*<\/p>\s*)+$/gi, "").trim();
+        const cleanPart = part
+          .replace(/^(\s*<p>\s*<\/p>\s*)+|(\s*<p>\s*<\/p>\s*)+$/gi, "")
+          .trim();
+
         if (cleanPart) {
           return (
             <div
@@ -107,45 +112,20 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
         return null;
       })}
 
+      {/* OVERRIDE HANYA UNTUK MEDIA TWEET EMBED & SPACING */}
       <style jsx global>{`
-        /* HEADING DEFAULT KUNING (#FFD700) SESUAI TAMPILAN THEME UNTUK H1-H6 */
-        .rich-text-content h1,
-        .rich-text-content h2,
-        .rich-text-content h3,
-        .rich-text-content h4,
-        .rich-text-content h5,
-        .rich-text-content h6 {
-          color: #FFD700 !important;
-          font-weight: 900 !important;
-          line-height: 1.15 !important;
-          margin-top: 1.5em !important;
-          margin-bottom: 0.5em !important;
-        }
-
-        /* JIKA TEKS DI DALAM HEADING MEMILIKI COLOR KUSTOM DARI CKEDITOR (SPAN STYLE), GUNAKAN WARNA TERSEBUT */
-        .rich-text-content h1 span[style*="color"],
-        .rich-text-content h2 span[style*="color"],
-        .rich-text-content h3 span[style*="color"],
-        .rich-text-content h4 span[style*="color"] {
-          color: inherit !important;
-        }
-
-        .rich-text-content p {
-          line-height: 1.15 !important;
-          text-align: justify !important;
-          margin-bottom: 1em !important;
-        }
-
-        /* HILANGKAN MARGIN DAN SPASI KOSONG PADA TWEET EMBED */
         .tweet-container {
           pointer-events: auto !important;
-          margin-top: 1rem !important;
-          margin-bottom: 1rem !important;
+          margin-top: 0.5rem !important;
+          margin-bottom: 0.5rem !important;
         }
 
-        .tweet-container [class*="react-tweet"] {
+        .tweet-container [class*="react-tweet"],
+        .tweet-container article {
           margin-top: 0 !important;
           margin-bottom: 0 !important;
+          padding-top: 0 !important;
+          padding-bottom: 0 !important;
         }
 
         .tweet-container img {

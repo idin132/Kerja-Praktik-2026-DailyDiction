@@ -430,19 +430,29 @@ export default async function DetailReview({
             text-align: justify;
           }
 
-          /* WARNA HEADING DEFAULT KUNING (#FFD700) */
+          /* HEADING DEFAULT PUTIH POLOS MENGIKUTI BASE BACKEND */
           .rich-text-content h1,
           .rich-text-content h2,
           .rich-text-content h3,
           .rich-text-content h4,
           .rich-text-content h5,
           .rich-text-content h6 {
-            color: #FFD700 !important;
-            font-weight: 900 !important;
-            margin-top: 1.75em !important;
-            margin-bottom: 0.75em !important;
-            line-height: 1.15 !important;
+            color: #ffffff;
+            font-weight: 900;
+            margin-top: 1.75em;
+            margin-bottom: 0.75em;
+            line-height: 1.15;
             text-align: justify;
+          }
+
+          /* JIKA HEADING DIBERI WARNA KUSTOM DARI CKEDITOR BACKEND (SPAN/STYLE) */
+          .rich-text-content h1[style*="color"],
+          .rich-text-content h2[style*="color"],
+          .rich-text-content h3[style*="color"],
+          .rich-text-content h1 span[style*="color"],
+          .rich-text-content h2 span[style*="color"],
+          .rich-text-content h3 span[style*="color"] {
+            color: inherit !important;
           }
 
           .rich-text-content p[style*="text-align: left"] { text-align: left !important; }
