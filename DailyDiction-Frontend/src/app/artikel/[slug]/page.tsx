@@ -165,7 +165,6 @@ export default async function DetailArtikel({
         ? article.content.map((b: any) => b.content ?? "").join("")
         : "";
 
-  // Parse tag <oembed> lama agar otomatis menjadi <iframe> YouTube
   rawContentString = parseContentMedia(rawContentString);
 
   return (
@@ -442,24 +441,81 @@ export default async function DetailArtikel({
             animation: cinematicFadeUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
           }
 
-          /* TEKS ARTIKEL RATA KIRI-KANAN (JUSTIFIED) */
+          /* BASE STYLING KONTEN & SPACING LINE-HEIGHT 1.15 */
           .rich-text-content {
             font-size: 1.125rem;
-            line-height: 1.75;
+            line-height: 1.15;
             color: #d1d5db;
             text-align: justify;
           }
-          .rich-text-content p { margin-bottom: 1.5em; text-align: justify; }
-          .rich-text-content h2,
-          .rich-text-content h3 {
-            color: white;
-            font-weight: 900;
-            margin-top: 2em;
-            margin-bottom: 0.75em;
+
+          .rich-text-content p {
+            margin-bottom: 1.25em;
+            line-height: 1.15;
             text-align: justify;
           }
 
-          /* MEMAKSA PARAGRAF YANG BERISI GAMBAR RATA TENGAH */
+          .rich-text-content h1,
+          .rich-text-content h2,
+          .rich-text-content h3,
+          .rich-text-content h4,
+          .rich-text-content h5,
+          .rich-text-content h6 {
+            color: white;
+            font-weight: 900;
+            margin-top: 1.75em;
+            margin-bottom: 0.75em;
+            line-height: 1.15;
+            text-align: justify;
+          }
+
+          /* PRESERVE INLINE STYLING CKEDITOR (COLOR, FONT-FAMILY, FONT-SIZE, ALIGNMENT) */
+          .rich-text-content [style*="color"] {
+            color: inherit;
+          }
+
+          .rich-text-content [style*="font-family"] {
+            font-family: inherit;
+          }
+
+          .rich-text-content [style*="font-size"] {
+            font-size: inherit;
+          }
+
+          /* SUPORT SPECIFIC ALIGNMENT APABILA DIATUR DI CKEDITOR */
+          .rich-text-content p[style*="text-align: left"],
+          .rich-text-content div[style*="text-align: left"],
+          .rich-text-content h1[style*="text-align: left"],
+          .rich-text-content h2[style*="text-align: left"],
+          .rich-text-content h3[style*="text-align: left"] {
+            text-align: left !important;
+          }
+
+          .rich-text-content p[style*="text-align: center"],
+          .rich-text-content div[style*="text-align: center"],
+          .rich-text-content h1[style*="text-align: center"],
+          .rich-text-content h2[style*="text-align: center"],
+          .rich-text-content h3[style*="text-align: center"] {
+            text-align: center !important;
+          }
+
+          .rich-text-content p[style*="text-align: right"],
+          .rich-text-content div[style*="text-align: right"],
+          .rich-text-content h1[style*="text-align: right"],
+          .rich-text-content h2[style*="text-align: right"],
+          .rich-text-content h3[style*="text-align: right"] {
+            text-align: right !important;
+          }
+
+          .rich-text-content p[style*="text-align: justify"],
+          .rich-text-content div[style*="text-align: justify"],
+          .rich-text-content h1[style*="text-align: justify"],
+          .rich-text-content h2[style*="text-align: justify"],
+          .rich-text-content h3[style*="text-align: justify"] {
+            text-align: justify !important;
+          }
+
+          /* DUKUNGAN PARAGRAF BERISI GAMBAR */
           .rich-text-content p:has(img) {
             text-align: center !important;
             display: flex !important;
@@ -470,7 +526,7 @@ export default async function DetailArtikel({
             margin-bottom: 2rem;
           }
 
-          /* STYLING GAMBAR: TERPOSISI PRESISI DI TENGAH */
+          /* STYLING GAMBAR: DIPOSISIKAN DI TENGAH BERAPAPUN UKURANNYA */
           .rich-text-content img {
             max-width: 100%;
             height: auto;
@@ -483,7 +539,7 @@ export default async function DetailArtikel({
             border: 1px solid rgba(255, 255, 255, 0.1);
           }
 
-          /* WRAPPER FIGURE DARI CKEDITOR (JIKA ADA) */
+          /* WRAPPER FIGURE DARI CKEDITOR */
           .rich-text-content figure.image {
             display: flex !important;
             justify-content: center !important;
@@ -506,7 +562,7 @@ export default async function DetailArtikel({
           .rich-text-content a:hover { text-decoration: underline; }
           .rich-text-content strong { color: white; }
           
-          /* STYLING YOUTUBE & EMBED MEDIA (TETAP 100% LEBAR & GEDE) */
+          /* STYLING YOUTUBE & EMBED MEDIA */
           .rich-text-content figure.media {
             width: 100% !important;
             display: block !important;
