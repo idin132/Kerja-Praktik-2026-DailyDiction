@@ -35,13 +35,13 @@ class SafeTweetBoundary extends Component<
 export default function TweetRenderer({ htmlContent }: { htmlContent: string }) {
   if (!htmlContent) return null;
 
-  // 1. Bersihkan sisa string atribut iframe terpotong/bocor dari database
+  // 1. Bersihkan sisa string iframe bocor
   let cleaned = htmlContent.replace(
     /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
     ""
   );
 
-  // 2. Hapus wrapper <figure> atau <p> di sekitar link Twitter/X agar tidak meninggalkan spasi raksasa
+  // 2. HAPUS TAG PEMBUNGKUS <figure> & <p> DI SEKITAR TWEET UNTUK HILANGKAN SPASI RAKSASA
   cleaned = cleaned.replace(
     /<figure[^>]*>\s*<oembed[^>]*url=["'](https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/\d+[^"']*)["'][^>]*>\s*<\/oembed>\s*<\/figure>/gi,
     "$1"
@@ -104,7 +104,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           );
         }
 
-        // Hapus elemen p/div kosong sisa pemisahan
+        // Filter dan buang bagian HTML kosong hasil pemisahan
         const cleanPart = part
           .replace(/^(\s*<p>\s*<\/p>\s*)+|(\s*<p>\s*<\/p>\s*)+$/gi, "")
           .replace(/^(\s*<figure>\s*<\/figure>\s*)+|(\s*<figure>\s*<\/figure>\s*)+$/gi, "")
@@ -121,7 +121,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
       })}
 
       <style jsx global>{`
-        /* SINKRONISASI WARNA DENGAN CKEDITOR BACKEND */
+        /* HEADING: SINKRON 100% DENGAN CKEDITOR BACKEND */
         .rich-text-content.prose h1,
         .rich-text-content.prose h2,
         .rich-text-content.prose h3,
@@ -135,9 +135,9 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           text-align: justify;
         }
 
-        /* MEMASIKAN INLINE STYLE WARNA DARI CKEDITOR TIDAK DITIMPA CSS LAIN */
+        /* MEMBACA INLINE STYLE COLOR DARI CKEDITOR JIKA BE DIBERI WARNA KUNING, MERAH, BLUE, DLL */
         .rich-text-content [style*="color"] {
-          color: inherit;
+          color: inherit !important;
         }
 
         .rich-text-content p {
