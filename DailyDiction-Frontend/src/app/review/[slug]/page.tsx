@@ -81,17 +81,14 @@ function formatImageUrl(
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-// HELPER PERBAIKAN: Bersihkan sisa tag rusak dan render <iframe> YouTube dengan aman
 function parseContentMedia(content: string): string {
   if (!content) return "";
 
-  // 1. Bersihkan sisa string atribut iframe yang terpotong/bocor dari database jika ada
   let cleanContent = content.replace(
     /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
     ""
   );
 
-  // 2. Parse tag <oembed> CKEditor menjadi <iframe> YouTube aman
   return cleanContent.replace(
     /<oembed\s+url=["']([^"']+)["']\s*><\/oembed>/gi,
     (match, url) => {
@@ -421,7 +418,6 @@ export default async function DetailReview({
       <style
         dangerouslySetInnerHTML={{
           __html: `
-          /* BASE STYLING KONTEN & SPACING LINE-HEIGHT 1.15 */
           .rich-text-content {
             font-size: 1.125rem;
             line-height: 1.15;
@@ -434,18 +430,18 @@ export default async function DetailReview({
             text-align: justify;
           }
 
-          /* WARNA HEADING DEFAULT KUNING SEPERTI DARI CKEDITOR BACKEND */
+          /* DEFAULT WARNA HEADING PUTIH POLOS SESUAI BE */
           .rich-text-content h1,
           .rich-text-content h2,
           .rich-text-content h3,
           .rich-text-content h4,
           .rich-text-content h5,
           .rich-text-content h6 {
-            color: #FFD700 !important;
-            font-weight: 900 !important;
-            margin-top: 1.75em !important;
-            margin-bottom: 0.75em !important;
-            line-height: 1.15 !important;
+            color: white;
+            font-weight: 900;
+            margin-top: 1.75em;
+            margin-bottom: 0.75em;
+            line-height: 1.15;
             text-align: justify;
           }
 

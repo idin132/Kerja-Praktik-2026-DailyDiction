@@ -36,7 +36,7 @@ class SafeTweetBoundary extends Component<
 export default function TweetRenderer({ htmlContent }: { htmlContent: string }) {
   if (!htmlContent) return null;
 
-  // FIX 1: Hapus sisa string atribut iframe yang terpotong/bocor dari database
+  // Hapus sisa string atribut iframe terpotong/bocor jika ada dari database
   const sanitizedContent = htmlContent.replace(
     /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
     ""
@@ -73,14 +73,14 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
   }
 
   return (
-    <div className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-12">
+    <div className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8">
       {parts.map((part, index) => {
         if (part.startsWith("TWEET_ID:")) {
           const tweetId = part.replace("TWEET_ID:", "");
           return (
             <div
               key={`tweet-${index}-${tweetId}`}
-              className="tweet-container my-10 flex w-full justify-center dark not-prose"
+              className="tweet-container my-4 flex w-full justify-center dark not-prose"
             >
               <div className="w-full max-w-lg">
                 <SafeTweetBoundary>
@@ -103,27 +103,46 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
         return null;
       })}
 
-      {/* OVERRIDE CSS: FIX HEADING KUNING PRESISI & TWEET MEDIA */}
       <style jsx global>{`
+        /* HEADING SINKRON BE: DEFAULT PUTIH & MENGIKUTI INLINE COLOR CKEDITOR */
         .rich-text-content h1,
         .rich-text-content h2,
         .rich-text-content h3,
-        .rich-text-content h4 {
-          color: #FFD700 !important;
-          font-weight: 900 !important;
+        .rich-text-content h4,
+        .rich-text-content h5,
+        .rich-text-content h6 {
+          color: white;
+          font-weight: 900;
           line-height: 1.15 !important;
-          margin-top: 1.75em !important;
-          margin-bottom: 0.75em !important;
+          margin-top: 1.5em !important;
+          margin-bottom: 0.5em !important;
+        }
+
+        .rich-text-content h1[style*="color"],
+        .rich-text-content h2[style*="color"],
+        .rich-text-content h3[style*="color"],
+        .rich-text-content h4[style*="color"] {
+          color: inherit;
         }
 
         .rich-text-content p {
           line-height: 1.15 !important;
           text-align: justify !important;
+          margin-bottom: 1em !important;
         }
 
+        /* PERBAIKAN SPASI EMBED TWEET */
         .tweet-container {
           pointer-events: auto !important;
+          margin-top: 1rem !important;
+          margin-bottom: 1rem !important;
         }
+
+        .tweet-container [class*="react-tweet"] {
+          margin-top: 0 !important;
+          margin-bottom: 0 !important;
+        }
+
         .tweet-container img {
           width: auto !important;
           height: auto !important;
@@ -132,16 +151,19 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           border: none !important;
           animation: none !important;
         }
+
         .tweet-container video {
           width: 100% !important;
           height: auto !important;
           border-radius: 0.5rem !important;
           object-fit: contain !important;
         }
+
         .tweet-container button {
           cursor: pointer !important;
           pointer-events: auto !important;
         }
+
         .react-tweet-theme {
           --tweet-container-margin: 0 !important;
         }

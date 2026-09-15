@@ -455,18 +455,18 @@ export default async function DetailArtikel({
             text-align: justify;
           }
 
-          /* WARNA HEADING DEFAULT KUNING SEPERTI DARI CKEDITOR BACKEND */
+          /* DEFAULT WARNA HEADING PUTIH POLOS SESUAI BE */
           .rich-text-content h1,
           .rich-text-content h2,
           .rich-text-content h3,
           .rich-text-content h4,
           .rich-text-content h5,
           .rich-text-content h6 {
-            color: #FFD700 !important;
-            font-weight: 900 !important;
-            margin-top: 1.75em !important;
-            margin-bottom: 0.75em !important;
-            line-height: 1.15 !important;
+            color: white;
+            font-weight: 900;
+            margin-top: 1.75em;
+            margin-bottom: 0.75em;
+            line-height: 1.15;
             text-align: justify;
           }
 
