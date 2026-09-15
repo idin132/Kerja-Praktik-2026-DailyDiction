@@ -1,7 +1,8 @@
 "use client";
 
-import React, { Component, ReactNode } from "react";
+import React, { Component, ReactNode, useEffect, useState } from "react";
 import { Tweet } from "react-tweet";
+import ReactDOM from "react-dom";
 
 class SafeTweetBoundary extends Component<
   { children: ReactNode },
@@ -33,87 +34,72 @@ class SafeTweetBoundary extends Component<
 }
 
 export default function TweetRenderer({ htmlContent }: { htmlContent: string }) {
-  if (!htmlContent) return null;
+  const [tweetSlots, setTweetSlots] = useState<{ id: string; elementId: string }[]>([]);
+  const [parsedHtml, setParsedHtml] = useState<string>("");
 
-  // 1. Bersihkan sisa string iframe bocor
-  let clean = htmlContent.replace(
-    /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
-    ""
-  );
+  useEffect(() => {
+    if (!htmlContent) return;
 
-  // 2. Bersihkan tag <p> dan <figure> yang membungkus link Twitter agar tidak meninggalkan space raksasa
-  clean = clean.replace(
-    /<figure[^>]*>\s*<oembed[^>]*url=["'](https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/\d+[^"']*)["'][^>]*>\s*<\/oembed>\s*<\/figure>/gi,
-    "$1"
-  );
-  clean = clean.replace(
-    /<p[^>]*>\s*(https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\s<]+)\s*<\/p>/gi,
-    "$1"
-  );
-  clean = clean.replace(
-    /<p[^>]*>\s*(<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/\d+"[^>]*>.*?<\/a>)\s*<\/p>/gi,
-    "$1"
-  );
+    // 1. Bersihkan sisa string atribut iframe terpotong/bocor dari DB
+    let clean = htmlContent.replace(
+      /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
+      ""
+    );
 
-  const marker = "___TWEET_ID_";
-  const markerEnd = "___";
+    const slots: { id: string; elementId: string }[] = [];
+    let counter = 0;
 
-  // 3. Ekstrak Tweet ID & ganti dengan marker
-  const replacedHtml = clean.replace(
-    /<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"]*"[^>]*>.*?<\/a>|<oembed[^>]*url=["']https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>\s*<\/oembed>|https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*/gi,
-    (match, id1, id2, id3) => {
-      const tweetId = id1 || id2 || id3;
-      return `${marker}${tweetId}${markerEnd}`;
-    }
-  );
+    // 2. Ganti URL / Embed Tweet langsung di tempatnya (Presisi tanpa merusak struktur HTML)
+    const processedHtml = clean.replace(
+      /<p[^>]*>\s*<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"]*"[^>]*>.*?<\/a>\s*<\/p>|<p[^>]*>\s*https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*\s*<\/p>|<figure[^>]*>\s*<oembed[^>]*url=["']https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>\s*<\/oembed>\s*<\/figure>|https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*/gi,
+      (match, id1, id2, id3, id4) => {
+        const tweetId = id1 || id2 || id3 || id4;
+        if (!tweetId) return match;
 
-  // 4. Split HTML menjadi bagian teks & bagian Tweet ID
-  const parts = replacedHtml.split(new RegExp(`(${marker}\\d+${markerEnd})`, "g"));
+        const slotId = `tweet-slot-${counter++}`;
+        slots.push({ id: tweetId, elementId: slotId });
+        return `<div id="${slotId}" class="tweet-placeholder my-2 flex justify-center"></div>`;
+      }
+    );
+
+    setTweetSlots(slots);
+    setParsedHtml(processedHtml);
+  }, [htmlContent]);
 
   return (
     <div className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8">
-      {parts.map((part, index) => {
-        if (part.startsWith(marker) && part.endsWith(markerEnd)) {
-          const tweetId = part.replace(marker, "").replace(markerEnd, "");
-          return (
-            <div
-              key={`tweet-${index}-${tweetId}`}
-              className="tweet-container my-3 flex w-full justify-center not-prose"
-            >
-              <div className="w-full max-w-lg">
-                <SafeTweetBoundary>
-                  <Tweet id={tweetId} />
-                </SafeTweetBoundary>
-              </div>
-            </div>
-          );
-        }
+      {/* Render HTML utama sekaligus dalam 1 div untuk menjaga margin paragraf alami */}
+      <div dangerouslySetInnerHTML={{ __html: parsedHtml }} />
 
-        // Render bagian HTML biasa (teks paragraf, judul, dll)
-        if (!part.trim()) return null;
+      {/* Inject React Tweet Component langsung ke placeholder-nya */}
+      {tweetSlots.map((slot) => {
+        const targetEl = typeof document !== "undefined" ? document.getElementById(slot.elementId) : null;
+        if (!targetEl) return null;
 
-        return (
-          <div
-            key={`html-${index}`}
-            dangerouslySetInnerHTML={{ __html: part }}
-          />
+        return ReactDOM.createPortal(
+          <div className="w-full max-w-lg not-prose">
+            <SafeTweetBoundary>
+              <Tweet id={slot.id} />
+            </SafeTweetBoundary>
+          </div>,
+          targetEl
         );
       })}
 
       <style jsx global>{`
-        /* SINKRONISASI WARNA DENGAN CKEDITOR BACKEND */
+        /* 1. SINKRONISASI HEADING & WARNA BACKEND CKEDITOR */
         .rich-text-content.prose h1,
         .rich-text-content.prose h2,
         .rich-text-content.prose h3,
         .rich-text-content.prose h4 {
+          color: #FFD700;
           font-weight: 900 !important;
           line-height: 1.2 !important;
           margin-top: 1.5em !important;
           margin-bottom: 0.5em !important;
-          text-align: justify;
         }
 
-        /* INLINE STYLE COLOR DARI BACKEND SELALU DIPRIORITASKAN */
+        /* INLINE/SPAN COLOR DARI CKEDITOR (MERAH, SKYBLUE, DLL) TETAP DIPRIORITASKAN */
         .rich-text-content [style*="color"] {
           color: inherit !important;
         }
@@ -124,17 +110,22 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           margin-bottom: 1em !important;
         }
 
-        /* PERBAIKAN SPASI TWEET EMBED */
-        .tweet-container {
-          pointer-events: auto !important;
-          margin-top: 0.75rem !important;
-          margin-bottom: 0.75rem !important;
+        /* 2. PAKSA SPASI DAN HEIGHT TWEET MENJADI METODE COMPACT */
+        .tweet-placeholder {
+          margin-top: 0.5rem !important;
+          margin-bottom: 0.5rem !important;
+          min-height: 0 !important;
+          height: auto !important;
         }
 
-        .tweet-container [class*="react-tweet"],
-        .tweet-container article {
+        .tweet-placeholder div[class*="react-tweet-container"],
+        .tweet-placeholder [class*="react-tweet"],
+        .tweet-placeholder article {
           margin-top: 0 !important;
           margin-bottom: 0 !important;
+          padding-top: 0 !important;
+          padding-bottom: 0 !important;
+          min-height: 0 !important;
         }
 
         .react-tweet-theme {
