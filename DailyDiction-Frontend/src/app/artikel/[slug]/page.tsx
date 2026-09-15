@@ -80,11 +80,18 @@ function formatImageUrl(
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-// HELPER: Konversi otomatis tag <oembed> lama dari CKEditor menjadi <iframe> YouTube
+// HELPER PERBAIKAN: Bersihkan sisa tag rusak dan render <iframe> YouTube dengan aman
 function parseContentMedia(content: string): string {
   if (!content) return "";
 
-  return content.replace(
+  // 1. Bersihkan sisa string atribut iframe yang terpotong/bocor jika ada
+  let cleanContent = content.replace(
+    /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
+    ""
+  );
+
+  // 2. Parse tag <oembed> CKEditor menjadi <iframe> YouTube aman
+  return cleanContent.replace(
     /<oembed\s+url=["']([^"']+)["']\s*><\/oembed>/gi,
     (match, url) => {
       let embedUrl = url;
@@ -99,9 +106,7 @@ function parseContentMedia(content: string): string {
         }
       }
 
-      return `<div class="aspect-video w-full my-6 overflow-hidden rounded-xl">
-        <iframe src="${embedUrl}" class="w-full h-full border-0 rounded-xl" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-      </div>`;
+      return `<div class="aspect-video w-full my-6 overflow-hidden rounded-xl"><iframe src="${embedUrl}" class="w-full h-full border-0 rounded-xl" allowfullscreen></iframe></div>`;
     },
   );
 }
@@ -446,7 +451,6 @@ export default async function DetailArtikel({
             font-size: 1.125rem;
             line-height: 1.15;
             color: #d1d5db;
-            text-align: justify;
           }
 
           .rich-text-content p {
@@ -461,7 +465,6 @@ export default async function DetailArtikel({
           .rich-text-content h4,
           .rich-text-content h5,
           .rich-text-content h6 {
-            color: white;
             font-weight: 900;
             margin-top: 1.75em;
             margin-bottom: 0.75em;
@@ -469,17 +472,24 @@ export default async function DetailArtikel({
             text-align: justify;
           }
 
-          /* PRESERVE INLINE STYLING CKEDITOR (COLOR, FONT-FAMILY, FONT-SIZE, ALIGNMENT) */
+          /* WARNA DEFAULT HEADING JIKA TIDAK DIBERI WARNA KUSTOM DI BACKEND */
+          .rich-text-content h1:not([style*="color"]),
+          .rich-text-content h2:not([style*="color"]),
+          .rich-text-content h3:not([style*="color"]) {
+            color: #white;
+          }
+
+          /* MENJAGA SEMUA INLINE STYLING CKEDITOR (WARNA KUSTOM, FONT-FAMILY, FONT-SIZE) */
           .rich-text-content [style*="color"] {
-            color: inherit;
+            /* biarkan inline style warna bekerja */
           }
 
           .rich-text-content [style*="font-family"] {
-            font-family: inherit;
+            /* biarkan inline style font bekerja */
           }
 
           .rich-text-content [style*="font-size"] {
-            font-size: inherit;
+            /* biarkan inline style font size bekerja */
           }
 
           /* SUPORT SPECIFIC ALIGNMENT APABILA DIATUR DI CKEDITOR */
@@ -576,6 +586,7 @@ export default async function DetailArtikel({
             border-radius: 0.75rem;
             margin-top: 1.5rem;
             margin-bottom: 1.5rem;
+            border: 0 !important;
             display: block !important;
           }
         `,
