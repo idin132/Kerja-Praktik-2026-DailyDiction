@@ -7,6 +7,8 @@ use Illuminate\Support\ServiceProvider;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Route;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,12 +19,17 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // FIX: Route otomatis aset Livewire untuk mencegah error 404 di cPanel/Production
+        Livewire::setScriptRoute(function ($handle) {
+            return Route::get('/livewire/livewire.js', $handle);
+        });
+
         ResetPassword::createUrlUsing(function ($user, string $token) {
             $frontendUrl = env('FRONTEND_URL', 'https://dailydiction.id');
             return "{$frontendUrl}/reset-password?token={$token}&email=" . urlencode($user->email);
         });
 
-        // Fix: TipTap scroll hijack pada ordered list
+        // TipTap scroll fix pada ordered list
         FilamentView::registerRenderHook(
             PanelsRenderHook::BODY_END,
             fn(): string => Blade::render('@include("filament.hooks.tiptap-scroll-fix")'),
