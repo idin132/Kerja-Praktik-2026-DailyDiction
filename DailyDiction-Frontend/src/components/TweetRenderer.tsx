@@ -35,13 +35,17 @@ class SafeTweetBoundary extends Component<
 export default function TweetRenderer({ htmlContent }: { htmlContent: string }) {
   if (!htmlContent) return null;
 
-  // 1. Bersihkan sisa string iframe bocor
+  // 1. Bersihkan sisa string atribut iframe terpotong/bocor dari database
   let cleaned = htmlContent.replace(
     /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
     ""
   );
 
-  // 2. POTONG TAG <p> YANG MEMBUNGKUS LINK TWITTER (Mencegah gap/spacing raksasa)
+  // 2. Hapus wrapper <figure> atau <p> di sekitar link Twitter/X agar tidak meninggalkan spasi raksasa
+  cleaned = cleaned.replace(
+    /<figure[^>]*>\s*<oembed[^>]*url=["'](https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/\d+[^"']*)["'][^>]*>\s*<\/oembed>\s*<\/figure>/gi,
+    "$1"
+  );
   cleaned = cleaned.replace(
     /<p[^>]*>\s*(https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\s<]+)\s*<\/p>/gi,
     "$1"
@@ -100,8 +104,12 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           );
         }
 
-        // Abaikan fragmen HTML yang hanya berisi whitespace / tag p kosong
-        const cleanPart = part.replace(/^(\s*<p>\s*<\/p>\s*)+|(\s*<p>\s*<\/p>\s*)+$/gi, "").trim();
+        // Hapus elemen p/div kosong sisa pemisahan
+        const cleanPart = part
+          .replace(/^(\s*<p>\s*<\/p>\s*)+|(\s*<p>\s*<\/p>\s*)+$/gi, "")
+          .replace(/^(\s*<figure>\s*<\/figure>\s*)+|(\s*<figure>\s*<\/figure>\s*)+$/gi, "")
+          .trim();
+
         if (!cleanPart) return null;
 
         return (
@@ -113,26 +121,23 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
       })}
 
       <style jsx global>{`
-        /* MATIKAN COLOR PROSE-INVERT & GUNAKAN STYLE DARI CKEDITOR (TERMASUK SPAN COLOR) */
+        /* SINKRONISASI WARNA DENGAN CKEDITOR BACKEND */
         .rich-text-content.prose h1,
         .rich-text-content.prose h2,
         .rich-text-content.prose h3,
         .rich-text-content.prose h4,
         .rich-text-content.prose h5,
         .rich-text-content.prose h6 {
-          color: inherit;
-          font-weight: 900;
+          font-weight: 900 !important;
           line-height: 1.2 !important;
           margin-top: 1.5em !important;
           margin-bottom: 0.5em !important;
           text-align: justify;
         }
 
-        .rich-text-content h1 span[style*="color"],
-        .rich-text-content h2 span[style*="color"],
-        .rich-text-content h3 span[style*="color"],
-        .rich-text-content h4 span[style*="color"] {
-          color: inherit !important;
+        /* MEMASIKAN INLINE STYLE WARNA DARI CKEDITOR TIDAK DITIMPA CSS LAIN */
+        .rich-text-content [style*="color"] {
+          color: inherit;
         }
 
         .rich-text-content p {
@@ -142,7 +147,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           margin-top: 0 !important;
         }
 
-        /* HILANGKAN MARGIN DAN SPASI EXTRA TWITTER EMBED */
+        /* EMBED TWITTER RAPAT PRESISI */
         .tweet-container {
           pointer-events: auto !important;
           margin-top: 0.5rem !important;
