@@ -1,13 +1,14 @@
 "use client";
 
-import React, { Component, ReactNode } from "react";
+import React, { Component, ReactNode, useEffect, useState } from "react";
 import { Tweet } from "react-tweet";
+import ReactDOM from "react-dom";
 
 class SafeTweetBoundary extends Component<
-  { children: ReactNode; fallbackUrl?: string },
+  { children: ReactNode },
   { hasError: boolean }
 > {
-  constructor(props: { children: ReactNode; fallbackUrl?: string }) {
+  constructor(props: { children: ReactNode }) {
     super(props);
     this.state = { hasError: false };
   }
@@ -33,154 +34,92 @@ class SafeTweetBoundary extends Component<
 }
 
 export default function TweetRenderer({ htmlContent }: { htmlContent: string }) {
-  if (!htmlContent) return null;
+  const [tweetSlots, setTweetSlots] = useState<{ id: string; elementId: string }[]>([]);
+  const [parsedHtml, setParsedHtml] = useState<string>("");
 
-  // 1. Bersihkan sisa string iframe bocor
-  let cleaned = htmlContent.replace(
-    /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
-    ""
-  );
+  useEffect(() => {
+    if (!htmlContent) return;
 
-  // 2. HAPUS TAG PEMBUNGKUS <figure> & <p> DI SEKITAR TWEET UNTUK HILANGKAN SPASI RAKSASA
-  cleaned = cleaned.replace(
-    /<figure[^>]*>\s*<oembed[^>]*url=["'](https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/\d+[^"']*)["'][^>]*>\s*<\/oembed>\s*<\/figure>/gi,
-    "$1"
-  );
-  cleaned = cleaned.replace(
-    /<p[^>]*>\s*(https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\s<]+)\s*<\/p>/gi,
-    "$1"
-  );
-  cleaned = cleaned.replace(
-    /<p[^>]*>\s*(<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/\d+"[^>]*>.*?<\/a>)\s*<\/p>/gi,
-    "$1"
-  );
+    // 1. Bersihkan sisa string atribut iframe terpotong/bocor dari DB
+    let clean = htmlContent.replace(
+      /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
+      ""
+    );
 
-  const marker = "___TWEET_BLOCK_";
-  const markerEnd = "___";
+    const slots: { id: string; elementId: string }[] = [];
+    let counter = 0;
 
-  const replacedHtml = cleaned.replace(
-    /<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"]*"[^>]*>.*?<\/a>|https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*/gi,
-    (match, id1, id2) => {
-      const tweetId = id1 || id2;
-      return `${marker}${tweetId}${markerEnd}`;
-    }
-  );
+    // 2. Ganti URL / Embed Tweet langsung di tempatnya (Presisi tanpa merusak struktur HTML)
+    const processedHtml = clean.replace(
+      /<p[^>]*>\s*<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"]*"[^>]*>.*?<\/a>\s*<\/p>|<p[^>]*>\s*https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*\s*<\/p>|<figure[^>]*>\s*<oembed[^>]*url=["']https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>\s*<\/oembed>\s*<\/figure>|https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*/gi,
+      (match, id1, id2, id3, id4) => {
+        const tweetId = id1 || id2 || id3 || id4;
+        if (!tweetId) return match;
 
-  const regexSplit = new RegExp(`${marker}(\\d+)${markerEnd}`, "g");
-  const parts: string[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
+        const slotId = `tweet-slot-${counter++}`;
+        slots.push({ id: tweetId, elementId: slotId });
+        return `<div id="${slotId}" class="tweet-placeholder my-3 flex justify-center"></div>`;
+      }
+    );
 
-  while ((match = regexSplit.exec(replacedHtml)) !== null) {
-    const htmlBefore = replacedHtml.substring(lastIndex, match.index);
-    if (htmlBefore) {
-      parts.push(htmlBefore);
-    }
-    parts.push(`TWEET_ID:${match[1]}`);
-    lastIndex = regexSplit.lastIndex;
-  }
-
-  const htmlAfter = replacedHtml.substring(lastIndex);
-  if (htmlAfter) {
-    parts.push(htmlAfter);
-  }
+    setTweetSlots(slots);
+    setParsedHtml(processedHtml);
+  }, [htmlContent]);
 
   return (
     <div className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8">
-      {parts.map((part, index) => {
-        if (part.startsWith("TWEET_ID:")) {
-          const tweetId = part.replace("TWEET_ID:", "");
-          return (
-            <div
-              key={`tweet-${index}-${tweetId}`}
-              className="tweet-container my-2 flex w-full justify-center dark not-prose"
-            >
-              <div className="w-full max-w-lg">
-                <SafeTweetBoundary>
-                  <Tweet id={tweetId} />
-                </SafeTweetBoundary>
-              </div>
-            </div>
-          );
-        }
+      {/* Render HTML utama sekaligus dalam 1 div untuk menjaga margin paragraf alami */}
+      <div dangerouslySetInnerHTML={{ __html: parsedHtml }} />
 
-        // Filter dan buang bagian HTML kosong hasil pemisahan
-        const cleanPart = part
-          .replace(/^(\s*<p>\s*<\/p>\s*)+|(\s*<p>\s*<\/p>\s*)+$/gi, "")
-          .replace(/^(\s*<figure>\s*<\/figure>\s*)+|(\s*<figure>\s*<\/figure>\s*)+$/gi, "")
-          .trim();
+      {/* Inject React Tweet Component langsung ke placeholder-nya */}
+      {tweetSlots.map((slot) => {
+        const targetEl = typeof document !== "undefined" ? document.getElementById(slot.elementId) : null;
+        if (!targetEl) return null;
 
-        if (!cleanPart) return null;
-
-        return (
-          <div
-            key={`html-${index}`}
-            dangerouslySetInnerHTML={{ __html: cleanPart }}
-          />
+        return ReactDOM.createPortal(
+          <div className="w-full max-w-lg not-prose">
+            <SafeTweetBoundary>
+              <Tweet id={slot.id} />
+            </SafeTweetBoundary>
+          </div>,
+          targetEl
         );
       })}
 
       <style jsx global>{`
-        /* HEADING: SINKRON 100% DENGAN CKEDITOR BACKEND */
+        /* 1. SINKRONISASI HEADING: WARNA KUNING BRAND DEFAULNYA, NAMUN BEBAS DIRUBAH VIA CKEDITOR BACKEND */
         .rich-text-content.prose h1,
         .rich-text-content.prose h2,
         .rich-text-content.prose h3,
-        .rich-text-content.prose h4,
-        .rich-text-content.prose h5,
-        .rich-text-content.prose h6 {
+        .rich-text-content.prose h4 {
+          color: #FFD700;
           font-weight: 900 !important;
           line-height: 1.2 !important;
           margin-top: 1.5em !important;
           margin-bottom: 0.5em !important;
-          text-align: justify;
         }
 
-        /* MEMBACA INLINE STYLE COLOR DARI CKEDITOR JIKA BE DIBERI WARNA KUNING, MERAH, BLUE, DLL */
+        /* PRIORITASKAN INLINE COLOR / SPAN COLOR KUSTOM DARI BACKEND DIBANDING PROSE */
         .rich-text-content [style*="color"] {
           color: inherit !important;
         }
 
         .rich-text-content p {
-          line-height: 1.2 !important;
+          line-height: 1.25 !important;
           text-align: justify !important;
-          margin-bottom: 0.85em !important;
-          margin-top: 0 !important;
+          margin-bottom: 1em !important;
         }
 
-        /* EMBED TWITTER RAPAT PRESISI */
-        .tweet-container {
-          pointer-events: auto !important;
-          margin-top: 0.5rem !important;
-          margin-bottom: 0.5rem !important;
+        /* 2. RAPATKAN EMBED TWEET */
+        .tweet-placeholder {
+          margin-top: 0.75rem !important;
+          margin-bottom: 0.75rem !important;
         }
 
-        .tweet-container [class*="react-tweet"],
-        .tweet-container article {
+        .tweet-placeholder [class*="react-tweet"],
+        .tweet-placeholder article {
           margin-top: 0 !important;
           margin-bottom: 0 !important;
-          padding-top: 0 !important;
-          padding-bottom: 0 !important;
-        }
-
-        .tweet-container img {
-          width: auto !important;
-          height: auto !important;
-          margin-top: 0 !important;
-          margin-bottom: 0 !important;
-          border: none !important;
-          animation: none !important;
-        }
-
-        .tweet-container video {
-          width: 100% !important;
-          height: auto !important;
-          border-radius: 0.5rem !important;
-          object-fit: contain !important;
-        }
-
-        .tweet-container button {
-          cursor: pointer !important;
-          pointer-events: auto !important;
         }
 
         .react-tweet-theme {
