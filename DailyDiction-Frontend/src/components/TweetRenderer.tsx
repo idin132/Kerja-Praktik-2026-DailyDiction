@@ -36,10 +36,16 @@ class SafeTweetBoundary extends Component<
 export default function TweetRenderer({ htmlContent }: { htmlContent: string }) {
   if (!htmlContent) return null;
 
+  // FIX 1: Hapus sisa string atribut iframe yang terpotong/bocor dari database
+  const sanitizedContent = htmlContent.replace(
+    /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
+    ""
+  );
+
   const marker = "___TWEET_BLOCK_";
   const markerEnd = "___";
 
-  const replacedHtml = htmlContent.replace(
+  const replacedHtml = sanitizedContent.replace(
     /<p[^>]*>\s*<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"]*"[^>]*>.*?<\/a>\s*<\/p>|<p[^>]*>\s*https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*\s*<\/p>|<a[^>]*href="https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"]*"[^>]*>.*?<\/a>|https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*/gi,
     (match, id1, id2, id3, id4) => {
       const tweetId = id1 || id2 || id3 || id4;
@@ -67,7 +73,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
   }
 
   return (
-    <div className="animate-fade-up-2 rich-text-content prose prose-invert prose-yellow max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-12">
+    <div className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed space-y-4 mb-12">
       {parts.map((part, index) => {
         if (part.startsWith("TWEET_ID:")) {
           const tweetId = part.replace("TWEET_ID:", "");
@@ -97,8 +103,24 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
         return null;
       })}
 
-      {/* OVERRIDE CSS AGAR AVATAR TWEET RAPI & VIDEO BISA DIPLAY SMOOTH */}
+      {/* OVERRIDE CSS: FIX HEADING KUNING PRESISI & TWEET MEDIA */}
       <style jsx global>{`
+        .rich-text-content h1,
+        .rich-text-content h2,
+        .rich-text-content h3,
+        .rich-text-content h4 {
+          color: #FFD700 !important;
+          font-weight: 900 !important;
+          line-height: 1.15 !important;
+          margin-top: 1.75em !important;
+          margin-bottom: 0.75em !important;
+        }
+
+        .rich-text-content p {
+          line-height: 1.15 !important;
+          text-align: justify !important;
+        }
+
         .tweet-container {
           pointer-events: auto !important;
         }

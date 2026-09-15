@@ -80,17 +80,14 @@ function formatImageUrl(
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-// HELPER PERBAIKAN: Bersihkan sisa tag rusak dan render <iframe> YouTube dengan aman
 function parseContentMedia(content: string): string {
   if (!content) return "";
 
-  // 1. Bersihkan sisa string atribut iframe yang terpotong/bocor jika ada
   let cleanContent = content.replace(
     /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
     ""
   );
 
-  // 2. Parse tag <oembed> CKEditor menjadi <iframe> YouTube aman
   return cleanContent.replace(
     /<oembed\s+url=["']([^"']+)["']\s*><\/oembed>/gi,
     (match, url) => {
@@ -446,7 +443,6 @@ export default async function DetailArtikel({
             animation: cinematicFadeUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
           }
 
-          /* BASE STYLING KONTEN & SPACING LINE-HEIGHT 1.15 */
           .rich-text-content {
             font-size: 1.125rem;
             line-height: 1.15;
@@ -459,73 +455,26 @@ export default async function DetailArtikel({
             text-align: justify;
           }
 
+          /* WARNA HEADING DEFAULT KUNING SEPERTI DARI CKEDITOR BACKEND */
           .rich-text-content h1,
           .rich-text-content h2,
           .rich-text-content h3,
           .rich-text-content h4,
           .rich-text-content h5,
           .rich-text-content h6 {
-            font-weight: 900;
-            margin-top: 1.75em;
-            margin-bottom: 0.75em;
-            line-height: 1.15;
+            color: #FFD700 !important;
+            font-weight: 900 !important;
+            margin-top: 1.75em !important;
+            margin-bottom: 0.75em !important;
+            line-height: 1.15 !important;
             text-align: justify;
           }
 
-          /* WARNA DEFAULT HEADING JIKA TIDAK DIBERI WARNA KUSTOM DI BACKEND */
-          .rich-text-content h1:not([style*="color"]),
-          .rich-text-content h2:not([style*="color"]),
-          .rich-text-content h3:not([style*="color"]) {
-            color: #white;
-          }
+          .rich-text-content p[style*="text-align: left"] { text-align: left !important; }
+          .rich-text-content p[style*="text-align: center"] { text-align: center !important; }
+          .rich-text-content p[style*="text-align: right"] { text-align: right !important; }
+          .rich-text-content p[style*="text-align: justify"] { text-align: justify !important; }
 
-          /* MENJAGA SEMUA INLINE STYLING CKEDITOR (WARNA KUSTOM, FONT-FAMILY, FONT-SIZE) */
-          .rich-text-content [style*="color"] {
-            /* biarkan inline style warna bekerja */
-          }
-
-          .rich-text-content [style*="font-family"] {
-            /* biarkan inline style font bekerja */
-          }
-
-          .rich-text-content [style*="font-size"] {
-            /* biarkan inline style font size bekerja */
-          }
-
-          /* SUPORT SPECIFIC ALIGNMENT APABILA DIATUR DI CKEDITOR */
-          .rich-text-content p[style*="text-align: left"],
-          .rich-text-content div[style*="text-align: left"],
-          .rich-text-content h1[style*="text-align: left"],
-          .rich-text-content h2[style*="text-align: left"],
-          .rich-text-content h3[style*="text-align: left"] {
-            text-align: left !important;
-          }
-
-          .rich-text-content p[style*="text-align: center"],
-          .rich-text-content div[style*="text-align: center"],
-          .rich-text-content h1[style*="text-align: center"],
-          .rich-text-content h2[style*="text-align: center"],
-          .rich-text-content h3[style*="text-align: center"] {
-            text-align: center !important;
-          }
-
-          .rich-text-content p[style*="text-align: right"],
-          .rich-text-content div[style*="text-align: right"],
-          .rich-text-content h1[style*="text-align: right"],
-          .rich-text-content h2[style*="text-align: right"],
-          .rich-text-content h3[style*="text-align: right"] {
-            text-align: right !important;
-          }
-
-          .rich-text-content p[style*="text-align: justify"],
-          .rich-text-content div[style*="text-align: justify"],
-          .rich-text-content h1[style*="text-align: justify"],
-          .rich-text-content h2[style*="text-align: justify"],
-          .rich-text-content h3[style*="text-align: justify"] {
-            text-align: justify !important;
-          }
-
-          /* DUKUNGAN PARAGRAF BERISI GAMBAR */
           .rich-text-content p:has(img) {
             text-align: center !important;
             display: flex !important;
@@ -536,7 +485,6 @@ export default async function DetailArtikel({
             margin-bottom: 2rem;
           }
 
-          /* STYLING GAMBAR: DIPOSISIKAN DI TENGAH BERAPAPUN UKURANNYA */
           .rich-text-content img {
             max-width: 100%;
             height: auto;
@@ -549,7 +497,6 @@ export default async function DetailArtikel({
             border: 1px solid rgba(255, 255, 255, 0.1);
           }
 
-          /* WRAPPER FIGURE DARI CKEDITOR */
           .rich-text-content figure.image {
             display: flex !important;
             justify-content: center !important;
@@ -572,7 +519,6 @@ export default async function DetailArtikel({
           .rich-text-content a:hover { text-decoration: underline; }
           .rich-text-content strong { color: white; }
           
-          /* STYLING YOUTUBE & EMBED MEDIA */
           .rich-text-content figure.media {
             width: 100% !important;
             display: block !important;
