@@ -32,8 +32,22 @@ class SafeTweetBoundary extends Component<
   }
 }
 
+// FUNGSI PEMBERSIH KARAKTER ANEH & POTONGAN TAG BROKEN DARI DATABASE ADMIN
+function sanitizeContent(html: string): string {
+  if (!html) return "";
+
+  return html
+    // 1. Bersihkan Karakter Kontrol Tersembunyi (Invisible Characters / Zero Width / Control Codes)
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, "")
+    // 2. Bersihkan Potongan String Atribut Iframe / Div Bocor
+    .replace(/class="w-full h-full border-0 rounded-xl"[^>]*>/gi, "")
+    .replace(/%3Cdiv%3E/gi, "")
+    .replace(/%3Cdiv/gi, "")
+    .replace(/div%3E%3Cdiv/gi, "");
+}
+
 export default function TweetRenderer({ htmlContent }: { htmlContent: string }) {
-  const [isMounted, setIsMounted] = useState<boolean>(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -41,86 +55,113 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
 
   if (!htmlContent) return null;
 
-  // 1. SAPU BERSIH STRING DIV LIAR & ATRIBUT BOCOR YANG MEMICU FETCH 404
-  let cleaned = htmlContent
-    .replace(/class="w-full h-full border-0 rounded-xl"[^>]*>/gi, "")
-    .replace(/%3Cdiv%3E/gi, "")
-    .replace(/%3Cdiv/gi, "")
-    .replace(/div%3E%3Cdiv/gi, "");
+  const cleaned = sanitizeContent(htmlContent);
 
-  const marker = "___TWEET_BLOCK_";
-  const markerEnd = "___";
-
-  // 2. REGEX PEMBUNUH SPASI GAIB TWITTER (Telan tag pembungkus <p> dan <figure>)
-  cleaned = cleaned.replace(
-    /<figure[^>]*>\s*<oembed[^>]*url=["']https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>\s*<\/oembed>\s*<\/figure>/gi,
-    `${marker}$1${markerEnd}`
-  );
-  cleaned = cleaned.replace(
-    /<p[^>]*>\s*(?:<a[^>]*>)?\s*https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*(?:<\/a>)?\s*<\/p>/gi,
-    `${marker}$1${markerEnd}`
-  );
-  cleaned = cleaned.replace(
-    /(?:<a[^>]*>)?https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*(?:<\/a>)?/gi,
-    (match, tweetId) => (tweetId ? `${marker}${tweetId}${markerEnd}` : match)
-  );
-
-  // 3. SPLIT STRUKTUR HTML
-  const regexSplit = new RegExp(`${marker}(\\d+)${markerEnd}`, "g");
-  const parts: string[] = [];
-  let lastIndex = 0;
-  let match;
-
-  while ((match = regexSplit.exec(cleaned)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push(cleaned.substring(lastIndex, match.index));
-    }
-    parts.push(`TWEET_ID:${match[1]}`);
-    lastIndex = regexSplit.lastIndex;
-  }
-  if (lastIndex < cleaned.length) {
-    parts.push(cleaned.substring(lastIndex));
-  }
-
-  // JIKA BELUM MOUNT DI BROWSER, RENDER SKELETON / HTML POLOS DULU (MENGHINDARI ERROR #412 HYDRATION)
+  // SAAT SERVER-SIDE RENDERING (SSR):
+  // Render div polos tanpa logika split kompleks agar Server dan Client 100% Identik (Anti Error #412)
   if (!isMounted) {
     return (
       <div
         className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8"
-        dangerouslySetInnerHTML={{ __html: cleaned.replace(/___TWEET_BLOCK_\d+___/g, "") }}
+        dangerouslySetInnerHTML={{ __html: cleaned }}
       />
     );
   }
 
+  // SAAT CLIENT-SIDE (BROWSER):
+  const hasTweet = /(?:x|twitter)\.com\/[^\/]+\/status\/\d+/i.test(cleaned);
+
+  // Jika artikel polos tanpa Tweet (seperti mayoritas artikel mas Lendy)
+  if (!hasTweet) {
+    return (
+      <div
+        className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8"
+        dangerouslySetInnerHTML={{ __html: cleaned }}
+      >
+        <style jsx global>{`
+          .rich-text-content h1,
+          .rich-text-content h2,
+          .rich-text-content h3,
+          .rich-text-content h4,
+          .rich-text-content h5,
+          .rich-text-content h6 {
+            color: #FFD700;
+            font-weight: 900 !important;
+            line-height: 1.2 !important;
+            margin-top: 1.5em !important;
+            margin-bottom: 0.5em !important;
+          }
+
+          .rich-text-content p {
+            line-height: 1.25 !important;
+            text-align: justify !important;
+            margin-bottom: 1em !important;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Jika artikel MEMILIKI Tweet
+  const marker = "___TWEET_BLOCK_";
+  const markerEnd = "___";
+
+  let parsed = cleaned.replace(
+    /<figure[^>]*>\s*<oembed[^>]*url=["']https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>\s*<\/oembed>\s*<\/figure>/gi,
+    `${marker}$1${markerEnd}`
+  );
+  parsed = parsed.replace(
+    /<p[^>]*>\s*(?:<a[^>]*>)?\s*https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*(?:<\/a>)?\s*<\/p>/gi,
+    `${marker}$1${markerEnd}`
+  );
+  parsed = parsed.replace(
+    /(?:<a[^>]*>)?https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*(?:<\/a>)?/gi,
+    (match, tweetId) => (tweetId ? `${marker}${tweetId}${markerEnd}` : match)
+  );
+
+  const regexSplit = new RegExp(`${marker}(\\d+)${markerEnd}`, "g");
+  const parts: (string | { tweetId: string })[] = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regexSplit.exec(parsed)) !== null) {
+    if (match.index > lastIndex) {
+      const textChunk = parsed.substring(lastIndex, match.index).trim();
+      if (textChunk) parts.push(textChunk);
+    }
+    parts.push({ tweetId: match[1] });
+    lastIndex = regexSplit.lastIndex;
+  }
+
+  if (lastIndex < parsed.length) {
+    const remainingChunk = parsed.substring(lastIndex).trim();
+    if (remainingChunk) parts.push(remainingChunk);
+  }
+
   return (
     <div className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8">
-      {parts.map((part, index) => {
-        if (part.startsWith("TWEET_ID:")) {
-          const tweetId = part.split(":")[1];
+      {parts.map((item, index) => {
+        if (typeof item === "object" && item.tweetId) {
           return (
             <div key={`tweet-${index}`} className="flex justify-center w-full my-0 py-0 not-prose">
               <div className="w-full max-w-lg">
                 <SafeTweetBoundary>
-                  <Tweet id={tweetId} />
+                  <Tweet id={item.tweetId} />
                 </SafeTweetBoundary>
               </div>
             </div>
           );
         }
 
-        const cleanPart = part.trim();
-        if (!cleanPart) return null;
-
         return (
           <div
             key={`html-${index}`}
-            dangerouslySetInnerHTML={{ __html: cleanPart }}
+            dangerouslySetInnerHTML={{ __html: item as string }}
           />
         );
       })}
 
       <style jsx global>{`
-        /* SINKRONISASI HEADING WARNA BACKEND DENGAN FRONTEND */
         .rich-text-content h1,
         .rich-text-content h2,
         .rich-text-content h3,
@@ -140,7 +181,6 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           margin-bottom: 1em !important;
         }
 
-        /* HILANGKAN SPASI GAIB DARI REACT TWEET */
         .react-tweet-theme {
           margin: 0 !important;
           --tweet-container-margin: 0 !important;
