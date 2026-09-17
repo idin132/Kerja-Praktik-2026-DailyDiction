@@ -305,11 +305,11 @@ export default async function DetailReview({
                 {/* Body Konten Review */}
                 <ArticleContent content={parsedContent} />
 
-                {/* Interaksi Like & Komen Review */}
+                {/* Interaksi Like & Komen */}
                 {review.id && (
                   <ArticleInteractions
                     articleId={review.id}
-                    initialLikes={(review as any).likes_count || 0}
+                    initialLikes={Number((review as any).likes_count) || 0}
                   />
                 )}
               </article>

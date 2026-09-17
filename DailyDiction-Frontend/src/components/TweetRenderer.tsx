@@ -32,14 +32,12 @@ class SafeTweetBoundary extends Component<
   }
 }
 
-// FUNGSI PEMBERSIH KARAKTER ANEH & POTONGAN TAG BROKEN DARI DATABASE ADMIN
+// FUNGSI PEMBERSIH KARAKTER ANEH & POTONGAN TAG BROKEN
 function sanitizeContent(html: string): string {
   if (!html) return "";
 
   return html
-    // 1. Bersihkan Karakter Kontrol Tersembunyi (Invisible Characters / Zero Width / Control Codes)
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, "")
-    // 2. Bersihkan Potongan String Atribut Iframe / Div Bocor
     .replace(/class="w-full h-full border-0 rounded-xl"[^>]*>/gi, "")
     .replace(/%3Cdiv%3E/gi, "")
     .replace(/%3Cdiv/gi, "")
@@ -57,27 +55,15 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
 
   const cleaned = sanitizeContent(htmlContent);
 
-  // SAAT SERVER-SIDE RENDERING (SSR):
-  // Render div polos tanpa logika split kompleks agar Server dan Client 100% Identik (Anti Error #412)
-  if (!isMounted) {
+  // SAAT SERVER-SIDE RENDERING ATAU ARTIKEL POLOS:
+  // Gunakan Fragment (<></>) agar <style> TIDAK berada di dalam div yang punya dangerouslySetInnerHTML
+  if (!isMounted || !/(?:x|twitter)\.com\/[^\/]+\/status\/\d+/i.test(cleaned)) {
     return (
-      <div
-        className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8"
-        dangerouslySetInnerHTML={{ __html: cleaned }}
-      />
-    );
-  }
-
-  // SAAT CLIENT-SIDE (BROWSER):
-  const hasTweet = /(?:x|twitter)\.com\/[^\/]+\/status\/\d+/i.test(cleaned);
-
-  // Jika artikel polos tanpa Tweet (seperti mayoritas artikel mas Lendy)
-  if (!hasTweet) {
-    return (
-      <div
-        className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8"
-        dangerouslySetInnerHTML={{ __html: cleaned }}
-      >
+      <>
+        <div
+          className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8"
+          dangerouslySetInnerHTML={{ __html: cleaned }}
+        />
         <style jsx global>{`
           .rich-text-content h1,
           .rich-text-content h2,
@@ -97,8 +83,16 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
             text-align: justify !important;
             margin-bottom: 1em !important;
           }
+
+          .react-tweet-theme {
+            margin: 0 !important;
+            --tweet-container-margin: 0 !important;
+          }
+          [class*="react-tweet-container"] {
+            margin: 0 !important;
+          }
         `}</style>
-      </div>
+      </>
     );
   }
 
@@ -139,28 +133,29 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
   }
 
   return (
-    <div className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8">
-      {parts.map((item, index) => {
-        if (typeof item === "object" && item.tweetId) {
-          return (
-            <div key={`tweet-${index}`} className="flex justify-center w-full my-0 py-0 not-prose">
-              <div className="w-full max-w-lg">
-                <SafeTweetBoundary>
-                  <Tweet id={item.tweetId} />
-                </SafeTweetBoundary>
+    <>
+      <div className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8">
+        {parts.map((item, index) => {
+          if (typeof item === "object" && item.tweetId) {
+            return (
+              <div key={`tweet-${index}`} className="flex justify-center w-full my-0 py-0 not-prose">
+                <div className="w-full max-w-lg">
+                  <SafeTweetBoundary>
+                    <Tweet id={item.tweetId} />
+                  </SafeTweetBoundary>
+                </div>
               </div>
-            </div>
+            );
+          }
+
+          return (
+            <div
+              key={`html-${index}`}
+              dangerouslySetInnerHTML={{ __html: item as string }}
+            />
           );
-        }
-
-        return (
-          <div
-            key={`html-${index}`}
-            dangerouslySetInnerHTML={{ __html: item as string }}
-          />
-        );
-      })}
-
+        })}
+      </div>
       <style jsx global>{`
         .rich-text-content h1,
         .rich-text-content h2,
@@ -189,6 +184,6 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           margin: 0 !important;
         }
       `}</style>
-    </div>
+    </>
   );
 }

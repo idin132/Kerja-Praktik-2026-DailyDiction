@@ -278,7 +278,7 @@ export default async function DetailArtikel({
                 {article.id && (
                   <ArticleInteractions
                     articleId={article.id}
-                    initialLikes={(article as any).likes_count || 0}
+                    initialLikes={Number((article as any).likes_count) || 0}
                   />
                 )}
               </article>
