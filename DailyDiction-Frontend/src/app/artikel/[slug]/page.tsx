@@ -13,8 +13,20 @@ import {
   Send,
 } from "lucide-react";
 import ArticleInteractions from "@/components/ArticleInteractions";
-import TweetRenderer from "@/components/TweetRenderer";
 import ViewTracker from "@/components/ViewTracker";
+import dynamicImport from "next/dynamic";
+
+// IMPORT TWEETRENDERER SECARA DYNAMIC (MEMATIKAN SSR UNTUK RICH TEXT DARI CKEDITOR)
+const TweetRenderer = dynamicImport(() => import("@/components/TweetRenderer"), {
+  ssr: false,
+  loading: () => (
+    <div className="animate-pulse space-y-4 my-8">
+      <div className="h-4 bg-dark-card rounded w-3/4"></div>
+      <div className="h-4 bg-dark-card rounded w-full"></div>
+      <div className="h-4 bg-dark-card rounded w-5/6"></div>
+    </div>
+  ),
+});
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -91,7 +103,6 @@ function parseContentMedia(content: string): string {
   return cleanContent.replace(
     /<oembed\s+url=["']([^"']+)["']\s*><\/oembed>/gi,
     (match, url) => {
-      // ABAIKAN TWITTER/X AGAR DIHANDLE OLEH TWEETRENDERER
       if (url.includes("twitter.com") || url.includes("x.com")) {
         return match;
       }
@@ -265,7 +276,7 @@ export default async function DetailArtikel({
                   </p>
                 </div>
 
-                {/* Body Artikel */}
+                {/* Body Artikel (Client Only - Safe from Hydration Mismatch) */}
                 <TweetRenderer htmlContent={rawContentString} />
 
                 {/* Interaksi Like & Komen */}
@@ -460,7 +471,6 @@ export default async function DetailArtikel({
             text-align: justify;
           }
 
-          /* WARNA HEADING DEFAULT KUNING (#FFD700) TANPA !IMPORTANT AGAR CKEDITOR BISA DITIMPA */
           .rich-text-content h1,
           .rich-text-content h2,
           .rich-text-content h3,
