@@ -82,7 +82,7 @@ function formatImageUrl(
 }
 
 function parseContentMedia(content: string): string {
-  if (!content) return "";
+  if (!content || typeof content !== "string") return "";
 
   let cleanContent = content.replace(
     /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
@@ -151,10 +151,15 @@ export default async function DetailReview({
     platform: string | string[] | undefined,
   ): string[] => {
     if (!platform) return [];
-    if (Array.isArray(platform)) return platform;
+    if (Array.isArray(platform)) {
+      return platform.map((p) => (typeof p === "string" ? p : String(p)));
+    }
     if (typeof platform === "string") {
       try {
-        return platform.startsWith("[") ? JSON.parse(platform) : [platform];
+        const parsed = platform.startsWith("[")
+          ? JSON.parse(platform)
+          : [platform];
+        return parsed.map((p: any) => (typeof p === "string" ? p : String(p)));
       } catch {
         return [platform];
       }
@@ -164,12 +169,25 @@ export default async function DetailReview({
 
   const platforms = parsePlatforms(review.platform);
 
-  let rawContentString =
-    typeof review.content === "string"
-      ? review.content
-      : Array.isArray(review.content)
-        ? review.content.map((b: any) => b.content ?? "").join("")
-        : "";
+  // KONVERSI KONTEN SECARA KETAT AGAR BEBAS DARI OBJECT PARSING ERROR (#60)
+  let rawContentString = "";
+  if (typeof review.content === "string") {
+    rawContentString = review.content;
+  } else if (Array.isArray(review.content)) {
+    rawContentString = review.content
+      .map((b: any) =>
+        typeof b === "string"
+          ? b
+          : b?.content || b?.html || b?.text || b?.value || ""
+      )
+      .join("");
+  } else if (typeof review.content === "object" && review.content !== null) {
+    rawContentString =
+      (review.content as any).content ||
+      (review.content as any).html ||
+      (review.content as any).text ||
+      "";
+  }
 
   rawContentString = parseContentMedia(rawContentString);
 

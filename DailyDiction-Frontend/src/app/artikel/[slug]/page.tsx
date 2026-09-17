@@ -81,7 +81,7 @@ function formatImageUrl(
 }
 
 function parseContentMedia(content: string): string {
-  if (!content) return "";
+  if (!content || typeof content !== "string") return "";
 
   let cleanContent = content.replace(
     /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
@@ -148,28 +148,46 @@ export default async function DetailArtikel({
 
   if (rawCategory) {
     if (Array.isArray(rawCategory)) {
-      categoryList = rawCategory;
+      categoryList = rawCategory.map((c) =>
+        typeof c === "string" ? c : (c as any)?.name || String(c)
+      );
     } else if (typeof rawCategory === "string") {
       try {
-        categoryList = rawCategory.startsWith("[")
+        const parsed = rawCategory.startsWith("[")
           ? JSON.parse(rawCategory)
           : [rawCategory];
+        categoryList = parsed.map((c: any) =>
+          typeof c === "string" ? c : c?.name || String(c)
+        );
       } catch {
         categoryList = [rawCategory];
       }
     }
   } else if (article.categories && article.categories.length > 0) {
     categoryList = article.categories.map((c: any) =>
-      typeof c === "string" ? c : c.name,
+      typeof c === "string" ? c : c.name || String(c)
     );
   }
 
-  let rawContentString =
-    typeof article.content === "string"
-      ? article.content
-      : Array.isArray(article.content)
-        ? article.content.map((b: any) => b.content ?? "").join("")
-        : "";
+  // KONVERSI KONTEN SECARA KETAT AGAR BEBAS DARI OBJECT PARSING ERROR (#60)
+  let rawContentString = "";
+  if (typeof article.content === "string") {
+    rawContentString = article.content;
+  } else if (Array.isArray(article.content)) {
+    rawContentString = article.content
+      .map((b: any) =>
+        typeof b === "string"
+          ? b
+          : b?.content || b?.html || b?.text || b?.value || ""
+      )
+      .join("");
+  } else if (typeof article.content === "object" && article.content !== null) {
+    rawContentString =
+      (article.content as any).content ||
+      (article.content as any).html ||
+      (article.content as any).text ||
+      "";
+  }
 
   rawContentString = parseContentMedia(rawContentString);
 
