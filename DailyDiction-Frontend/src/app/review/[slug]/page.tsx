@@ -92,6 +92,11 @@ function parseContentMedia(content: string): string {
   return cleanContent.replace(
     /<oembed\s+url=["']([^"']+)["']\s*><\/oembed>/gi,
     (match, url) => {
+      // ABAIKAN TWITTER/X AGAR DIHANDLE OLEH TWEETRENDERER
+      if (url.includes("twitter.com") || url.includes("x.com")) {
+        return match;
+      }
+
       let embedUrl = url;
 
       if (url.includes("youtube.com") || url.includes("youtu.be")) {
@@ -430,23 +435,19 @@ export default async function DetailReview({
             text-align: justify;
           }
 
-          /* STYLING HEADING TANPA OVERRIDE COLOR BERLEBIHAN */
+          /* WARNA HEADING DEFAULT KUNING (#FFD700) TANPA !IMPORTANT AGAR CKEDITOR BISA DITIMPA */
           .rich-text-content h1,
           .rich-text-content h2,
           .rich-text-content h3,
           .rich-text-content h4,
           .rich-text-content h5,
           .rich-text-content h6 {
+            color: #FFD700;
             font-weight: 900 !important;
             margin-top: 1.75em !important;
             margin-bottom: 0.75em !important;
             line-height: 1.15 !important;
             text-align: justify !important;
-          }
-
-          /* MEMBACA INLINE STYLE COLOR DARI CKEDITOR JIKA USER MEMILIH MERAH/SKYBLUE/KUNING/DLL */
-          .rich-text-content [style*="color"] {
-            color: inherit;
           }
 
           .rich-text-content p[style*="text-align: left"] { text-align: left !important; }

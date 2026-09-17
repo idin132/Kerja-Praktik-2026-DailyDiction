@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Component, ReactNode } from "react";
+import React, { Component, ReactNode, useEffect, useState } from "react";
 import { Tweet } from "react-tweet";
 
 class SafeTweetBoundary extends Component<
@@ -33,20 +33,25 @@ class SafeTweetBoundary extends Component<
 }
 
 export default function TweetRenderer({ htmlContent }: { htmlContent: string }) {
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   if (!htmlContent) return null;
 
-  // 1. Bersihkan sisa string atribut iframe terpotong
-  let cleaned = htmlContent.replace(
-    /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
-    ""
-  );
+  // 1. SAPU BERSIH STRING DIV LIAR & ATRIBUT BOCOR YANG MEMICU FETCH 404
+  let cleaned = htmlContent
+    .replace(/class="w-full h-full border-0 rounded-xl"[^>]*>/gi, "")
+    .replace(/%3Cdiv%3E/gi, "")
+    .replace(/%3Cdiv/gi, "")
+    .replace(/div%3E%3Cdiv/gi, "");
 
   const marker = "___TWEET_BLOCK_";
   const markerEnd = "___";
 
-  // 2. REGEX PEMBUNUH SPASI GAIB
-  // Telan seluruh tag <figure> atau <p> jika hanya berisi link Twitter.
-  // Ini mencegah terpecahnya tag pembuka <p> dan penutup </p> yang bikin spasi raksasa.
+  // 2. REGEX PEMBUNUH SPASI GAIB TWITTER (Telan tag pembungkus <p> dan <figure>)
   cleaned = cleaned.replace(
     /<figure[^>]*>\s*<oembed[^>]*url=["']https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>\s*<\/oembed>\s*<\/figure>/gi,
     `${marker}$1${markerEnd}`
@@ -55,13 +60,12 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
     /<p[^>]*>\s*(?:<a[^>]*>)?\s*https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*(?:<\/a>)?\s*<\/p>/gi,
     `${marker}$1${markerEnd}`
   );
-  // Fallback jika URL berdiri sendiri
   cleaned = cleaned.replace(
     /(?:<a[^>]*>)?https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*(?:<\/a>)?/gi,
     (match, tweetId) => (tweetId ? `${marker}${tweetId}${markerEnd}` : match)
   );
 
-  // 3. Split HTML dengan aman
+  // 3. SPLIT STRUKTUR HTML
   const regexSplit = new RegExp(`${marker}(\\d+)${markerEnd}`, "g");
   const parts: string[] = [];
   let lastIndex = 0;
@@ -76,6 +80,16 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
   }
   if (lastIndex < cleaned.length) {
     parts.push(cleaned.substring(lastIndex));
+  }
+
+  // JIKA BELUM MOUNT DI BROWSER, RENDER SKELETON / HTML POLOS DULU (MENGHINDARI ERROR #412 HYDRATION)
+  if (!isMounted) {
+    return (
+      <div
+        className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8"
+        dangerouslySetInnerHTML={{ __html: cleaned.replace(/___TWEET_BLOCK_\d+___/g, "") }}
+      />
+    );
   }
 
   return (
@@ -100,24 +114,20 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
         return (
           <div
             key={`html-${index}`}
-            className="contents" 
             dangerouslySetInnerHTML={{ __html: cleanPart }}
           />
         );
       })}
 
       <style jsx global>{`
-        /* --- KUNCI WARNA HEADING --- */
-        /* H1-H6 default Kuning.
-           JIKA dari CKEditor user set warna (misal merah: <h2 style="color: red">), 
-           maka browser akan otomatis memenangkan inline style CKEditor! */
+        /* SINKRONISASI HEADING WARNA BACKEND DENGAN FRONTEND */
         .rich-text-content h1,
         .rich-text-content h2,
         .rich-text-content h3,
         .rich-text-content h4,
         .rich-text-content h5,
         .rich-text-content h6 {
-          color: #FFD700; 
+          color: #FFD700;
           font-weight: 900 !important;
           line-height: 1.2 !important;
           margin-top: 1.5em !important;
@@ -130,8 +140,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           margin-bottom: 1em !important;
         }
 
-        /* --- ABSOLUTE SPACING KILLER --- */
-        /* Matikan semua margin bawaan dari react-tweet */
+        /* HILANGKAN SPASI GAIB DARI REACT TWEET */
         .react-tweet-theme {
           margin: 0 !important;
           --tweet-container-margin: 0 !important;
