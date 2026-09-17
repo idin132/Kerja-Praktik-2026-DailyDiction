@@ -34,12 +34,12 @@ interface ArticleDetailItem {
   title: string;
   slug: string;
   type?: string;
-  category?: string | string[];
-  category_input?: string | string[];
-  categories?: { id?: number; name: string }[] | any[];
+  category?: any;
+  category_input?: any;
+  categories?: any;
   category_color?: string;
   summary?: string;
-  content?: string | any[];
+  content?: any;
   image_url?: string;
   image?: string;
   thumbnail?: string;
@@ -48,7 +48,7 @@ interface ArticleDetailItem {
   image_full_url?: string;
   read_time?: string;
   created_at?: string;
-  author?: string;
+  author?: any;
   prev?: NavItem | null;
   next?: NavItem | null;
 }
@@ -80,7 +80,7 @@ function formatImageUrl(
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-// SAFE PARSER UNTUK OEMBED DENGAN PENANGANAN INPUT STREAM
+// SANITASI INPUT MEDIA AGAR HANYA MENGHASILKAN STRING HTML VALID
 function parseContentMedia(content: any): string {
   let stringContent = "";
 
@@ -130,6 +130,50 @@ function parseContentMedia(content: any): string {
   );
 }
 
+// SANITASI STRUKTUR KATEGORI DARIPADA BENTUK OBJECT/ARRAY YGG BIKIN ERROR #60
+function parseCategoriesSafely(article: ArticleDetailItem): string[] {
+  const rawCategory = article.category_input || article.category;
+  let categoryList: string[] = [];
+
+  const extractString = (item: any): string => {
+    if (!item) return "";
+    if (typeof item === "string") return item;
+    if (typeof item === "object") {
+      return item.name || item.title || item.label || item.value || "";
+    }
+    return String(item);
+  };
+
+  if (rawCategory) {
+    if (Array.isArray(rawCategory)) {
+      categoryList = rawCategory.map(extractString).filter(Boolean);
+    } else if (typeof rawCategory === "string") {
+      try {
+        const parsed = rawCategory.startsWith("[")
+          ? JSON.parse(rawCategory)
+          : [rawCategory];
+        categoryList = Array.isArray(parsed)
+          ? parsed.map(extractString).filter(Boolean)
+          : [extractString(parsed)];
+      } catch {
+        categoryList = [rawCategory];
+      }
+    } else if (typeof rawCategory === "object") {
+      const extracted = extractString(rawCategory);
+      if (extracted) categoryList = [extracted];
+    }
+  } else if (article.categories) {
+    if (Array.isArray(article.categories)) {
+      categoryList = article.categories.map(extractString).filter(Boolean);
+    } else {
+      const extracted = extractString(article.categories);
+      if (extracted) categoryList = [extracted];
+    }
+  }
+
+  return categoryList;
+}
+
 export default async function DetailArtikel({
   params,
 }: {
@@ -161,33 +205,15 @@ export default async function DetailArtikel({
   const prevArticle = article.prev || null;
   const nextArticle = article.next || null;
 
-  let categoryList: string[] = [];
-  const rawCategory = article.category_input || article.category;
-
-  if (rawCategory) {
-    if (Array.isArray(rawCategory)) {
-      categoryList = rawCategory.map((c) =>
-        typeof c === "string" ? c : (c as any)?.name || String(c)
-      );
-    } else if (typeof rawCategory === "string") {
-      try {
-        const parsed = rawCategory.startsWith("[")
-          ? JSON.parse(rawCategory)
-          : [rawCategory];
-        categoryList = parsed.map((c: any) =>
-          typeof c === "string" ? c : c?.name || String(c)
-        );
-      } catch {
-        categoryList = [rawCategory];
-      }
-    }
-  } else if (article.categories && article.categories.length > 0) {
-    categoryList = article.categories.map((c: any) =>
-      typeof c === "string" ? c : c.name || String(c)
-    );
-  }
-
+  // PARSE KATEGORI & CONTENT DENGAN PROTEKSI MULTI-LAYER
+  const categoryList = parseCategoriesSafely(article);
   const parsedContent = parseContentMedia(article.content);
+
+  // SANITASI AUTHOR
+  const authorName =
+    typeof article.author === "string"
+      ? article.author
+      : article.author?.name || article.author?.username || "Redaksi";
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
@@ -210,7 +236,7 @@ export default async function DetailArtikel({
                           key={idx}
                           className="rounded bg-[#FFD700]/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#FFD700] border border-[#FFD700]/30"
                         >
-                          {cat}
+                          {String(cat)}
                         </span>
                       ))
                     ) : (
@@ -221,7 +247,7 @@ export default async function DetailArtikel({
                   </div>
 
                   <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-tight">
-                    {article.title}
+                    {String(article.title || "")}
                   </h1>
 
                   {/* Info Bar */}
@@ -229,7 +255,7 @@ export default async function DetailArtikel({
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-[#FFD700]" />
                       <span className="font-bold text-white">
-                        {article.author || "Redaksi"}
+                        {authorName}
                       </span>
                     </div>
 
@@ -252,7 +278,7 @@ export default async function DetailArtikel({
                     {article.read_time && (
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-[#FFD700]" />
-                        <span>{article.read_time}</span>
+                        <span>{String(article.read_time)}</span>
                       </div>
                     )}
                   </div>
@@ -269,14 +295,16 @@ export default async function DetailArtikel({
                           article.image_full_url,
                         "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
                       )}
-                      alt={article.title}
+                      alt={String(article.title || "")}
                       className="w-full aspect-[16/9] object-cover"
                     />
                   </div>
 
                   <p className="text-base sm:text-lg text-text-muted text-justify font-medium border-l-4 border-[#FFD700] pl-4 bg-dark-card/30 p-4 rounded-r-lg">
-                    {article.summary ||
-                      "Simak berita selengkapnya di bawah ini."}
+                    {String(
+                      article.summary ||
+                        "Simak berita selengkapnya di bawah ini."
+                    )}
                   </p>
                 </div>
 
@@ -305,7 +333,7 @@ export default async function DetailArtikel({
                         ARTIKEL SEBELUMNYA
                       </p>
                       <h4 className="text-sm font-bold text-white group-hover:text-[#FFD700] truncate transition-colors">
-                        {prevArticle.title}
+                        {String(prevArticle.title || "")}
                       </h4>
                     </div>
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
@@ -316,7 +344,7 @@ export default async function DetailArtikel({
                             prevArticle.image_url,
                           "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                         )}
-                        alt={prevArticle.title}
+                        alt={String(prevArticle.title || "")}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
                       />
                     </div>
@@ -338,7 +366,7 @@ export default async function DetailArtikel({
                             nextArticle.image_url,
                           "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
                         )}
-                        alt={nextArticle.title}
+                        alt={String(nextArticle.title || "")}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
                       />
                     </div>
@@ -347,7 +375,7 @@ export default async function DetailArtikel({
                         ARTIKEL SELANJUTNYA
                       </p>
                       <h4 className="text-sm font-bold text-white group-hover:text-[#FFD700] truncate transition-colors">
-                        {nextArticle.title}
+                        {String(nextArticle.title || "")}
                       </h4>
                     </div>
                     <ChevronRight className="h-6 w-6 text-text-muted group-hover:text-[#FFD700] shrink-0" />
@@ -362,7 +390,7 @@ export default async function DetailArtikel({
             <aside className="lg:col-span-4 space-y-8">
               <div className="sticky top-24 space-y-6">
                 {/* 1. Widget Share */}
-                <ShareWidget title={article.title} />
+                <ShareWidget title={String(article.title || "")} />
 
                 {/* 2. Space Iklan Dinamis */}
                 <div className="animate-fade-up-2">
@@ -375,7 +403,7 @@ export default async function DetailArtikel({
                     >
                       <img
                         src={formatImageUrl(sidebarAd.banner_image, "")}
-                        alt={sidebarAd.title}
+                        alt={String(sidebarAd.title || "")}
                         className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <span className="absolute top-2 right-3 text-[9px] font-black tracking-widest text-white bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded">

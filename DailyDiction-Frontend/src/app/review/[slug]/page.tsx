@@ -39,16 +39,16 @@ interface ReviewItem {
   title: string;
   slug: string;
   type?: string;
-  platform?: string | string[];
+  platform?: any;
   summary?: string;
-  content?: string | any[];
+  content?: any;
   image_url?: string;
   image_full_url?: string;
   image?: string;
   thumbnail_url?: string;
   thumbnail?: string;
   created_at?: string;
-  author?: string;
+  author?: any;
   read_time?: string;
   prev?: NavReviewItem | null;
   next?: NavReviewItem | null;
@@ -81,7 +81,7 @@ function formatImageUrl(
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-// SAFE PARSER UNTUK OEMBED DENGAN PENANGANAN INPUT STREAM
+// SANITASI INPUT MEDIA AGAR HANYA MENGHASILKAN STRING HTML VALID
 function parseContentMedia(content: any): string {
   let stringContent = "";
 
@@ -131,6 +131,44 @@ function parseContentMedia(content: any): string {
   );
 }
 
+// SANITASI DENGAN PROTEKSI OBJECT / ARRAY PLATFORM
+function parsePlatformsSafely(platform: any): string[] {
+  if (!platform) return [];
+
+  const extractString = (item: any): string => {
+    if (!item) return "";
+    if (typeof item === "string") return item;
+    if (typeof item === "object") {
+      return item.name || item.title || item.label || item.value || "";
+    }
+    return String(item);
+  };
+
+  if (Array.isArray(platform)) {
+    return platform.map(extractString).filter(Boolean);
+  }
+
+  if (typeof platform === "string") {
+    try {
+      const parsed = platform.startsWith("[")
+        ? JSON.parse(platform)
+        : [platform];
+      return Array.isArray(parsed)
+        ? parsed.map(extractString).filter(Boolean)
+        : [extractString(parsed)];
+    } catch {
+      return [platform];
+    }
+  }
+
+  if (typeof platform === "object") {
+    const extracted = extractString(platform);
+    return extracted ? [extracted] : [];
+  }
+
+  return [];
+}
+
 export default async function DetailReview({
   params,
 }: {
@@ -165,28 +203,15 @@ export default async function DetailReview({
   const prevReview = review.prev || null;
   const nextReview = review.next || null;
 
-  const parsePlatforms = (
-    platform: string | string[] | undefined,
-  ): string[] => {
-    if (!platform) return [];
-    if (Array.isArray(platform)) {
-      return platform.map((p) => (typeof p === "string" ? p : String(p)));
-    }
-    if (typeof platform === "string") {
-      try {
-        const parsed = platform.startsWith("[")
-          ? JSON.parse(platform)
-          : [platform];
-        return parsed.map((p: any) => (typeof p === "string" ? p : String(p)));
-      } catch {
-        return [platform];
-      }
-    }
-    return [];
-  };
-
-  const platforms = parsePlatforms(review.platform);
+  // SANITASI STRUKTUR PLATFORM & KONTEN REVIEW
+  const platforms = parsePlatformsSafely(review.platform);
   const parsedContent = parseContentMedia(review.content);
+
+  // SANITASI AUTHOR
+  const authorName =
+    typeof review.author === "string"
+      ? review.author
+      : review.author?.name || review.author?.username || "Redaksi";
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
@@ -208,14 +233,14 @@ export default async function DetailReview({
                           className="flex items-center gap-1.5 rounded bg-[#FFD700]/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#FFD700] border border-[#FFD700]/30"
                         >
                           <Gamepad2 className="h-3.5 w-3.5" />
-                          {plat}
+                          {String(plat)}
                         </span>
                       ))}
                     </div>
                   )}
 
                   <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-tight">
-                    {review.title}
+                    {String(review.title || "")}
                   </h1>
 
                   {/* INFO AUTHOR & TANGGAL */}
@@ -223,7 +248,7 @@ export default async function DetailReview({
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-[#FFD700]" />
                       <span className="font-bold text-white">
-                        {review.author || "Redaksi"}
+                        {authorName}
                       </span>
                     </div>
                     {review.created_at && (
@@ -243,13 +268,15 @@ export default async function DetailReview({
                     )}
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-[#FFD700]" />
-                      <span>{review.read_time || "3 MIN READ"}</span>
+                      <span>{String(review.read_time || "3 MIN READ")}</span>
                     </div>
                   </div>
 
                   {/* Summary */}
                   <p className="text-base sm:text-lg text-text-muted text-justify font-medium border-l-4 border-[#FFD700] pl-4 bg-dark-card/30 p-4 rounded-r-lg">
-                    {review.summary || "Baca ulasan lengkap game ini di bawah."}
+                    {String(
+                      review.summary || "Baca ulasan lengkap game ini di bawah."
+                    )}
                   </p>
                 </div>
 
@@ -269,7 +296,7 @@ export default async function DetailReview({
                           review.thumbnail,
                         "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
                       )}
-                      alt={review.title}
+                      alt={String(review.title || "")}
                       className="h-full w-full object-cover"
                     />
                   </div>
@@ -300,7 +327,7 @@ export default async function DetailReview({
                         REVIEW SEBELUMNYA
                       </p>
                       <h4 className="text-sm font-bold text-white group-hover:text-[#FFD700] truncate transition-colors">
-                        {prevReview.title}
+                        {String(prevReview.title || "")}
                       </h4>
                     </div>
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
@@ -312,7 +339,7 @@ export default async function DetailReview({
                             prevReview.image,
                           "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                         )}
-                        alt={prevReview.title}
+                        alt={String(prevReview.title || "")}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
                       />
                     </div>
@@ -335,7 +362,7 @@ export default async function DetailReview({
                             nextReview.image,
                           "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
                         )}
-                        alt={nextReview.title}
+                        alt={String(nextReview.title || "")}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
                       />
                     </div>
@@ -344,7 +371,7 @@ export default async function DetailReview({
                         REVIEW SELANJUTNYA
                       </p>
                       <h4 className="text-sm font-bold text-white group-hover:text-[#FFD700] truncate transition-colors">
-                        {nextReview.title}
+                        {String(nextReview.title || "")}
                       </h4>
                     </div>
                     <ChevronRight className="h-6 w-6 text-text-muted group-hover:text-[#FFD700] shrink-0" />
@@ -359,7 +386,7 @@ export default async function DetailReview({
             <aside className="lg:col-span-4 space-y-8">
               <div className="sticky top-24 space-y-6">
                 {/* 1. Widget Share */}
-                <ShareWidget title={review.title} />
+                <ShareWidget title={String(review.title || "")} />
 
                 {/* 2. Space Iklan Dinamis */}
                 <div>
@@ -372,7 +399,7 @@ export default async function DetailReview({
                     >
                       <img
                         src={formatImageUrl(sidebarAd.banner_image, "")}
-                        alt={sidebarAd.title}
+                        alt={String(sidebarAd.title || "")}
                         className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <span className="absolute top-2 right-3 text-[9px] font-black tracking-widest text-white bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded">
