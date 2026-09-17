@@ -80,10 +80,28 @@ function formatImageUrl(
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-function parseContentMedia(content: string): string {
-  if (!content || typeof content !== "string") return "";
+// SAFE PARSER UNTUK OEMBED DENGAN PENANGANAN INPUT STREAM
+function parseContentMedia(content: any): string {
+  let stringContent = "";
 
-  let cleanContent = content.replace(
+  if (typeof content === "string") {
+    stringContent = content;
+  } else if (Array.isArray(content)) {
+    stringContent = content
+      .map((b: any) =>
+        typeof b === "string"
+          ? b
+          : b?.content || b?.html || b?.text || b?.value || ""
+      )
+      .join("");
+  } else if (typeof content === "object" && content !== null) {
+    stringContent =
+      content.content || content.html || content.text || content.value || "";
+  } else {
+    stringContent = String(content || "");
+  }
+
+  let cleanContent = stringContent.replace(
     /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
     ""
   );
@@ -169,27 +187,7 @@ export default async function DetailArtikel({
     );
   }
 
-  // KONVERSI KONTEN SECARA KETAT AGAR BEBAS DARI OBJECT PARSING ERROR (#60)
-  let rawContentString = "";
-  if (typeof article.content === "string") {
-    rawContentString = article.content;
-  } else if (Array.isArray(article.content)) {
-    rawContentString = article.content
-      .map((b: any) =>
-        typeof b === "string"
-          ? b
-          : b?.content || b?.html || b?.text || b?.value || ""
-      )
-      .join("");
-  } else if (typeof article.content === "object" && article.content !== null) {
-    rawContentString =
-      (article.content as any).content ||
-      (article.content as any).html ||
-      (article.content as any).text ||
-      "";
-  }
-
-  rawContentString = parseContentMedia(rawContentString);
+  const parsedContent = parseContentMedia(article.content);
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
@@ -283,7 +281,7 @@ export default async function DetailArtikel({
                 </div>
 
                 {/* Body Artikel */}
-                <ArticleContent content={rawContentString} />
+                <ArticleContent content={parsedContent} />
 
                 {/* Interaksi Like & Komen */}
                 {article.id && (

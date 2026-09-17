@@ -81,10 +81,28 @@ function formatImageUrl(
   return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-function parseContentMedia(content: string): string {
-  if (!content || typeof content !== "string") return "";
+// SAFE PARSER UNTUK OEMBED DENGAN PENANGANAN INPUT STREAM
+function parseContentMedia(content: any): string {
+  let stringContent = "";
 
-  let cleanContent = content.replace(
+  if (typeof content === "string") {
+    stringContent = content;
+  } else if (Array.isArray(content)) {
+    stringContent = content
+      .map((b: any) =>
+        typeof b === "string"
+          ? b
+          : b?.content || b?.html || b?.text || b?.value || ""
+      )
+      .join("");
+  } else if (typeof content === "object" && content !== null) {
+    stringContent =
+      content.content || content.html || content.text || content.value || "";
+  } else {
+    stringContent = String(content || "");
+  }
+
+  let cleanContent = stringContent.replace(
     /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
     ""
   );
@@ -168,28 +186,7 @@ export default async function DetailReview({
   };
 
   const platforms = parsePlatforms(review.platform);
-
-  // KONVERSI KONTEN SECARA KETAT AGAR BEBAS DARI OBJECT PARSING ERROR (#60)
-  let rawContentString = "";
-  if (typeof review.content === "string") {
-    rawContentString = review.content;
-  } else if (Array.isArray(review.content)) {
-    rawContentString = review.content
-      .map((b: any) =>
-        typeof b === "string"
-          ? b
-          : b?.content || b?.html || b?.text || b?.value || ""
-      )
-      .join("");
-  } else if (typeof review.content === "object" && review.content !== null) {
-    rawContentString =
-      (review.content as any).content ||
-      (review.content as any).html ||
-      (review.content as any).text ||
-      "";
-  }
-
-  rawContentString = parseContentMedia(rawContentString);
+  const parsedContent = parseContentMedia(review.content);
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
@@ -279,7 +276,7 @@ export default async function DetailReview({
                 )}
 
                 {/* Body Konten Review */}
-                <ArticleContent content={rawContentString} />
+                <ArticleContent content={parsedContent} />
 
                 {/* Interaksi Like & Komen Review */}
                 {review.id && (
