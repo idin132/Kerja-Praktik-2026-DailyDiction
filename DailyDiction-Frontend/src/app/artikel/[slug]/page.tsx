@@ -14,19 +14,7 @@ import {
 } from "lucide-react";
 import ArticleInteractions from "@/components/ArticleInteractions";
 import ViewTracker from "@/components/ViewTracker";
-import dynamicImport from "next/dynamic";
-
-// IMPORT TWEETRENDERER SECARA DYNAMIC (MEMATIKAN SSR UNTUK RICH TEXT DARI CKEDITOR)
-const TweetRenderer = dynamicImport(() => import("@/components/TweetRenderer"), {
-  ssr: false,
-  loading: () => (
-    <div className="animate-pulse space-y-4 my-8">
-      <div className="h-4 bg-dark-card rounded w-3/4"></div>
-      <div className="h-4 bg-dark-card rounded w-full"></div>
-      <div className="h-4 bg-dark-card rounded w-5/6"></div>
-    </div>
-  ),
-});
+import ArticleContent from "@/components/ArticleContent";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -276,8 +264,8 @@ export default async function DetailArtikel({
                   </p>
                 </div>
 
-                {/* Body Artikel (Client Only - Safe from Hydration Mismatch) */}
-                <TweetRenderer htmlContent={rawContentString} />
+                {/* Body Artikel */}
+                <ArticleContent content={rawContentString} />
 
                 {/* Interaksi Like & Komen */}
                 {article.id && (
