@@ -20,67 +20,45 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
-interface NavItem {
-  title: string;
-  slug: string;
-  thumbnail?: string;
-  thumbnail_url?: string;
-  image?: string;
-  image_url?: string;
+// HELPER SANITASI TOTAL AGAR TIDAK PERNAH ADA OBJECT KEBOCOR KE REACT JSX (ANTI ERROR #60)
+function safeStringify(val: any, fallback: string = ""): string {
+  if (val === null || val === undefined) return fallback;
+  if (typeof val === "string") return val;
+  if (typeof val === "number" || typeof val === "boolean") return String(val);
+  if (typeof val === "object") {
+    if (val.name) return String(val.name);
+    if (val.title) return String(val.title);
+    if (val.label) return String(val.label);
+    if (val.username) return String(val.username);
+    if (val.content) return safeStringify(val.content, fallback);
+    if (val.html) return safeStringify(val.html, fallback);
+    if (val.value) return safeStringify(val.value, fallback);
+  }
+  return fallback;
 }
 
-interface ArticleDetailItem {
-  id?: number;
-  title: string;
-  slug: string;
-  type?: string;
-  category?: any;
-  category_input?: any;
-  categories?: any;
-  category_color?: string;
-  summary?: string;
-  content?: any;
-  image_url?: string;
-  image?: string;
-  thumbnail?: string;
-  thumbnail_url?: string;
-  banner_image?: string;
-  image_full_url?: string;
-  read_time?: string;
-  created_at?: string;
-  author?: any;
-  prev?: NavItem | null;
-  next?: NavItem | null;
+function parseCategoriesToSafeStrings(raw: any): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) {
+    return raw.map((item) => safeStringify(item)).filter(Boolean);
+  }
+  if (typeof raw === "string") {
+    try {
+      const parsed = raw.startsWith("[") ? JSON.parse(raw) : [raw];
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => safeStringify(item)).filter(Boolean);
+      }
+    } catch {
+      return [raw];
+    }
+  }
+  if (typeof raw === "object") {
+    const str = safeStringify(raw);
+    return str ? [str] : [];
+  }
+  return [];
 }
 
-function formatImageUrl(
-  imageUrl: string | null | undefined,
-  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
-): string {
-  if (!imageUrl || typeof imageUrl !== "string") return fallback;
-
-  const clean = imageUrl.trim();
-
-  if (
-    clean.includes("/storage/http://") ||
-    clean.includes("/storage/https://")
-  ) {
-    return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
-  }
-
-  if (clean.startsWith("http://") || clean.startsWith("https://")) {
-    return clean;
-  }
-
-  const cleanPath = clean.replace(/^\/+/, "");
-  if (cleanPath.startsWith("storage/")) {
-    return `https://dailydiction.id/${cleanPath}`;
-  }
-
-  return `https://dailydiction.id/storage/${cleanPath}`;
-}
-
-// SANITASI INPUT MEDIA AGAR HANYA MENGHASILKAN STRING HTML VALID
 function parseContentMedia(content: any): string {
   let stringContent = "";
 
@@ -130,48 +108,32 @@ function parseContentMedia(content: any): string {
   );
 }
 
-// SANITASI STRUKTUR KATEGORI DARIPADA BENTUK OBJECT/ARRAY YGG BIKIN ERROR #60
-function parseCategoriesSafely(article: ArticleDetailItem): string[] {
-  const rawCategory = article.category_input || article.category;
-  let categoryList: string[] = [];
+function formatImageUrl(
+  imageUrl: any,
+  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
+): string {
+  const cleanUrl = safeStringify(imageUrl);
+  if (!cleanUrl) return fallback;
 
-  const extractString = (item: any): string => {
-    if (!item) return "";
-    if (typeof item === "string") return item;
-    if (typeof item === "object") {
-      return item.name || item.title || item.label || item.value || "";
-    }
-    return String(item);
-  };
+  const clean = cleanUrl.trim();
 
-  if (rawCategory) {
-    if (Array.isArray(rawCategory)) {
-      categoryList = rawCategory.map(extractString).filter(Boolean);
-    } else if (typeof rawCategory === "string") {
-      try {
-        const parsed = rawCategory.startsWith("[")
-          ? JSON.parse(rawCategory)
-          : [rawCategory];
-        categoryList = Array.isArray(parsed)
-          ? parsed.map(extractString).filter(Boolean)
-          : [extractString(parsed)];
-      } catch {
-        categoryList = [rawCategory];
-      }
-    } else if (typeof rawCategory === "object") {
-      const extracted = extractString(rawCategory);
-      if (extracted) categoryList = [extracted];
-    }
-  } else if (article.categories) {
-    if (Array.isArray(article.categories)) {
-      categoryList = article.categories.map(extractString).filter(Boolean);
-    } else {
-      const extracted = extractString(article.categories);
-      if (extracted) categoryList = [extracted];
-    }
+  if (
+    clean.includes("/storage/http://") ||
+    clean.includes("/storage/https://")
+  ) {
+    return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
   }
 
-  return categoryList;
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    return clean;
+  }
+
+  const cleanPath = clean.replace(/^\/+/, "");
+  if (cleanPath.startsWith("storage/")) {
+    return `https://dailydiction.id/${cleanPath}`;
+  }
+
+  return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
 export default async function DetailArtikel({
@@ -187,8 +149,7 @@ export default async function DetailArtikel({
     getAdvertisements().catch(() => null),
   ]);
 
-  const rawArticle: ArticleDetailItem | null =
-    (articleRes as any)?.data || articleRes;
+  const rawArticle = (articleRes as any)?.data || articleRes;
 
   if (!rawArticle || !rawArticle.title) {
     notFound();
@@ -205,15 +166,22 @@ export default async function DetailArtikel({
   const prevArticle = article.prev || null;
   const nextArticle = article.next || null;
 
-  // PARSE KATEGORI & CONTENT DENGAN PROTEKSI MULTI-LAYER
-  const categoryList = parseCategoriesSafely(article);
-  const parsedContent = parseContentMedia(article.content);
+  // SANITASI SELURUH VARIABEL DARI BACKEND KEDALAM TIPE DATA APLIKASI
+  const articleTitle = safeStringify(article.title, "Artikel");
+  const authorName = safeStringify(article.author, "Redaksi");
+  const summaryText = safeStringify(
+    article.summary,
+    "Simak berita selengkapnya di bawah ini."
+  );
+  const readTimeText = safeStringify(article.read_time, "3 MIN READ");
 
-  // SANITASI AUTHOR
-  const authorName =
-    typeof article.author === "string"
-      ? article.author
-      : article.author?.name || article.author?.username || "Redaksi";
+  // PARSE CATEGORIES DEEP CLEAN
+  let categoryList: string[] = parseCategoriesToSafeStrings(
+    article.category_input || article.category || article.categories
+  );
+
+  // PARSE CONTENT MEDIA
+  const parsedContent = parseContentMedia(article.content);
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
@@ -236,7 +204,7 @@ export default async function DetailArtikel({
                           key={idx}
                           className="rounded bg-[#FFD700]/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#FFD700] border border-[#FFD700]/30"
                         >
-                          {String(cat)}
+                          {safeStringify(cat, "Berita")}
                         </span>
                       ))
                     ) : (
@@ -247,7 +215,7 @@ export default async function DetailArtikel({
                   </div>
 
                   <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-tight">
-                    {String(article.title || "")}
+                    {articleTitle}
                   </h1>
 
                   {/* Info Bar */}
@@ -275,12 +243,10 @@ export default async function DetailArtikel({
                       </div>
                     )}
 
-                    {article.read_time && (
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-[#FFD700]" />
-                        <span>{String(article.read_time)}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-[#FFD700]" />
+                      <span>{readTimeText}</span>
+                    </div>
                   </div>
 
                   {/* Thumbnail Cover */}
@@ -295,16 +261,13 @@ export default async function DetailArtikel({
                           article.image_full_url,
                         "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
                       )}
-                      alt={String(article.title || "")}
+                      alt={articleTitle}
                       className="w-full aspect-[16/9] object-cover"
                     />
                   </div>
 
                   <p className="text-base sm:text-lg text-text-muted text-justify font-medium border-l-4 border-[#FFD700] pl-4 bg-dark-card/30 p-4 rounded-r-lg">
-                    {String(
-                      article.summary ||
-                        "Simak berita selengkapnya di bawah ini."
-                    )}
+                    {summaryText}
                   </p>
                 </div>
 
@@ -324,7 +287,7 @@ export default async function DetailArtikel({
               <div className="animate-fade-up-3 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-dark-border pt-8 mt-8">
                 {prevArticle ? (
                   <Link
-                    href={`/artikel/${prevArticle.slug}`}
+                    href={`/artikel/${safeStringify(prevArticle.slug)}`}
                     className="group flex items-center gap-4 p-4 rounded-xl border border-dark-border bg-dark-card hover:border-[#FFD700] transition-colors"
                   >
                     <ChevronLeft className="h-6 w-6 text-text-muted group-hover:text-[#FFD700] shrink-0" />
@@ -333,7 +296,7 @@ export default async function DetailArtikel({
                         ARTIKEL SEBELUMNYA
                       </p>
                       <h4 className="text-sm font-bold text-white group-hover:text-[#FFD700] truncate transition-colors">
-                        {String(prevArticle.title || "")}
+                        {safeStringify(prevArticle.title)}
                       </h4>
                     </div>
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
@@ -344,7 +307,7 @@ export default async function DetailArtikel({
                             prevArticle.image_url,
                           "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                         )}
-                        alt={String(prevArticle.title || "")}
+                        alt={safeStringify(prevArticle.title)}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
                       />
                     </div>
@@ -355,7 +318,7 @@ export default async function DetailArtikel({
 
                 {nextArticle ? (
                   <Link
-                    href={`/artikel/${nextArticle.slug}`}
+                    href={`/artikel/${safeStringify(nextArticle.slug)}`}
                     className="group flex items-center gap-4 p-4 rounded-xl border border-dark-border bg-dark-card hover:border-[#FFD700] transition-colors text-right"
                   >
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
@@ -366,7 +329,7 @@ export default async function DetailArtikel({
                             nextArticle.image_url,
                           "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
                         )}
-                        alt={String(nextArticle.title || "")}
+                        alt={safeStringify(nextArticle.title)}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
                       />
                     </div>
@@ -375,7 +338,7 @@ export default async function DetailArtikel({
                         ARTIKEL SELANJUTNYA
                       </p>
                       <h4 className="text-sm font-bold text-white group-hover:text-[#FFD700] truncate transition-colors">
-                        {String(nextArticle.title || "")}
+                        {safeStringify(nextArticle.title)}
                       </h4>
                     </div>
                     <ChevronRight className="h-6 w-6 text-text-muted group-hover:text-[#FFD700] shrink-0" />
@@ -390,20 +353,20 @@ export default async function DetailArtikel({
             <aside className="lg:col-span-4 space-y-8">
               <div className="sticky top-24 space-y-6">
                 {/* 1. Widget Share */}
-                <ShareWidget title={String(article.title || "")} />
+                <ShareWidget title={articleTitle} />
 
                 {/* 2. Space Iklan Dinamis */}
                 <div className="animate-fade-up-2">
                   {sidebarAd ? (
                     <a
-                      href={sidebarAd.url_link}
+                      href={safeStringify(sidebarAd.url_link, "#")}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="relative block w-full max-w-[320px] mx-auto overflow-hidden rounded-xl group border border-dark-border/30 shadow-xl"
                     >
                       <img
                         src={formatImageUrl(sidebarAd.banner_image, "")}
-                        alt={String(sidebarAd.title || "")}
+                        alt={safeStringify(sidebarAd.title, "Ad")}
                         className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <span className="absolute top-2 right-3 text-[9px] font-black tracking-widest text-white bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded">
