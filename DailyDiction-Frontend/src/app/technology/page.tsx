@@ -19,7 +19,6 @@ import {
   Eye,
 } from "lucide-react";
 import TrendingSection from "@/components/TrendingSection";
-import LatestNewsSection from "@/components/LatestNewsSection";
 
 interface TechItem {
   id: number;
@@ -458,7 +457,6 @@ export default function TechnologyPage() {
                 </a>
               </div>
               <TrendingSection />
-              <LatestNewsSection />
             </aside>
           </div>
         </main>

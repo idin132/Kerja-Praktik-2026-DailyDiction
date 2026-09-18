@@ -15,6 +15,7 @@ import {
 import ArticleInteractions from "@/components/ArticleInteractions";
 import ViewTracker from "@/components/ViewTracker";
 import ArticleContent from "@/components/ArticleContent";
+import LatestNewsSection from "@/components/LatestNewsSection";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -421,6 +422,7 @@ export default async function DetailArtikel({
                   </div>
                 </div>
               </div>
+              <LatestNewsSection />
             </aside>
           </div>
         </div>

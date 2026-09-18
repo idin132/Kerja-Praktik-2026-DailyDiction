@@ -17,7 +17,6 @@ import {
 import { getYouTubeVideos } from "@/lib/youtube";
 import { Flame, Star, ArrowRight } from "lucide-react";
 import TrendingSection from "@/components/TrendingSection";
-import LatestNewsSection from "@/components/LatestNewsSection";
 
 export const revalidate = 0;
 
@@ -279,7 +278,6 @@ export default async function Home() {
 
             <DiscordWidget />
             <TrendingSection />
-            <LatestNewsSection />
           </aside>
         </div>
       </main>
