@@ -15,6 +15,11 @@ class EditArticle extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('save')
+                ->label('Save')
+                ->action('save')
+                ->color('primary'),
+
             Actions\DeleteAction::make(),
         ];
     }
