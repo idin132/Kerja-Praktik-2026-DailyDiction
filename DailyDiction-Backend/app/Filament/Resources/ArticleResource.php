@@ -55,14 +55,14 @@ class ArticleResource extends Resource
                     }),
 
                 (auth()->user()?->role === 'superadmin' || (auth()->user() && method_exists(auth()->user(), 'isSuperAdmin') && auth()->user()->isSuperAdmin()))
-                    ? Forms\Components\Select::make('author')
+                ? Forms\Components\Select::make('author')
                     ->label('Author (Penulis)')
                     ->options(fn() => User::pluck('name', 'name')->toArray())
                     ->searchable()
                     ->preload()
                     ->default(fn() => auth()->user()?->name)
                     ->required()
-                    : Forms\Components\TextInput::make('author')
+                : Forms\Components\TextInput::make('author')
                     ->label('Author (Penulis)')
                     ->required()
                     ->readOnly()
@@ -227,6 +227,7 @@ class ArticleResource extends Resource
                 Tables\Columns\TextColumn::make('type')
                     ->label('Tipe')
                     ->badge()
+                    ->sortable() // <-- Ditambahkan
                     ->color(fn(string $state): string => match ($state) {
                         'article' => 'info',
                         'technology' => 'success',
@@ -237,7 +238,9 @@ class ArticleResource extends Resource
                     ->formatStateUsing(fn(string $state): string => ucfirst($state)),
 
                 Tables\Columns\TextColumn::make('title')
+                    ->label('Judul')
                     ->searchable()
+                    ->sortable() // <-- Ditambahkan
                     ->limit(30),
 
                 Tables\Columns\TextColumn::make('categories.name')
@@ -251,23 +254,31 @@ class ArticleResource extends Resource
                     ->separator(','),
 
                 Tables\Columns\TextColumn::make('category_color')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true), // Di-hide bawaan agar tabel tidak terlalu penuh
+
                 Tables\Columns\TextColumn::make('read_time')
+                    ->label('Waktu Baca')
                     ->searchable(),
+
                 Tables\Columns\IconColumn::make('is_featured')
                     ->boolean()
                     ->hidden(),
 
                 Tables\Columns\IconColumn::make('is_published')
-                    ->boolean(),
+                    ->label('Tayang')
+                    ->boolean()
+                    ->sortable(), // <-- Ditambahkan
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->label('Tanggal Buat')
+                    ->dateTime('d M Y, H:i')
+                    ->sortable() // <-- Ditambahkan
+                    ->toggleable(isToggledHiddenByDefault: false), // Ditampilkan agar terlihat urutan tanggalnya
             ])
-            ->defaultSort('created_at', 'desc')
+            ->defaultSort('created_at', 'desc') // Sortir default: Postingan terbaru paling atas
             ->filters([
+                // Filter 1: Tipe Konten
                 Tables\Filters\SelectFilter::make('type')
                     ->label('Filter Tipe Konten')
                     ->options([
@@ -275,6 +286,14 @@ class ArticleResource extends Resource
                         'technology' => 'Teknologi & Hardware',
                         'review' => 'Game Review',
                         'entertainment' => 'Entertainment',
+                    ]),
+
+                // Filter 2: Status Publikasi (Publik vs Draft)
+                Tables\Filters\SelectFilter::make('is_published')
+                    ->label('Status Publikasi')
+                    ->options([
+                        '1' => 'Publik (Tayang)',
+                        '0' => 'Draft (Pribadi)',
                     ]),
             ])
             ->actions([
