@@ -105,13 +105,13 @@ function parseContentMedia(content: any): string {
       }
 
       return `<div class="aspect-video w-full my-6 overflow-hidden rounded-xl"><iframe src="${embedUrl}" class="w-full h-full border-0 rounded-xl" allowfullscreen></iframe></div>`;
-    },
+    }
   );
 }
 
 function formatImageUrl(
   imageUrl: any,
-  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
+  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
 ): string {
   const cleanUrl = safeStringify(imageUrl);
   if (!cleanUrl) return fallback;
@@ -161,8 +161,8 @@ export default async function DetailArtikel({
     adsData?.data && Array.isArray(adsData.data)
       ? adsData.data[0]
       : Array.isArray(adsData)
-        ? adsData[0]
-        : null;
+      ? adsData[0]
+      : null;
 
   const prevArticle = article.prev || null;
   const nextArticle = article.next || null;
@@ -223,9 +223,7 @@ export default async function DetailArtikel({
                   <div className="flex flex-wrap items-center gap-6 text-sm font-mono text-text-muted border-y border-dark-border py-4">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-[#FFD700]" />
-                      <span className="font-bold text-white">
-                        {authorName}
-                      </span>
+                      <span className="font-bold text-white">{authorName}</span>
                     </div>
 
                     {article.created_at && (
@@ -238,7 +236,7 @@ export default async function DetailArtikel({
                               day: "numeric",
                               month: "long",
                               year: "numeric",
-                            },
+                            }
                           )}
                         </span>
                       </div>
@@ -260,7 +258,7 @@ export default async function DetailArtikel({
                           article.thumbnail_url ||
                           article.banner_image ||
                           article.image_full_url,
-                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
+                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
                       )}
                       alt={articleTitle}
                       className="w-full aspect-[16/9] object-cover"
@@ -306,7 +304,7 @@ export default async function DetailArtikel({
                           prevArticle.thumbnail ||
                             prevArticle.image ||
                             prevArticle.image_url,
-                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
+                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
                         )}
                         alt={safeStringify(prevArticle.title)}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -328,7 +326,7 @@ export default async function DetailArtikel({
                           nextArticle.thumbnail ||
                             nextArticle.image ||
                             nextArticle.image_url,
-                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
+                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
                         )}
                         alt={safeStringify(nextArticle.title)}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -421,8 +419,8 @@ export default async function DetailArtikel({
                     </a>
                   </div>
                 </div>
+                <LatestNewsSection />
               </div>
-              <LatestNewsSection />
             </aside>
           </div>
         </div>
