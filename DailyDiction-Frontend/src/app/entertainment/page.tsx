@@ -19,6 +19,7 @@ import {
   Eye,
 } from "lucide-react";
 import TrendingSection from "@/components/TrendingSection";
+import LatestNewsSection from "@/components/LatestNewsSection";
 
 interface ArticleItem {
   id: number;
@@ -454,6 +455,7 @@ export default function EntertainmentPage() {
                 </a>
               </div>
               <TrendingSection />
+              <LatestNewsSection />
             </aside>
           </div>
         </main>

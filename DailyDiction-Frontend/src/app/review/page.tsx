@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import TrendingSection from "@/components/TrendingSection";
+import LatestNewsSection from "@/components/LatestNewsSection";
 
 interface ReviewItem {
   id: number;
@@ -471,6 +472,7 @@ export default function ReviewPage() {
             {/* Kolom kanan - sidebar */}
             <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
               <TrendingSection />
+              <LatestNewsSection />
             </aside>
           </div>
         </main>
