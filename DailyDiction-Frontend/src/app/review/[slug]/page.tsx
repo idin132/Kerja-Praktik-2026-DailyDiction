@@ -20,6 +20,7 @@ import ShareWidget from "@/components/ShareWidget";
 import ArticleInteractions from "@/components/ArticleInteractions";
 import ViewTracker from "@/components/ViewTracker";
 import ArticleContent from "@/components/ArticleContent";
+import TrendingSection from "@/components/TrendingSection";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -92,7 +93,7 @@ function parseContentMedia(content: any): string {
       .map((b: any) =>
         typeof b === "string"
           ? b
-          : b?.content || b?.html || b?.text || b?.value || ""
+          : b?.content || b?.html || b?.text || b?.value || "",
       )
       .join("");
   } else if (typeof content === "object" && content !== null) {
@@ -104,7 +105,7 @@ function parseContentMedia(content: any): string {
 
   let cleanContent = stringContent.replace(
     /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
-    ""
+    "",
   );
 
   return cleanContent.replace(
@@ -247,9 +248,7 @@ export default async function DetailReview({
                   <div className="flex flex-wrap items-center gap-6 text-sm font-mono text-text-muted border-y border-dark-border py-4">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-[#FFD700]" />
-                      <span className="font-bold text-white">
-                        {authorName}
-                      </span>
+                      <span className="font-bold text-white">{authorName}</span>
                     </div>
                     {review.created_at && (
                       <div className="flex items-center gap-2">
@@ -275,7 +274,8 @@ export default async function DetailReview({
                   {/* Summary */}
                   <p className="text-base sm:text-lg text-text-muted text-justify font-medium border-l-4 border-[#FFD700] pl-4 bg-dark-card/30 p-4 rounded-r-lg">
                     {String(
-                      review.summary || "Baca ulasan lengkap game ini di bawah."
+                      review.summary ||
+                        "Baca ulasan lengkap game ini di bawah.",
                     )}
                   </p>
                 </div>
@@ -453,6 +453,7 @@ export default async function DetailReview({
                     </a>
                   </div>
                 </div>
+                <TrendingSection />
               </div>
             </aside>
           </div>
