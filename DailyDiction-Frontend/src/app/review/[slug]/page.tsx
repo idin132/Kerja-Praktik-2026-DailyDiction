@@ -214,6 +214,11 @@ export default async function DetailReview({
       ? review.author
       : review.author?.name || review.author?.username || "Redaksi";
 
+  const getArticleHref = (item: any) => {
+    if (item?.type === "review") return `/review/${item.slug}`;
+    return `/artikel/${item.slug}`;
+  };
+
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
       <Navbar />
@@ -318,7 +323,7 @@ export default async function DetailReview({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-dark-border pt-8 mt-8">
                 {prevReview ? (
                   <Link
-                    href={`/review/${prevReview.slug}`}
+                    href={getArticleHref(prevReview)}
                     className="group flex items-center gap-4 p-4 rounded-xl border border-dark-border bg-dark-card hover:border-[#FFD700] transition-colors"
                   >
                     <ChevronLeft className="h-6 w-6 text-text-muted group-hover:text-[#FFD700] shrink-0" />
@@ -350,7 +355,7 @@ export default async function DetailReview({
 
                 {nextReview ? (
                   <Link
-                    href={`/review/${nextReview.slug}`}
+                    href={getArticleHref(nextReview)}
                     className="group flex items-center gap-4 p-4 rounded-xl border border-dark-border bg-dark-card hover:border-[#FFD700] transition-colors text-right"
                   >
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">

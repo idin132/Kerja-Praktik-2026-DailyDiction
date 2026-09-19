@@ -71,7 +71,7 @@ function parseContentMedia(content: any): string {
       .map((b: any) =>
         typeof b === "string"
           ? b
-          : b?.content || b?.html || b?.text || b?.value || ""
+          : b?.content || b?.html || b?.text || b?.value || "",
       )
       .join("");
   } else if (typeof content === "object" && content !== null) {
@@ -83,7 +83,7 @@ function parseContentMedia(content: any): string {
 
   let cleanContent = stringContent.replace(
     /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
-    ""
+    "",
   );
 
   return cleanContent.replace(
@@ -106,13 +106,13 @@ function parseContentMedia(content: any): string {
       }
 
       return `<div class="aspect-video w-full my-6 overflow-hidden rounded-xl"><iframe src="${embedUrl}" class="w-full h-full border-0 rounded-xl" allowfullscreen></iframe></div>`;
-    }
+    },
   );
 }
 
 function formatImageUrl(
   imageUrl: any,
-  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
+  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
 ): string {
   const cleanUrl = safeStringify(imageUrl);
   if (!cleanUrl) return fallback;
@@ -162,8 +162,8 @@ export default async function DetailArtikel({
     adsData?.data && Array.isArray(adsData.data)
       ? adsData.data[0]
       : Array.isArray(adsData)
-      ? adsData[0]
-      : null;
+        ? adsData[0]
+        : null;
 
   const prevArticle = article.prev || null;
   const nextArticle = article.next || null;
@@ -173,17 +173,22 @@ export default async function DetailArtikel({
   const authorName = safeStringify(article.author, "Redaksi");
   const summaryText = safeStringify(
     article.summary,
-    "Simak berita selengkapnya di bawah ini."
+    "Simak berita selengkapnya di bawah ini.",
   );
   const readTimeText = safeStringify(article.read_time, "3 MIN READ");
 
   // PARSE CATEGORIES DEEP CLEAN
   let categoryList: string[] = parseCategoriesToSafeStrings(
-    article.category_input || article.category || article.categories
+    article.category_input || article.category || article.categories,
   );
 
   // PARSE CONTENT MEDIA
   const parsedContent = parseContentMedia(article.content);
+
+  const getArticleHref = (item: any) => {
+    if (item?.type === "review") return `/review/${item.slug}`;
+    return `/artikel/${item.slug}`;
+  };
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
@@ -237,7 +242,7 @@ export default async function DetailArtikel({
                               day: "numeric",
                               month: "long",
                               year: "numeric",
-                            }
+                            },
                           )}
                         </span>
                       </div>
@@ -259,7 +264,7 @@ export default async function DetailArtikel({
                           article.thumbnail_url ||
                           article.banner_image ||
                           article.image_full_url,
-                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600"
+                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
                       )}
                       alt={articleTitle}
                       className="w-full aspect-[16/9] object-cover"
@@ -287,7 +292,7 @@ export default async function DetailArtikel({
               <div className="animate-fade-up-3 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-dark-border pt-8 mt-8">
                 {prevArticle ? (
                   <Link
-                    href={`/artikel/${safeStringify(prevArticle.slug)}`}
+                    href={getArticleHref(prevArticle)}
                     className="group flex items-center gap-4 p-4 rounded-xl border border-dark-border bg-dark-card hover:border-[#FFD700] transition-colors"
                   >
                     <ChevronLeft className="h-6 w-6 text-text-muted group-hover:text-[#FFD700] shrink-0" />
@@ -305,7 +310,7 @@ export default async function DetailArtikel({
                           prevArticle.thumbnail ||
                             prevArticle.image ||
                             prevArticle.image_url,
-                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
+                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                         )}
                         alt={safeStringify(prevArticle.title)}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -318,7 +323,7 @@ export default async function DetailArtikel({
 
                 {nextArticle ? (
                   <Link
-                    href={`/artikel/${safeStringify(nextArticle.slug)}`}
+                    href={getArticleHref(nextArticle)}
                     className="group flex items-center gap-4 p-4 rounded-xl border border-dark-border bg-dark-card hover:border-[#FFD700] transition-colors text-right"
                   >
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
@@ -327,7 +332,7 @@ export default async function DetailArtikel({
                           nextArticle.thumbnail ||
                             nextArticle.image ||
                             nextArticle.image_url,
-                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
+                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
                         )}
                         alt={safeStringify(nextArticle.title)}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"

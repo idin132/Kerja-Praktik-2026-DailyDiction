@@ -49,35 +49,21 @@ class ArticleController extends Controller
 
         $type = $article->type ?? 'article';
 
+        // Prev — strict filter by type
         $prevArticle = Article::where('is_published', true)
+            ->where('published_at', '<=', now())
             ->where('id', '<', $article->id)
-            ->where(function ($q) use ($type) {
-                $q->where('type', $type)->orWhereNull('type');
-            })
+            ->where('type', $type)
             ->orderBy('id', 'desc')
-            ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
+            ->first(['id', 'slug', 'title', 'image_url', 'image_path', 'type']);
 
-        if (!$prevArticle) {
-            $prevArticle = Article::where('is_published', true)
-                ->where('id', '<', $article->id)
-                ->orderBy('id', 'desc')
-                ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
-        }
-
+        // Next — strict filter by type
         $nextArticle = Article::where('is_published', true)
+            ->where('published_at', '<=', now())
             ->where('id', '>', $article->id)
-            ->where(function ($q) use ($type) {
-                $q->where('type', $type)->orWhereNull('type');
-            })
+            ->where('type', $type)
             ->orderBy('id', 'asc')
-            ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
-
-        if (!$nextArticle) {
-            $nextArticle = Article::where('is_published', true)
-                ->where('id', '>', $article->id)
-                ->orderBy('id', 'asc')
-                ->first(['id', 'slug', 'title', 'image_url', 'image_path']);
-        }
+            ->first(['id', 'slug', 'title', 'image_url', 'image_path', 'type']);
 
         $articleData = $article->toArray();
 
