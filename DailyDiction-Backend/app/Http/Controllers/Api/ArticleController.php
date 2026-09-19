@@ -20,7 +20,7 @@ class ArticleController extends Controller
         return Cache::remember($cacheKey, 300, function () use ($request) {
             $query = Article::with('categories')
                 ->where('is_published', true)
-                ->whereNotNull('published_at');
+                ->where('published_at', '<=', now());
 
             if ($request->has('type') && $request->type !== 'all') {
                 $query->where('type', $request->type);
@@ -37,6 +37,7 @@ class ArticleController extends Controller
         $article = Article::with('categories')
             ->where('slug', $slug)
             ->where('is_published', true)
+            ->where('published_at', '<=', now())
             ->first();
 
         if (!$article) {
@@ -118,7 +119,7 @@ class ArticleController extends Controller
         return Cache::remember('articles_featured', 600, function () {
             $featured = Article::with('categories')
                 ->where('is_published', true)
-                ->whereNotNull('published_at') // pastikan sudah punya published_at
+                ->where('published_at', '<=', now())
                 ->where('type', 'article')
                 ->orderBy('published_at', 'desc') // ← ganti dari latest()
                 ->take(5)
@@ -139,6 +140,7 @@ class ArticleController extends Controller
         return Cache::remember("articles_tech_p{$page}_l{$perPage}", 300, function () use ($perPage) {
             $technologies = Article::with('categories')
                 ->where('is_published', true)
+                ->where('published_at', '<=', now())
                 ->where('type', 'technology')
                 ->latest()
                 ->paginate($perPage);
@@ -152,6 +154,7 @@ class ArticleController extends Controller
     {
         $article = Article::where('slug', $slug)
             ->where('is_published', true)
+            ->where('published_at', '<=', now())
             ->first();
 
         if (!$article) {
@@ -173,14 +176,13 @@ class ArticleController extends Controller
         ]);
     }
 
-    // =============================================
-    // BARU: Top 5 trending (views terbanyak, 7 hari terakhir)
-    // =============================================
+    // Top 5 trending (views terbanyak, 7 hari terakhir)
     public function trending()
     {
         return Cache::remember('articles_trending', 300, function () {
             $articles = Article::with('categories')
                 ->where('is_published', true)
+                ->where('published_at', '<=', now())
                 ->where('last_viewed_at', '>=', now()->subDays(7))
                 ->orderBy('views', 'desc')
                 ->limit(5)
@@ -319,7 +321,7 @@ class ArticleController extends Controller
             $reviews = Article::query()
                 ->where('type', 'review')
                 ->where('is_published', true)
-                ->whereNotNull('published_at')
+                ->where('published_at', '<=', now())
                 ->with('categories')
                 ->orderBy('published_at', 'desc') // ← ganti dari latest()
                 ->paginate($limit);

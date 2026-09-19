@@ -42,6 +42,11 @@ class CreateArticle extends CreateRecord
         }
 
         unset($data['category_input']);
+
+        // Jika published_at tidak diisi, set ke sekarang
+        if (empty($data['published_at'])) {
+            $data['published_at'] = now();
+        }
         return $data;
     }
 

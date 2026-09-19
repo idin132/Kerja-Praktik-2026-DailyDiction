@@ -31,8 +31,8 @@ class ArticleStatsOverview extends BaseWidget
                 ->color('success'),
 
             // Card 4: entertainment Dipublish
-            Stat::make('entertainment Dipublish', Article::where('type', 'entertainment')->where('is_published', true)->count())
-                ->description('Total artikel hiburan yang tayang')
+            Stat::make('Entertainment Dipublish', Article::where('type', 'entertainment')->where('is_published', true)->count())
+                ->description('Total entertainment yang tayang')
                 ->descriptionIcon('heroicon-m-cpu-chip')
                 ->color('success'),
 

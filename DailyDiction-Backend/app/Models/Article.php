@@ -46,7 +46,7 @@ class Article extends Model
         });
 
         static::saving(function ($article) {
-            if ($article->isDirty('is_published') && $article->is_published && !$article->published_at) {
+            if ($article->is_published && empty($article->published_at)) {
                 $article->published_at = now();
             }
         });

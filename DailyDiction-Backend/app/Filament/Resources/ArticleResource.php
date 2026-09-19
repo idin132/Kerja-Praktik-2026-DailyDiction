@@ -55,14 +55,14 @@ class ArticleResource extends Resource
                     }),
 
                 (auth()->user()?->role === 'superadmin' || (auth()->user() && method_exists(auth()->user(), 'isSuperAdmin') && auth()->user()->isSuperAdmin()))
-                ? Forms\Components\Select::make('author')
+                    ? Forms\Components\Select::make('author')
                     ->label('Author (Penulis)')
                     ->options(fn() => User::pluck('name', 'name')->toArray())
                     ->searchable()
                     ->preload()
                     ->default(fn() => auth()->user()?->name)
                     ->required()
-                : Forms\Components\TextInput::make('author')
+                    : Forms\Components\TextInput::make('author')
                     ->label('Author (Penulis)')
                     ->required()
                     ->readOnly()
@@ -78,23 +78,37 @@ class ArticleResource extends Resource
 
                 // ================= 3. FORM HYBRID (KONDISIONAL SESUAI TIPE) =================
 
-                // A & B. GABUNGAN ARTIKEL & TEKNOLOGI
-                Forms\Components\TagsInput::make('category_input')
-                    ->label(fn(Get $get) => $get('type') === 'technology' ? 'Kategori Tech / Perangkat' : 'Category')
-                    ->placeholder(fn(Get $get) => $get('type') === 'technology' ? 'Contoh: Keyboard, Mouse, GPU, Monitor...' : 'Ketik kategori, tekan Enter...')
-                    ->suggestions(fn(Get $get) => $get('type') === 'technology' ? [
-                        'Keyboard',
-                        'Mouse',
-                        'Headset',
-                        'Monitor',
-                        'VGA / GPU',
-                        'Processor',
-                        'Laptop Gaming',
-                        'Console / Handheld',
-                        'Accessories',
-                    ] : Category::pluck('name')->toArray())
-                    ->visible(fn(Get $get) => in_array($get('type'), ['article', 'technology', 'entertainment']))
-                    ->required(fn(Get $get) => in_array($get('type'), ['article', 'technology', 'entertainment'])),
+                Forms\Components\Grid::make(2)
+                    ->schema([
+                        // A & B. GABUNGAN ARTIKEL & TEKNOLOGI
+                        Forms\Components\TagsInput::make('category_input')
+                            ->label(fn(Get $get) => $get('type') === 'technology' ? 'Kategori Tech / Perangkat' : 'Category')
+                            ->placeholder(fn(Get $get) => $get('type') === 'technology' ? 'Contoh: Keyboard, Mouse, GPU, Monitor...' : 'Ketik kategori, tekan Enter...')
+                            ->suggestions(fn(Get $get) => $get('type') === 'technology' ? [
+                                'Keyboard',
+                                'Mouse',
+                                'Headset',
+                                'Monitor',
+                                'VGA / GPU',
+                                'Processor',
+                                'Laptop Gaming',
+                                'Console / Handheld',
+                                'Accessories',
+                            ] : Category::pluck('name')->toArray())
+                            ->visible(fn(Get $get) => in_array($get('type'), ['article', 'technology', 'entertainment']))
+                            ->required(fn(Get $get) => in_array($get('type'), ['article', 'technology', 'entertainment'])),
+
+                        Forms\Components\DateTimePicker::make('published_at')
+                            ->label('Jadwal Tayang')
+                            ->helperText('Kosongkan untuk publish sekarang. Isi tanggal & jam jika ingin dijadwalkan.')
+                            ->nullable()
+                            ->default(now())
+                            ->displayFormat('d M Y, H:i')
+                            ->timezone('Asia/Jakarta')
+                            ->native(false),
+
+
+                    ]),
 
                 // C. KHUSUS REVIEW: Platform Game
                 Forms\Components\Select::make('platform')
@@ -268,14 +282,29 @@ class ArticleResource extends Resource
                 Tables\Columns\IconColumn::make('is_published')
                     ->label('Tayang')
                     ->boolean()
-                    ->sortable(), // <-- Ditambahkan
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('published_at')
+                    ->label('Jadwal Tayang')
+                    ->dateTime('d M Y, H:i')
+                    ->timezone('Asia/Jakarta')
+                    ->sortable()
+                    ->color(fn($state) => $state && $state->isFuture() ? 'warning' : 'success')
+                    ->description(
+                        fn($record) =>
+                        $record->published_at?->isFuture()
+                            ? '⏳ Terjadwal — belum tayang'
+                            : null
+                    ),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Tanggal Buat')
                     ->dateTime('d M Y, H:i')
-                    ->sortable() // <-- Ditambahkan
+                    ->timezone('Asia/Jakarta')
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false), // Ditampilkan agar terlihat urutan tanggalnya
             ])
+
             ->defaultSort('created_at', 'desc') // Sortir default: Postingan terbaru paling atas
             ->filters([
                 // Filter 1: Tipe Konten
