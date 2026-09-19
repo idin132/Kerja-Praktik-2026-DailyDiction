@@ -20,6 +20,7 @@ interface ArticleItem {
   read_time?: string;
   created_at?: string;
   contentType?: "artikel" | "review";
+  published_at?: String;
 }
 
 function formatHeroImage(article: ArticleItem): string {
@@ -49,9 +50,13 @@ function getCategoriesArray(item: ArticleItem, fallback = "NEWS"): string[] {
   let rawCats: any[] = [];
 
   if (item.categories && item.categories.length > 0) {
-    rawCats = item.categories.map((c: any) => (typeof c === "string" ? c : c.name));
+    rawCats = item.categories.map((c: any) =>
+      typeof c === "string" ? c : c.name,
+    );
   } else if (item.category_input) {
-    rawCats = Array.isArray(item.category_input) ? item.category_input : [item.category_input];
+    rawCats = Array.isArray(item.category_input)
+      ? item.category_input
+      : [item.category_input];
   } else if (item.category) {
     if (typeof item.category === "string" && item.category.startsWith("[")) {
       try {
@@ -65,7 +70,9 @@ function getCategoriesArray(item: ArticleItem, fallback = "NEWS"): string[] {
   }
 
   const validCats = rawCats.filter(Boolean).map(String);
-  return validCats.length > 0 ? validCats.map((c) => c.toUpperCase()) : [fallback];
+  return validCats.length > 0
+    ? validCats.map((c) => c.toUpperCase())
+    : [fallback];
 }
 
 export default function HeroSection() {
@@ -101,25 +108,33 @@ export default function HeroSection() {
           (item: any) => ({
             ...item,
             contentType: "artikel",
-          })
+          }),
         );
 
         const reviewsData: ArticleItem[] = (reviewsJson?.data || []).map(
           (item: any) => ({
             ...item,
             contentType: "review",
-          })
+          }),
         );
 
         const rawCombined = [...newsData, ...reviewsData];
 
         const uniqueCombined = Array.from(
-          new Map(rawCombined.map((item) => [item.id, item])).values()
+          new Map(rawCombined.map((item) => [item.id, item])).values(),
         );
 
         const sortedCombined = uniqueCombined.sort((a, b) => {
-          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          const dateA = a.published_at
+            ? new Date(a.published_at).getTime()
+            : a.created_at
+              ? new Date(a.created_at).getTime()
+              : 0;
+          const dateB = b.published_at
+            ? new Date(b.published_at).getTime()
+            : b.created_at
+              ? new Date(b.created_at).getTime()
+              : 0;
           return dateB - dateA;
         });
 

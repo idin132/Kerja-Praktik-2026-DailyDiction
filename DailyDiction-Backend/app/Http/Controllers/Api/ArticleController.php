@@ -19,13 +19,16 @@ class ArticleController extends Controller
 
         return Cache::remember($cacheKey, 300, function () use ($request) {
             $query = Article::with('categories')
-                ->where('is_published', true);
+                ->where('is_published', true)
+                ->whereNotNull('published_at');
 
             if ($request->has('type') && $request->type !== 'all') {
                 $query->where('type', $request->type);
             }
 
-            return response()->json($query->latest()->paginate(10));
+            return response()->json(
+                $query->orderBy('published_at', 'desc')->paginate(10)
+            );
         });
     }
 
@@ -97,12 +100,27 @@ class ArticleController extends Controller
 
     public function featured()
     {
+        // return Cache::remember('articles_featured', 600, function () {
+        //     $featured = Article::with('categories')
+        //         ->where('is_published', true)
+        //         ->where('is_featured', true)
+        //         ->where('type', 'article')
+        //         ->latest()
+        //         ->take(5)
+        //         ->get();
+
+        //     return response()->json([
+        //         'status' => 'success',
+        //         'data' => $featured
+        //     ]);
+        // });
+
         return Cache::remember('articles_featured', 600, function () {
             $featured = Article::with('categories')
                 ->where('is_published', true)
-                ->where('is_featured', true)
+                ->whereNotNull('published_at') // pastikan sudah punya published_at
                 ->where('type', 'article')
-                ->latest()
+                ->orderBy('published_at', 'desc') // ← ganti dari latest()
                 ->take(5)
                 ->get();
 
@@ -301,8 +319,9 @@ class ArticleController extends Controller
             $reviews = Article::query()
                 ->where('type', 'review')
                 ->where('is_published', true)
+                ->whereNotNull('published_at')
                 ->with('categories')
-                ->latest()
+                ->orderBy('published_at', 'desc') // ← ganti dari latest()
                 ->paginate($limit);
 
             return response()->json([

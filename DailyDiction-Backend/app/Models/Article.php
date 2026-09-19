@@ -28,7 +28,8 @@ class Article extends Model
         'platform',
         'category_input',
         'views',
-        'last_viewed_at'
+        'last_viewed_at',
+        'published_at',
     ];
     protected static function booted()
     {
@@ -43,6 +44,12 @@ class Article extends Model
                 $article->read_time = "{$minutes} MIN READ";
             }
         });
+
+        static::saving(function ($article) {
+            if ($article->isDirty('is_published') && $article->is_published && !$article->published_at) {
+                $article->published_at = now();
+            }
+        });
     }
 
 
@@ -53,6 +60,7 @@ class Article extends Model
         'platform' => 'array', // <--- Tambahin ini biar ngebaca multiple select
         'category_input' => 'array',
         'last_viewed_at' => 'datetime',
+        'published_at' => 'datetime',
     ];
 
     // Menyertakan 'image_full_url' secara otomatis saat dipanggil sebagai JSON/API
