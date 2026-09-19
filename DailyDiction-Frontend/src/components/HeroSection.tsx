@@ -20,7 +20,7 @@ interface ArticleItem {
   read_time?: string;
   created_at?: string;
   contentType?: "artikel" | "review";
-  published_at?: String;
+  published_at?: string;
 }
 
 function formatHeroImage(article: ArticleItem): string {
