@@ -61,7 +61,8 @@ export default function LatestNewsSection() {
     const apiUrl =
       process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
-    fetch(`${apiUrl}/articles?type=article&limit=5`, {
+    // Mengambil 5 konten terbaru dari seluruh kategori (news, review, tech, entertainment, dll)
+    fetch(`${apiUrl}/articles?limit=5`, {
       headers: { Accept: "application/json" },
     })
       .then((res) => (res.ok ? res.json() : { data: [] }))
@@ -88,8 +89,35 @@ export default function LatestNewsSection() {
 
   const getArticleHref = (item: any): string => {
     const slug = safeStringify(item.slug);
-    if (item.type === "review") return `/review/${slug}`;
+    if (
+      item.type === "review" ||
+      item.type === "reviews" ||
+      (typeof item.category === "string" &&
+        item.category.toLowerCase().includes("review"))
+    ) {
+      return `/review/${slug}`;
+    }
     return `/artikel/${slug}`;
+  };
+
+  const getCategoryBadge = (item: any): string => {
+    if (item.type === "review") return "REVIEW";
+    if (item.categories && item.categories.length > 0) {
+      return safeStringify(item.categories[0]);
+    }
+    if (item.category_input) {
+      const cat = Array.isArray(item.category_input)
+        ? item.category_input[0]
+        : item.category_input;
+      return safeStringify(cat);
+    }
+    if (item.category) {
+      const cat = Array.isArray(item.category)
+        ? item.category[0]
+        : item.category;
+      return safeStringify(cat);
+    }
+    return "TERBARU";
   };
 
   if (isLoading) {
@@ -98,7 +126,7 @@ export default function LatestNewsSection() {
         <div className="flex items-center gap-2 mb-6">
           <Newspaper className="h-5 w-5 text-[#FFD700]" />
           <h2 className="text-lg font-black uppercase tracking-wider text-text-primary">
-            Berita Terbaru
+            Konten Terbaru
           </h2>
         </div>
         <div className="flex flex-col gap-3">
@@ -121,7 +149,7 @@ export default function LatestNewsSection() {
         <div className="flex items-center gap-2">
           <Newspaper className="h-5 w-5 text-[#FFD700]" />
           <h2 className="text-lg font-black uppercase tracking-wider text-text-primary">
-            Berita Terbaru
+            Konten Terbaru
           </h2>
         </div>
         <Link
@@ -136,10 +164,7 @@ export default function LatestNewsSection() {
       <div className="flex flex-col gap-3">
         {articles.map((item: any) => {
           const titleText = safeStringify(item.title);
-          const categoryName =
-            item.categories && item.categories.length > 0
-              ? safeStringify(item.categories[0])
-              : null;
+          const categoryName = getCategoryBadge(item);
 
           return (
             <Link
@@ -150,7 +175,11 @@ export default function LatestNewsSection() {
               <div className="h-16 w-24 shrink-0 overflow-hidden rounded-lg relative">
                 <img
                   src={formatImageUrl(
-                    item.image_url || item.image_full_url || item.thumbnail,
+                    item.image_url ||
+                      item.image_full_url ||
+                      item.thumbnail ||
+                      item.thumbnail_url ||
+                      item.image,
                   )}
                   alt={titleText}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
