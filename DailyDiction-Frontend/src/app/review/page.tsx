@@ -18,9 +18,9 @@ interface ReviewItem {
   id: number;
   title: string;
   slug: string;
-  platform?: string | string[];
-  category_input?: string | string[];
-  category?: string | string[];
+  platform?: any;
+  category_input?: any;
+  category?: any;
   categories?: any[];
   summary: string;
   content?: string;
@@ -30,6 +30,20 @@ interface ReviewItem {
   thumbnail_url?: string;
   created_at?: string;
   type?: string;
+}
+
+function safeStringify(val: any, fallback: string = ""): string {
+  if (val === null || val === undefined) return fallback;
+  if (typeof val === "string") return val || fallback;
+  if (typeof val === "number" || typeof val === "boolean") return String(val);
+  if (typeof val === "object") {
+    if (val.name) return String(val.name);
+    if (val.title) return String(val.title);
+    if (val.label) return String(val.label);
+    if (val.username) return String(val.username);
+    if (val.slug) return String(val.slug);
+  }
+  return fallback;
 }
 
 function formatImageUrl(
@@ -110,13 +124,11 @@ export default function ReviewPage() {
                 ? item.category
                 : [item.category]),
               ...(Array.isArray(item.categories)
-                ? item.categories.map((c: any) =>
-                    typeof c === "string" ? c : c.name,
-                  )
+                ? item.categories.map((c: any) => safeStringify(c))
                 : []),
             ]
               .filter(Boolean)
-              .map((c) => String(c).toUpperCase());
+              .map((c) => safeStringify(c).toUpperCase());
 
             return cats.some(
               (cat) => cat.includes("REVIEW") || cat.includes("ULASAN"),
@@ -157,8 +169,8 @@ export default function ReviewPage() {
         const res = await fetch(`${apiUrl}/categories`, { cache: "no-store" });
         if (!res.ok) return;
         const json = await res.json();
-        const names: string[] = (json.data || []).map((c: { name: string }) =>
-          c.name.toUpperCase(),
+        const names: string[] = (json.data || []).map((c: any) =>
+          safeStringify(c).toUpperCase(),
         );
         setPlatforms(["ALL", ...names]);
       } catch (err) {
@@ -170,19 +182,26 @@ export default function ReviewPage() {
 
   const getPlatformsArray = (review: ReviewItem): string[] => {
     const raw = review.platform || review.category || ["PC"];
-    if (Array.isArray(raw)) return raw;
-    if (typeof raw === "string") {
+    let parsedList: any[] = [];
+
+    if (Array.isArray(raw)) {
+      parsedList = raw;
+    } else if (typeof raw === "string") {
       try {
-        return raw.startsWith("[") ? JSON.parse(raw) : [raw];
+        parsedList = raw.startsWith("[") ? JSON.parse(raw) : [raw];
       } catch {
-        return [raw];
+        parsedList = [raw];
       }
+    } else {
+      parsedList = [raw];
     }
-    return ["PC"];
+
+    const cleanList = parsedList.map((p) => safeStringify(p)).filter(Boolean);
+    return cleanList.length > 0 ? cleanList : ["PC"];
   };
 
   const filteredReviews = reviews.filter((review) => {
-    const plats = getPlatformsArray(review).map((p) => String(p).toUpperCase());
+    const plats = getPlatformsArray(review).map((p) => p.toUpperCase());
 
     const matchPlatform =
       selectedPlatform === "ALL" ||
@@ -190,9 +209,11 @@ export default function ReviewPage() {
         (p) => p.includes(selectedPlatform) || selectedPlatform.includes(p),
       );
 
+    const titleStr = safeStringify(review.title).toLowerCase();
+    const summaryStr = safeStringify(review.summary).toLowerCase();
     const matchSearch =
-      (review.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (review.summary?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+      titleStr.includes(searchQuery.toLowerCase()) ||
+      summaryStr.includes(searchQuery.toLowerCase());
 
     return matchPlatform && matchSearch;
   });
@@ -217,7 +238,6 @@ export default function ReviewPage() {
         <Navbar />
 
         <main className="mx-auto max-w-[1600px] px-4 py-12 sm:px-6 lg:px-8">
-          {/* Header */}
           <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-dark-border/50 pb-8">
             <div>
               <span className="mb-2 flex w-max items-center gap-2 rounded-full border border-[#FFD700]/30 bg-[#FFD700]/10 px-3 py-1 text-xs font-bold tracking-wider text-[#FFD700] font-mono">
@@ -246,13 +266,12 @@ export default function ReviewPage() {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12">
             <div className="lg:col-span-8 2xl:col-span-9">
-              {/* Featured Review */}
               {isLoading ? (
                 <div className="h-80 md:h-96 rounded-2xl border border-dark-border bg-dark-card/50 animate-pulse mb-12" />
               ) : featuredReview ? (
                 <div className="mb-12">
                   <Link
-                    href={`/review/${featuredReview.slug}`}
+                    href={`/review/${safeStringify(featuredReview.slug)}`}
                     className="group block overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-colors hover:border-[#FFD700]/50 shadow-xl"
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
@@ -264,7 +283,7 @@ export default function ReviewPage() {
                               featuredReview.thumbnail_url ||
                               featuredReview.thumbnail,
                           )}
-                          alt={featuredReview.title}
+                          alt={safeStringify(featuredReview.title)}
                           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         <span className="absolute left-4 top-4 rounded bg-[#FFD700] px-3 py-1 text-[10px] font-black uppercase tracking-widest text-black shadow-lg font-mono">
@@ -288,10 +307,10 @@ export default function ReviewPage() {
                         </div>
 
                         <h2 className="text-2xl md:text-3xl font-black text-white group-hover:text-[#FFD700] transition-colors line-clamp-2">
-                          {featuredReview.title}
+                          {safeStringify(featuredReview.title)}
                         </h2>
                         <p className="mt-4 text-text-muted text-xs line-clamp-3 leading-relaxed">
-                          {featuredReview.summary}
+                          {safeStringify(featuredReview.summary)}
                         </p>
 
                         <div className="mt-8 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#FFD700] transition-colors font-mono">
@@ -303,7 +322,6 @@ export default function ReviewPage() {
                 </div>
               ) : null}
 
-              {/* Filter Buttons */}
               <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-2 font-mono">
                 <span className="flex items-center gap-2 text-xs text-text-muted uppercase tracking-widest mr-2 shrink-0">
                   FILTER:
@@ -334,7 +352,6 @@ export default function ReviewPage() {
                 )}
               </div>
 
-              {/* Grid Reviews */}
               {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
@@ -357,11 +374,12 @@ export default function ReviewPage() {
                     >
                       {currentReviews.map((review) => {
                         const platforms = getPlatformsArray(review);
+                        const reviewSlug = safeStringify(review.slug);
 
                         return (
                           <Link
                             key={review.id}
-                            href={`/review/${review.slug}`}
+                            href={`/review/${reviewSlug}`}
                             className="group flex flex-col overflow-hidden rounded-xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/50 hover:-translate-y-1 hover:shadow-lg duration-300"
                           >
                             <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-dark-border/50 shrink-0">
@@ -372,7 +390,7 @@ export default function ReviewPage() {
                                     review.thumbnail_url ||
                                     review.thumbnail,
                                 )}
-                                alt={review.title}
+                                alt={safeStringify(review.title)}
                                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                               />
                               <div className="absolute left-3 top-3 flex flex-wrap gap-1.5 font-mono">
@@ -390,10 +408,10 @@ export default function ReviewPage() {
                             <div className="flex flex-1 flex-col justify-between p-5">
                               <div>
                                 <h3 className="text-base font-bold text-white group-hover:text-[#FFD700] transition-colors line-clamp-2">
-                                  {review.title}
+                                  {safeStringify(review.title)}
                                 </h3>
                                 <p className="mt-2 text-xs text-text-muted line-clamp-3 leading-relaxed">
-                                  {review.summary}
+                                  {safeStringify(review.summary)}
                                 </p>
                               </div>
 
@@ -420,7 +438,6 @@ export default function ReviewPage() {
                     </motion.div>
                   </AnimatePresence>
 
-                  {/* Pagination Controls */}
                   {totalPages > 1 && (
                     <div className="flex items-center justify-center gap-2 pt-12 font-mono text-xs">
                       <button
@@ -468,7 +485,6 @@ export default function ReviewPage() {
                 </div>
               )}
             </div>
-            {/* Kolom kanan - sidebar */}
             <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
               <TrendingSection />
             </aside>

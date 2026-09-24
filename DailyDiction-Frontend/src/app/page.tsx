@@ -12,35 +12,51 @@ import {
   getArticles,
   getGameReviews,
   getAdvertisements,
-  getTrendingArticles,
 } from "@/lib/api";
 import { getYouTubeVideos } from "@/lib/youtube";
 import { Flame, Star, ArrowRight } from "lucide-react";
 import TrendingSection from "@/components/TrendingSection";
 
-export const revalidate = 0;
+// OPTIMASI LCP: Ubah dari 0 ke ISR (Cache 60 Detik) agar Homepage dibuka instan dari Edge
+export const revalidate = 60;
 
 function formatImageUrl(
   imageUrl: string | null | undefined,
   fallback: string,
 ): string {
-  if (!imageUrl) return fallback;
+  if (!imageUrl || typeof imageUrl !== "string") return fallback;
 
-  if (imageUrl.includes("dailydiction.id/storage/")) {
-    return imageUrl;
+  const clean = imageUrl.trim();
+
+  if (clean.includes("dailydiction.id/storage/")) {
+    return clean;
   }
 
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    if (imageUrl.includes("https://dailydiction.id/storage/http")) {
-      return imageUrl.replace(
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    if (clean.includes("https://dailydiction.id/storage/http")) {
+      return clean.replace(
         /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
         "$1",
       );
     }
-    return imageUrl;
+    return clean;
   }
 
-  return `https://dailydiction.id/storage/${imageUrl}`;
+  return `https://dailydiction.id/storage/${clean.replace(/^\/+/, "")}`;
+}
+
+// HELPER SANITASI STRING AGAR TIDAK ERROR #60 (MENDUKUNG 2 ARGUMEN)
+function safeStringify(val: any, fallback: string = ""): string {
+  if (val === null || val === undefined) return fallback;
+  if (typeof val === "string") return val || fallback;
+  if (typeof val === "number" || typeof val === "boolean") return String(val);
+  if (typeof val === "object") {
+    if (val.name) return String(val.name);
+    if (val.title) return String(val.title);
+    if (val.label) return String(val.label);
+    if (val.username) return String(val.username);
+  }
+  return fallback;
 }
 
 export default async function Home() {
@@ -87,7 +103,7 @@ export default async function Home() {
         : []),
     ]
       .filter(Boolean)
-      .map((c) => String(c).toUpperCase());
+      .map((c) => safeStringify(c).toUpperCase());
 
     return cats.some((cat) => cat.includes("REVIEW") || cat.includes("ULASAN"));
   };
@@ -178,23 +194,27 @@ export default async function Home() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
                 {newsArticles.slice(0, 6).map((item: any) => {
-                  let finalCategory = ["Berita"];
+                  let rawCategory = ["Berita"];
 
                   if (item.category_input && item.category_input.length > 0) {
-                    finalCategory = item.category_input;
+                    rawCategory = item.category_input;
                   } else if (item.category && item.category.length > 0) {
-                    finalCategory = item.category;
+                    rawCategory = item.category;
                   } else if (item.categories && item.categories.length > 0) {
-                    finalCategory = item.categories.map((c: any) => c.name);
+                    rawCategory = item.categories.map((c: any) => c.name);
                   }
+
+                  const finalCategory = Array.isArray(rawCategory)
+                    ? rawCategory.map((c) => safeStringify(c, "Berita"))
+                    : [safeStringify(rawCategory, "Berita")];
 
                   return (
                     <NewsFeedCard
                       key={item.id}
                       category={finalCategory}
                       categoryColor="yellow"
-                      title={item.title}
-                      summary={item.summary}
+                      title={safeStringify(item.title)}
+                      summary={safeStringify(item.summary)}
                       imageUrl={formatImageUrl(
                         item.image_url ||
                           item.image_full_url ||
@@ -203,8 +223,8 @@ export default async function Home() {
                           item.image,
                         "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                       )}
-                      slug={item.slug}
-                      author={item.author}
+                      slug={safeStringify(item.slug)}
+                      author={safeStringify(item.author, "Redaksi")}
                       createdAt={item.created_at}
                       views={item.views}
                     />
@@ -233,24 +253,31 @@ export default async function Home() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
                 {reviews.length > 0 ? (
-                  reviews.map((review: any) => (
-                    <ReviewCard
-                      key={review.id}
-                      summary={review.summary}
-                      title={review.title}
-                      platform={review.platform || review.category || ["PC"]}
-                      imageUrl={formatImageUrl(
-                        review.image_url ||
-                          review.image_full_url ||
-                          review.thumbnail ||
-                          review.thumbnail_url ||
-                          review.image,
-                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
-                      )}
-                      slug={review.slug}
-                      views={review.views}
-                    />
-                  ))
+                  reviews.map((review: any) => {
+                    const rawPlatform = review.platform || review.category || ["PC"];
+                    const finalPlatform = Array.isArray(rawPlatform)
+                      ? rawPlatform.map((p) => safeStringify(p, "PC"))
+                      : [safeStringify(rawPlatform, "PC")];
+
+                    return (
+                      <ReviewCard
+                        key={review.id}
+                        summary={safeStringify(review.summary)}
+                        title={safeStringify(review.title)}
+                        platform={finalPlatform}
+                        imageUrl={formatImageUrl(
+                          review.image_url ||
+                            review.image_full_url ||
+                            review.thumbnail ||
+                            review.thumbnail_url ||
+                            review.image,
+                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
+                        )}
+                        slug={safeStringify(review.slug)}
+                        views={review.views}
+                      />
+                    );
+                  })
                 ) : (
                   <p className="text-xs font-mono text-text-muted col-span-2 2xl:col-span-3">
                     Belum ada ulasan game yang dipublikasikan dari Admin Panel.

@@ -24,8 +24,8 @@ interface TechItem {
   id: number;
   title: string;
   slug: string;
-  category_input?: string | string[];
-  category?: string | string[];
+  category_input?: any;
+  category?: any;
   categories?: any[];
   summary: string;
   content: string;
@@ -33,29 +33,50 @@ interface TechItem {
   image_full_url?: string;
   read_time: string;
   created_at: string;
-  author?: string;
+  author?: any;
   type?: string;
   views?: number;
 }
 
+function safeStringify(val: any, fallback: string = ""): string {
+  if (val === null || val === undefined) return fallback;
+  if (typeof val === "string") return val || fallback;
+  if (typeof val === "number" || typeof val === "boolean") return String(val);
+  if (typeof val === "object") {
+    if (val.name) return String(val.name);
+    if (val.title) return String(val.title);
+    if (val.label) return String(val.label);
+    if (val.username) return String(val.username);
+    if (val.slug) return String(val.slug);
+  }
+  return fallback;
+}
+
 function formatTechImage(item: TechItem): string {
-  const imageUrl = item.image_url || item.image_full_url;
+  const rawUrl = item.image_url || item.image_full_url;
   const fallback =
     "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
 
-  if (!imageUrl) return fallback;
+  if (!rawUrl || typeof rawUrl !== "string") return fallback;
 
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    if (imageUrl.includes("https://dailydiction.id/storage/http")) {
-      return imageUrl.replace(
+  const clean = rawUrl.trim();
+
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    if (clean.includes("https://dailydiction.id/storage/http")) {
+      return clean.replace(
         /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
         "$1",
       );
     }
-    return imageUrl;
+    return clean;
   }
 
-  return `https://dailydiction.id/storage/${imageUrl}`;
+  const cleanPath = clean.startsWith("/") ? clean.slice(1) : clean;
+  if (cleanPath.startsWith("storage/")) {
+    return `https://dailydiction.id/${cleanPath}`;
+  }
+
+  return `https://dailydiction.id/storage/${cleanPath}`;
 }
 
 function formatViews(n: number): string {
@@ -134,7 +155,7 @@ export default function TechnologyPage() {
     let rawCats: any[] = [];
 
     if (item.categories && item.categories.length > 0) {
-      rawCats = item.categories.map((c: any) => c.name);
+      rawCats = item.categories.map((c: any) => safeStringify(c));
     } else if (item.category_input) {
       rawCats = Array.isArray(item.category_input)
         ? item.category_input
@@ -153,7 +174,9 @@ export default function TechnologyPage() {
       }
     }
 
-    const validCats = rawCats.filter(Boolean).map(String);
+    const validCats = rawCats
+      .map((c) => safeStringify(c))
+      .filter(Boolean);
     return validCats.length > 0 ? validCats : ["HARDWARE"];
   };
 
@@ -163,9 +186,11 @@ export default function TechnologyPage() {
     const matchCategory =
       selectedCategory === "ALL" || itemCats.includes(selectedCategory);
 
+    const titleStr = safeStringify(item.title).toLowerCase();
+    const summaryStr = safeStringify(item.summary).toLowerCase();
     const matchSearch =
-      (item.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (item.summary?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+      titleStr.includes(searchQuery.toLowerCase()) ||
+      summaryStr.includes(searchQuery.toLowerCase());
 
     return matchCategory && matchSearch;
   });
@@ -186,7 +211,6 @@ export default function TechnologyPage() {
         <Navbar />
 
         <main className="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-8">
-          {/* Header Section */}
           <div className="mb-8 border-b border-dark-border pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -214,9 +238,7 @@ export default function TechnologyPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12">
-            {/* Left Column: Tech Post List */}
             <div className="lg:col-span-8 2xl:col-span-9 space-y-6">
-              {/* Category Filter Pills */}
               {categoriesList.length > 1 && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none font-mono text-xs">
                   <span className="flex items-center gap-1 text-text-muted mr-2 shrink-0">
@@ -261,6 +283,7 @@ export default function TechnologyPage() {
                     >
                       {filteredList.map((item) => {
                         const itemCategories = getCategoriesArray(item);
+                        const itemSlug = safeStringify(item.slug);
 
                         return (
                           <article
@@ -270,7 +293,7 @@ export default function TechnologyPage() {
                             <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
                               <img
                                 src={formatTechImage(item)}
-                                alt={item.title}
+                                alt={safeStringify(item.title)}
                                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 onError={(e) => {
                                   (e.target as HTMLImageElement).src =
@@ -294,14 +317,14 @@ export default function TechnologyPage() {
                               <div>
                                 <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-[#FFD700] line-clamp-2 leading-snug">
                                   <Link
-                                    href={`/artikel/${item.slug}`}
+                                    href={`/artikel/${itemSlug}`}
                                     className="before:absolute before:inset-0 before:z-10 focus:outline-none"
                                   >
-                                    {item.title}
+                                    {safeStringify(item.title)}
                                   </Link>
                                 </h2>
                                 <p className="mt-2.5 text-xs text-text-muted line-clamp-2 leading-relaxed relative z-20 pointer-events-none">
-                                  {item.summary}
+                                  {safeStringify(item.summary)}
                                 </p>
                               </div>
 
@@ -310,7 +333,7 @@ export default function TechnologyPage() {
                                   <div className="flex items-center gap-1.5">
                                     <User className="h-3.5 w-3.5 text-[#FFD700]" />
                                     <span className="truncate max-w-[90px] xl:max-w-[120px] font-semibold text-white">
-                                      {item.author || "Redaksi"}
+                                      {safeStringify(item.author, "Redaksi")}
                                     </span>
                                   </div>
 
@@ -363,7 +386,6 @@ export default function TechnologyPage() {
                     </motion.div>
                   </AnimatePresence>
 
-                  {/* Pagination Controls */}
                   {totalPages > 1 && (
                     <div className="flex items-center justify-center gap-2 pt-8 font-mono text-xs">
                       <button
@@ -413,9 +435,7 @@ export default function TechnologyPage() {
               )}
             </div>
 
-            {/* Right Sidebar Column */}
             <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
-              {/* Space Iklan Sidebar */}
               <div className="w-full h-[250px] rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
                 <AdCarousel
                   ads={sidebarAds}
@@ -426,7 +446,6 @@ export default function TechnologyPage() {
                 />
               </div>
 
-              {/* Widget Discord */}
               <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
                 <svg
                   viewBox="0 0 24 24"

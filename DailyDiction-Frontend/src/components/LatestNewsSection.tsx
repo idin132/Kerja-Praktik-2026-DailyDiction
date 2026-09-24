@@ -4,11 +4,27 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Newspaper, Clock, ArrowRight } from "lucide-react";
 
-function formatImageUrl(imageUrl: string | null | undefined): string {
+function safeStringify(val: any, fallback: string = ""): string {
+  if (val === null || val === undefined) return fallback;
+  if (typeof val === "string") return val || fallback;
+  if (typeof val === "number" || typeof val === "boolean") return String(val);
+  if (typeof val === "object") {
+    if (val.name) return String(val.name);
+    if (val.title) return String(val.title);
+    if (val.label) return String(val.label);
+    if (val.username) return String(val.username);
+    if (val.slug) return String(val.slug);
+  }
+  return fallback;
+}
+
+function formatImageUrl(imageUrl: any): string {
   const fallback =
     "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
-  if (!imageUrl || typeof imageUrl !== "string") return fallback;
-  const clean = imageUrl.trim();
+  const cleanUrl = safeStringify(imageUrl);
+  if (!cleanUrl) return fallback;
+
+  const clean = cleanUrl.trim();
   if (clean.startsWith("http://") || clean.startsWith("https://")) return clean;
   const cleanPath = clean.replace(/^\/+/, "");
   return cleanPath.startsWith("storage/")
@@ -16,7 +32,6 @@ function formatImageUrl(imageUrl: string | null | undefined): string {
     : `https://dailydiction.id/storage/${cleanPath}`;
 }
 
-// Helper untuk format waktu relatif dinamis
 function formatTimeAgo(dateString: string): string {
   if (!dateString) return "Baru saja";
   const date = new Date(dateString);
@@ -42,15 +57,16 @@ export default function LatestNewsSection() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     const apiUrl =
       process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
-    // Mengambil 5 berita/artikel terbaru secara dinamis
     fetch(`${apiUrl}/articles?type=article&limit=5`, {
       headers: { Accept: "application/json" },
     })
       .then((res) => (res.ok ? res.json() : { data: [] }))
       .then((json) => {
+        if (!isMounted) return;
         const list = Array.isArray(json.data)
           ? json.data
           : Array.isArray(json)
@@ -58,13 +74,22 @@ export default function LatestNewsSection() {
           : [];
         setArticles(list.slice(0, 5));
       })
-      .catch(() => setArticles([]))
-      .finally(() => setIsLoading(false));
+      .catch(() => {
+        if (isMounted) setArticles([]);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const getArticleHref = (item: any): string => {
-    if (item.type === "review") return `/review/${item.slug}`;
-    return `/artikel/${item.slug}`;
+    const slug = safeStringify(item.slug);
+    if (item.type === "review") return `/review/${slug}`;
+    return `/artikel/${slug}`;
   };
 
   if (isLoading) {
@@ -109,51 +134,56 @@ export default function LatestNewsSection() {
       </div>
 
       <div className="flex flex-col gap-3">
-        {articles.map((item: any) => (
-          <Link
-            key={item.id}
-            href={getArticleHref(item)}
-            className="group relative flex items-center gap-4 rounded-xl border border-dark-border bg-dark-card p-3 transition-all hover:border-[#FFD700]/50 hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
-          >
-            {/* Thumbnail */}
-            <div className="h-16 w-24 shrink-0 overflow-hidden rounded-lg relative">
-              <img
-                src={formatImageUrl(
-                  item.image_url || item.image_full_url || item.thumbnail
-                )}
-                alt={item.title}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
-                }}
-              />
-            </div>
+        {articles.map((item: any) => {
+          const titleText = safeStringify(item.title);
+          const categoryName =
+            item.categories && item.categories.length > 0
+              ? safeStringify(item.categories[0])
+              : null;
 
-            {/* Konten */}
-            <div className="flex-1 min-w-0">
-              {/* Badge Kategori jika ada */}
-              {item.categories && item.categories.length > 0 && (
-                <span className="text-[9px] font-mono font-bold uppercase text-[#FFD700] bg-[#FFD700]/10 border border-[#FFD700]/20 px-1.5 py-0.5 rounded mb-1 inline-block">
-                  {item.categories[0].name}
-                </span>
-              )}
-
-              <h4 className="text-sm font-bold text-text-primary line-clamp-2 leading-snug group-hover:text-[#FFD700] transition-colors">
-                {item.title}
-              </h4>
-
-              <div className="flex items-center gap-1.5 mt-1">
-                <Clock className="h-3 w-3 text-text-muted" />
-                <span className="text-[10px] font-mono text-text-muted">
-                  {formatTimeAgo(item.created_at)}
-                </span>
+          return (
+            <Link
+              key={item.id}
+              href={getArticleHref(item)}
+              className="group relative flex items-center gap-4 rounded-xl border border-dark-border bg-dark-card p-3 transition-all hover:border-[#FFD700]/50 hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+            >
+              <div className="h-16 w-24 shrink-0 overflow-hidden rounded-lg relative">
+                <img
+                  src={formatImageUrl(
+                    item.image_url || item.image_full_url || item.thumbnail,
+                  )}
+                  alt={titleText}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
+                  }}
+                />
               </div>
-            </div>
 
-            <ArrowRight className="h-4 w-4 shrink-0 text-text-muted group-hover:text-[#FFD700] transition-colors" />
-          </Link>
-        ))}
+              <div className="flex-1 min-w-0">
+                {categoryName && (
+                  <span className="text-[9px] font-mono font-bold uppercase text-[#FFD700] bg-[#FFD700]/10 border border-[#FFD700]/20 px-1.5 py-0.5 rounded mb-1 inline-block">
+                    {categoryName}
+                  </span>
+                )}
+
+                <h4 className="text-sm font-bold text-text-primary line-clamp-2 leading-snug group-hover:text-[#FFD700] transition-colors">
+                  {titleText}
+                </h4>
+
+                <div className="flex items-center gap-1.5 mt-1">
+                  <Clock className="h-3 w-3 text-text-muted" />
+                  <span className="text-[10px] font-mono text-text-muted">
+                    {formatTimeAgo(item.created_at)}
+                  </span>
+                </div>
+              </div>
+
+              <ArrowRight className="h-4 w-4 shrink-0 text-text-muted group-hover:text-[#FFD700] transition-colors" />
+            </Link>
+          );
+        })}
       </div>
     </section>
   );

@@ -18,20 +18,28 @@ import ArticleContent from "@/components/ArticleContent";
 import LatestNewsSection from "@/components/LatestNewsSection";
 import TrendingSection from "@/components/TrendingSection";
 
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
-export const revalidate = 0;
+export const revalidate = 60;
 
-// HELPER SANITASI TOTAL AGAR TIDAK PERNAH ADA OBJECT KEBOCOR KE REACT JSX (ANTI ERROR #60)
+interface NavArticleItem {
+  title: string;
+  slug: string;
+  type?: string;
+  thumbnail_url?: string;
+  thumbnail?: string;
+  image_url?: string;
+  image?: string;
+}
+
 function safeStringify(val: any, fallback: string = ""): string {
   if (val === null || val === undefined) return fallback;
-  if (typeof val === "string") return val;
+  if (typeof val === "string") return val || fallback;
   if (typeof val === "number" || typeof val === "boolean") return String(val);
   if (typeof val === "object") {
     if (val.name) return String(val.name);
     if (val.title) return String(val.title);
     if (val.label) return String(val.label);
     if (val.username) return String(val.username);
+    if (val.slug) return String(val.slug);
     if (val.content) return safeStringify(val.content, fallback);
     if (val.html) return safeStringify(val.html, fallback);
     if (val.value) return safeStringify(val.value, fallback);
@@ -144,7 +152,8 @@ export default async function DetailArtikel({
   params: Promise<{ slug: string }>;
 }) {
   const resolvedParams = await params;
-  const slug = resolvedParams.slug;
+  const rawSlug = resolvedParams.slug;
+  const slug = safeStringify(rawSlug);
 
   const [articleRes, adsData] = await Promise.all([
     getArticleBySlug(slug).catch(() => null),
@@ -165,10 +174,9 @@ export default async function DetailArtikel({
         ? adsData[0]
         : null;
 
-  const prevArticle = article.prev || null;
-  const nextArticle = article.next || null;
+  const prevArticle: NavArticleItem | null = article.prev || null;
+  const nextArticle: NavArticleItem | null = article.next || null;
 
-  // SANITASI SELURUH VARIABEL DARI BACKEND KEDALAM TIPE DATA APLIKASI
   const articleTitle = safeStringify(article.title, "Artikel");
   const authorName = safeStringify(article.author, "Redaksi");
   const summaryText = safeStringify(
@@ -177,17 +185,17 @@ export default async function DetailArtikel({
   );
   const readTimeText = safeStringify(article.read_time, "3 MIN READ");
 
-  // PARSE CATEGORIES DEEP CLEAN
   let categoryList: string[] = parseCategoriesToSafeStrings(
     article.category_input || article.category || article.categories,
   );
 
-  // PARSE CONTENT MEDIA
   const parsedContent = parseContentMedia(article.content);
 
-  const getArticleHref = (item: any) => {
-    if (item?.type === "review") return `/review/${item.slug}`;
-    return `/artikel/${item.slug}`;
+  const getArticleHref = (item: NavArticleItem | null) => {
+    if (!item) return "#";
+    const itemSlug = safeStringify(item.slug);
+    if (item.type === "review") return `/review/${itemSlug}`;
+    return `/artikel/${itemSlug}`;
   };
 
   return (
@@ -197,13 +205,10 @@ export default async function DetailArtikel({
 
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
-            {/* ================= KOLOM KIRI (KONTEN UTAMA) ================= */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
             <div className="lg:col-span-8">
               <article>
-                {/* Header Artikel */}
                 <div className="animate-fade-up-1 mb-8 space-y-6">
-                  {/* Badge Kategori */}
                   <div className="flex flex-wrap items-center gap-2">
                     {categoryList.length > 0 ? (
                       categoryList.map((cat, idx) => (
@@ -225,7 +230,6 @@ export default async function DetailArtikel({
                     {articleTitle}
                   </h1>
 
-                  {/* Info Bar */}
                   <div className="flex flex-wrap items-center gap-6 text-sm font-mono text-text-muted border-y border-dark-border py-4">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-[#FFD700]" />
@@ -254,7 +258,6 @@ export default async function DetailArtikel({
                     </div>
                   </div>
 
-                  {/* Thumbnail Cover */}
                   <div className="mb-10 w-full overflow-hidden rounded-2xl border border-dark-border bg-dark-card shadow-2xl">
                     <img
                       src={formatImageUrl(
@@ -276,10 +279,8 @@ export default async function DetailArtikel({
                   </p>
                 </div>
 
-                {/* Body Artikel */}
                 <ArticleContent content={parsedContent} />
 
-                {/* Interaksi Like & Komen */}
                 {article.id && (
                   <ArticleInteractions
                     articleId={article.id}
@@ -288,7 +289,6 @@ export default async function DetailArtikel({
                 )}
               </article>
 
-              {/* ================= NAVIGASI NEXT / PREV ARTIKEL ================= */}
               <div className="animate-fade-up-3 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-dark-border pt-8 mt-8">
                 {prevArticle ? (
                   <Link
@@ -354,80 +354,75 @@ export default async function DetailArtikel({
               </div>
             </div>
 
-            {/* ================= KOLOM KANAN (SIDEBAR) ================= */}
-            <aside className="lg:col-span-4 space-y-8">
-              <div className="sticky top-24 space-y-6">
-                {/* 1. Widget Share */}
-                <ShareWidget title={articleTitle} />
+            {/* Sidebar disatukan dalam sticky top-24 agar mengalir mulus saat di-scroll */}
+            <aside className="lg:col-span-4 sticky top-24 space-y-6 self-start">
+              <ShareWidget title={articleTitle} />
 
-                {/* 2. Space Iklan Dinamis */}
-                <div className="animate-fade-up-2">
-                  {sidebarAd ? (
-                    <a
-                      href={safeStringify(sidebarAd.url_link, "#")}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="relative block w-full max-w-[320px] mx-auto overflow-hidden rounded-xl group border border-dark-border/30 shadow-xl"
-                    >
-                      <img
-                        src={formatImageUrl(sidebarAd.banner_image, "")}
-                        alt={safeStringify(sidebarAd.title, "Ad")}
-                        className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <span className="absolute top-2 right-3 text-[9px] font-black tracking-widest text-white bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded">
-                        AD
-                      </span>
-                    </a>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden aspect-[3/4] w-full max-w-[320px] mx-auto">
-                      <span className="absolute top-2 right-3 text-[9px] text-text-muted/50 font-mono border border-text-muted/20 px-1 rounded">
-                        Ad
-                      </span>
-                      <span className="text-xs font-mono text-text-muted">
-                        Space Iklan Dinamis
-                      </span>
-                      <span className="text-[10px] font-mono text-[#FFD700]/50 mt-1">
-                        Tinggi menyesuaikan gambar
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* 3. Widget Discord Komunitas */}
-                <div className="animate-fade-up-3 w-full max-w-[320px] mx-auto">
-                  <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="w-10 h-10 fill-indigo-400 mx-auto mb-3 animate-bounce"
-                      aria-hidden="true"
-                    >
-                      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515c-.213.385-.444.905-.608 1.315a18.27 18.27 0 0 0-5.648 0c-.164-.41-.4-.93-.615-1.315A19.736 19.736 0 0 0 3.67 4.37C.533 9.046-.319 13.608.106 18.11a19.98 19.98 0 0 0 6.002 3.03c.49-.67.924-1.38 1.293-2.13-.71-.27-1.39-.61-2.04-1.01.17-.125.337-.255.5-.39 3.93 1.84 8.18 1.84 12.06 0 .164.135.33.265.5.39-.65.4-1.33.74-2.04 1.01.37.75.8 1.46 1.29 2.13a19.98 19.98 0 0 0 6.006-3.03c.5-5.22-.85-9.74-3.36-13.74ZM8.02 15.33c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Zm7.96 0c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Z" />
-                    </svg>
-
-                    <h3 className="text-base font-mono font-black text-white uppercase tracking-wide">
-                      TEMPAT NONGKRONG GAMER
-                    </h3>
-
-                    <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
-                      Join server Discord Daily Diction buat mabar, berbagi info
-                      gacha, pamer spek PC, atau sekadar gibahin industri pop
-                      culture!
-                    </p>
-
-                    <a
-                      href="https://discord.com/invite/DG6Nebkex9"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex w-full items-center justify-center gap-2 bg-white text-black font-mono font-bold text-xs uppercase py-3 px-4 rounded-xl hover:bg-white/90 transition-all shadow-lg relative z-10"
-                    >
-                      <Send className="h-3.5 w-3.5 fill-current" />
-                      <span>Masuk Server</span>
-                    </a>
+              <div className="animate-fade-up-2">
+                {sidebarAd ? (
+                  <a
+                    href={safeStringify(sidebarAd.url_link, "#")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative block w-full max-w-[320px] mx-auto overflow-hidden rounded-xl group border border-dark-border/30 shadow-xl"
+                  >
+                    <img
+                      src={formatImageUrl(sidebarAd.banner_image, "")}
+                      alt={safeStringify(sidebarAd.title, "Ad")}
+                      className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <span className="absolute top-2 right-3 text-[9px] font-black tracking-widest text-white bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded">
+                      AD
+                    </span>
+                  </a>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden aspect-[3/4] w-full max-w-[320px] mx-auto">
+                    <span className="absolute top-2 right-3 text-[9px] text-text-muted/50 font-mono border border-text-muted/20 px-1 rounded">
+                      Ad
+                    </span>
+                    <span className="text-xs font-mono text-text-muted">
+                      Space Iklan Dinamis
+                    </span>
+                    <span className="text-[10px] font-mono text-[#FFD700]/50 mt-1">
+                      Tinggi menyesuaikan gambar
+                    </span>
                   </div>
-                </div>
-                <TrendingSection />
-                <LatestNewsSection />
+                )}
               </div>
+
+              <div className="animate-fade-up-3 w-full max-w-[320px] mx-auto">
+                <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="w-10 h-10 fill-indigo-400 mx-auto mb-3 animate-bounce"
+                    aria-hidden="true"
+                  >
+                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515c-.213.385-.444.905-.608 1.315a18.27 18.27 0 0 0-5.648 0c-.164-.41-.4-.93-.615-1.315A19.736 19.736 0 0 0 3.67 4.37C.533 9.046-.319 13.608.106 18.11a19.98 19.98 0 0 0 6.002 3.03c.49-.67.924-1.38 1.293-2.13-.71-.27-1.39-.61-2.04-1.01.17-.125.337-.255.5-.39 3.93 1.84 8.18 1.84 12.06 0 .164.135.33.265.5.39-.65.4-1.33.74-2.04 1.01.37.75.8 1.46 1.29 2.13a19.98 19.98 0 0 0 6.006-3.03c.5-5.22-.85-9.74-3.36-13.74ZM8.02 15.33c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Zm7.96 0c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Z" />
+                  </svg>
+
+                  <h3 className="text-base font-mono font-black text-white uppercase tracking-wide">
+                    TEMPAT NONGKRONG GAMER
+                  </h3>
+
+                  <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
+                    Join server Discord Daily Diction buat mabar, berbagi info
+                    gacha, pamer spek PC, atau sekadar gibahin industri pop
+                    culture!
+                  </p>
+
+                  <a
+                    href="https://discord.com/invite/DG6Nebkex9"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex w-full items-center justify-center gap-2 bg-white text-black font-mono font-bold text-xs uppercase py-3 px-4 rounded-xl hover:bg-white/90 transition-all shadow-lg relative z-10"
+                  >
+                    <Send className="h-3.5 w-3.5 fill-current" />
+                    <span>Masuk Server</span>
+                  </a>
+                </div>
+              </div>
+              <TrendingSection />
+              <LatestNewsSection />
             </aside>
           </div>
         </div>
@@ -438,121 +433,121 @@ export default async function DetailArtikel({
       <style
         dangerouslySetInnerHTML={{
           __html: `
-          @keyframes cinematicFadeUp {
-            0% {
-              opacity: 0;
-              transform: translateY(36px);
-            }
-            100% {
-              opacity: 1;
-              transform: translateY(0);
-            }
+        @keyframes cinematicFadeUp {
+          0% {
+            opacity: 0;
+            transform: translateY(36px);
           }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
 
-          .animate-fade-up-1 {
-            animation: cinematicFadeUp 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
-          }
+        .animate-fade-up-1 {
+          animation: cinematicFadeUp 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
 
-          .animate-fade-up-2 {
-            animation: cinematicFadeUp 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
-          }
+        .animate-fade-up-2 {
+          animation: cinematicFadeUp 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+        }
 
-          .animate-fade-up-3 {
-            animation: cinematicFadeUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
-          }
+        .animate-fade-up-3 {
+          animation: cinematicFadeUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
+        }
 
-          .rich-text-content {
-            font-size: 1.125rem;
-            line-height: 1.15;
-            color: #d1d5db;
-          }
+        .rich-text-content {
+          font-size: 1.125rem;
+          line-height: 1.15;
+          color: #d1d5db;
+        }
 
-          .rich-text-content p {
-            margin-bottom: 1.25em;
-            line-height: 1.15;
-            text-align: justify;
-          }
+        .rich-text-content p {
+          margin-bottom: 1.25em;
+          line-height: 1.15;
+          text-align: justify;
+        }
 
-          .rich-text-content h1,
-          .rich-text-content h2,
-          .rich-text-content h3,
-          .rich-text-content h4,
-          .rich-text-content h5,
-          .rich-text-content h6 {
-            color: #FFD700;
-            font-weight: 900 !important;
-            margin-top: 1.75em !important;
-            margin-bottom: 0.75em !important;
-            line-height: 1.15 !important;
-            text-align: justify !important;
-          }
+        .rich-text-content h1,
+        .rich-text-content h2,
+        .rich-text-content h3,
+        .rich-text-content h4,
+        .rich-text-content h5,
+        .rich-text-content h6 {
+          color: #FFD700;
+          font-weight: 900 !important;
+          margin-top: 1.75em !important;
+          margin-bottom: 0.75em !important;
+          line-height: 1.15 !important;
+          text-align: justify !important;
+        }
 
-          .rich-text-content p[style*="text-align: left"] { text-align: left !important; }
-          .rich-text-content p[style*="text-align: center"] { text-align: center !important; }
-          .rich-text-content p[style*="text-align: right"] { text-align: right !important; }
-          .rich-text-content p[style*="text-align: justify"] { text-align: justify !important; }
+        .rich-text-content p[style*="text-align: left"] { text-align: left !important; }
+        .rich-text-content p[style*="text-align: center"] { text-align: center !important; }
+        .rich-text-content p[style*="text-align: right"] { text-align: right !important; }
+        .rich-text-content p[style*="text-align: justify"] { text-align: justify !important; }
 
-          .rich-text-content p:has(img) {
-            text-align: center !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            width: 100% !important;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-          }
+        .rich-text-content p:has(img) {
+          text-align: center !important;
+          display: flex !important;
+          justify-content: center !important;
+          align-items: center !important;
+          width: 100% !important;
+          margin-top: 2rem;
+          margin-bottom: 2rem;
+        }
 
-          .rich-text-content img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 0.75rem;
-            margin-top: 1.5rem;
-            margin-bottom: 1.5rem;
-            margin-left: auto !important;
-            margin-right: auto !important;
-            display: block !important;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-          }
+        .rich-text-content img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 0.75rem;
+          margin-top: 1.5rem;
+          margin-bottom: 1.5rem;
+          margin-left: auto !important;
+          margin-right: auto !important;
+          display: block !important;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-          .rich-text-content figure.image {
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            width: 100% !important;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-            text-align: center !important;
-          }
+        .rich-text-content figure.image {
+          display: flex !important;
+          justify-content: center !important;
+          align-items: center !important;
+          width: 100% !important;
+          margin-top: 2rem;
+          margin-bottom: 2rem;
+          text-align: center !important;
+        }
 
-          .rich-text-content figure.image img {
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-          }
+        .rich-text-content figure.image img {
+          margin-top: 0 !important;
+          margin-bottom: 0 !important;
+        }
 
-          .rich-text-content a {
-            color: #FFD700;
-            text-decoration: none;
-          }
-          .rich-text-content a:hover { text-decoration: underline; }
-          .rich-text-content strong { color: white; }
-          
-          .rich-text-content figure.media {
-            width: 100% !important;
-            display: block !important;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-          }
+        .rich-text-content a {
+          color: #FFD700;
+          text-decoration: none;
+        }
+        .rich-text-content a:hover { text-decoration: underline; }
+        .rich-text-content strong { color: white; }
+        
+        .rich-text-content figure.media {
+          width: 100% !important;
+          display: block !important;
+          margin-top: 2rem;
+          margin-bottom: 2rem;
+        }
 
-          .rich-text-content iframe {
-            width: 100% !important;
-            aspect-ratio: 16/9;
-            border-radius: 0.75rem;
-            margin-top: 1.5rem;
-            margin-bottom: 1.5rem;
-            border: 0 !important;
-            display: block !important;
-          }
-        `,
+        .rich-text-content iframe {
+          width: 100% !important;
+          aspect-ratio: 16/9;
+          border-radius: 0.75rem;
+          margin-top: 1.5rem;
+          margin-bottom: 1.5rem;
+          border: 0 !important;
+          display: block !important;
+        }
+      `,
         }}
       />
     </div>

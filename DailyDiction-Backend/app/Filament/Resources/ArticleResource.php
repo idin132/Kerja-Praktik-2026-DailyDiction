@@ -47,9 +47,10 @@ class ArticleResource extends Resource
                     ->label('Title')
                     ->required()
                     ->maxLength(255)
+                    ->live(onBlur: true) // OPTIMASI 1: Jangan kirim request setiap ketik huruf, hanya saat kursor keluar (blur)
                     ->extraInputAttributes(['autocomplete' => 'off'])
                     ->afterStateUpdated(function (string $operation, ?string $state, Set $set) {
-                        if ($operation === 'create') {
+                        if ($operation === 'create' && !empty($state)) {
                             $set('slug', Str::slug($state));
                         }
                     }),
@@ -57,9 +58,9 @@ class ArticleResource extends Resource
                 (auth()->user()?->role === 'superadmin' || (auth()->user() && method_exists(auth()->user(), 'isSuperAdmin') && auth()->user()->isSuperAdmin()))
                     ? Forms\Components\Select::make('author')
                     ->label('Author (Penulis)')
-                    ->options(fn() => User::pluck('name', 'name')->toArray())
                     ->searchable()
-                    ->preload()
+                    ->getSearchResultsUsing(fn (string $search): array => User::where('name', 'like', "%{$search}%")->limit(20)->pluck('name', 'name')->toArray()) // OPTIMASI 2: Paging/Lazy query saat ketik nama
+                    ->getOptionLabelUsing(fn ($value): ?string => $value)
                     ->default(fn() => auth()->user()?->name)
                     ->required()
                     : Forms\Components\TextInput::make('author')
@@ -80,7 +81,6 @@ class ArticleResource extends Resource
 
                 Forms\Components\Grid::make(2)
                     ->schema([
-                        // A & B. GABUNGAN ARTIKEL & TEKNOLOGI
                         Forms\Components\TagsInput::make('category_input')
                             ->label(fn(Get $get) => $get('type') === 'technology' ? 'Kategori Tech / Perangkat' : 'Category')
                             ->placeholder(fn(Get $get) => $get('type') === 'technology' ? 'Contoh: Keyboard, Mouse, GPU, Monitor...' : 'Ketik kategori, tekan Enter...')
@@ -106,8 +106,6 @@ class ArticleResource extends Resource
                             ->displayFormat('d M Y, H:i')
                             ->timezone('Asia/Jakarta')
                             ->native(false),
-
-
                     ]),
 
                 // C. KHUSUS REVIEW: Platform Game
@@ -159,16 +157,10 @@ class ArticleResource extends Resource
                     ->disk('public')
                     ->directory('thumbnails')
                     ->visibility('public')
-                    ->imageResizeMode('cover')
-                    ->imageCropAspectRatio('16:9')
-                    ->maxSize(2048)
+                    ->maxSize(2048) // Maksimal 2MB
                     ->imagePreviewHeight('192')
                     ->columnSpanFull()
-                    ->afterStateHydrated(function ($component, $state) {
-                        if (is_string($state) && !empty($state)) {
-                            $component->state([$state]);
-                        }
-                    })
+                    // OPTIMASI 3: Dihapus imageResizeMode('cover') & imageCropAspectRatio('16:9') yang memberatkan server PHP saat submit
                     ->visible(fn(Get $get) => $get('thumbnail_mode') === 'file')
                     ->required(fn(Get $get) => $get('thumbnail_mode') === 'file')
                     ->dehydrated(fn(Get $get) => $get('thumbnail_mode') === 'file'),
@@ -203,7 +195,6 @@ class ArticleResource extends Resource
                     ->rows(3)
                     ->columnSpanFull(),
 
-                // CKEDITOR DENGAN UPLOAD LOKAL DI TITIK KURSOR (AMANA TANPA METHOD UN-SUPPORTED)
                 CKEditor::make('content')
                     ->label('Konten Artikel')
                     ->uploadUrl(route('ckeditor.upload'))
@@ -241,7 +232,7 @@ class ArticleResource extends Resource
                 Tables\Columns\TextColumn::make('type')
                     ->label('Tipe')
                     ->badge()
-                    ->sortable() // <-- Ditambahkan
+                    ->sortable()
                     ->color(fn(string $state): string => match ($state) {
                         'article' => 'info',
                         'technology' => 'success',
@@ -254,7 +245,7 @@ class ArticleResource extends Resource
                 Tables\Columns\TextColumn::make('title')
                     ->label('Judul')
                     ->searchable()
-                    ->sortable() // <-- Ditambahkan
+                    ->sortable()
                     ->limit(30),
 
                 Tables\Columns\TextColumn::make('categories.name')
@@ -269,7 +260,7 @@ class ArticleResource extends Resource
 
                 Tables\Columns\TextColumn::make('category_color')
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true), // Di-hide bawaan agar tabel tidak terlalu penuh
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('read_time')
                     ->label('Waktu Baca')
@@ -302,12 +293,11 @@ class ArticleResource extends Resource
                     ->dateTime('d M Y, H:i')
                     ->timezone('Asia/Jakarta')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: false), // Ditampilkan agar terlihat urutan tanggalnya
+                    ->toggleable(isToggledHiddenByDefault: false),
             ])
 
-            ->defaultSort('created_at', 'desc') // Sortir default: Postingan terbaru paling atas
+            ->defaultSort('created_at', 'desc')
             ->filters([
-                // Filter 1: Tipe Konten
                 Tables\Filters\SelectFilter::make('type')
                     ->label('Filter Tipe Konten')
                     ->options([
@@ -317,11 +307,11 @@ class ArticleResource extends Resource
                         'entertainment' => 'Entertainment',
                     ]),
 
-                // Filter 2: Status Publikasi (Publik vs Draft)
                 Tables\Filters\SelectFilter::make('is_published')
                     ->label('Status Publikasi')
                     ->options([
                         '1' => 'Publik (Tayang)',
+                        '0' => 'Draft (Pribadi)',
                         '0' => 'Draft (Pribadi)',
                     ]),
             ])

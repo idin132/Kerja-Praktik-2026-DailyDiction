@@ -4,25 +4,38 @@ import { NewsFeedCard } from "@/components/Cards";
 import { Search, AlertCircle } from "lucide-react";
 import { getArticles, getGameReviews } from "@/lib/api";
 
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
-export const revalidate = 0;
+export const revalidate = 60;
+
+function safeStringify(val: any, fallback: string = ""): string {
+  if (val === null || val === undefined) return fallback;
+  if (typeof val === "string") return val || fallback;
+  if (typeof val === "number" || typeof val === "boolean") return String(val);
+  if (typeof val === "object") {
+    if (val.name) return String(val.name);
+    if (val.title) return String(val.title);
+    if (val.label) return String(val.label);
+    if (val.username) return String(val.username);
+    if (val.slug) return String(val.slug);
+  }
+  return fallback;
+}
 
 function formatImageUrl(
   imageUrl: string | null | undefined,
   fallback: string,
 ): string {
-  if (!imageUrl) return fallback;
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    if (imageUrl.includes("dailydiction.id/storage/http")) {
-      return imageUrl.replace(
+  if (!imageUrl || typeof imageUrl !== "string") return fallback;
+  const clean = imageUrl.trim();
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    if (clean.includes("dailydiction.id/storage/http")) {
+      return clean.replace(
         /https:\/\/dailydiction\.id\/storage\/(https?:\/\/)/,
         "$1",
       );
     }
-    return imageUrl;
+    return clean;
   }
-  return `https://dailydiction.id/storage/${imageUrl}`;
+  return `https://dailydiction.id/storage/${clean.replace(/^\/+/, "")}`;
 }
 
 export default async function SearchPage(props: {
@@ -38,18 +51,23 @@ export default async function SearchPage(props: {
   ]);
 
   const articles = (articlesData as any)?.data || articlesData || [];
-  const reviews = Array.isArray(reviewsData) ? reviewsData : ((reviewsData as any)?.data || []);
+  const reviews = Array.isArray(reviewsData)
+    ? reviewsData
+    : (reviewsData as any)?.data || [];
 
   const allPosts = [...articles, ...reviews];
 
   const searchResults = allPosts.filter((item: any) => {
     if (!query) return false;
-    const title = (item.title || "").toLowerCase();
-    const summary = (item.summary || "").toLowerCase();
+    const title = safeStringify(item.title).toLowerCase();
+    const summary = safeStringify(item.summary).toLowerCase();
     return title.includes(lowerQuery) || summary.includes(lowerQuery);
   });
 
-  searchResults.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  searchResults.sort(
+    (a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
 
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black flex flex-col justify-between font-sans">
@@ -74,7 +92,7 @@ export default async function SearchPage(props: {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {searchResults.map((item: any) => {
                 let rawCategory: any = ["Berita"];
-                
+
                 if (item.type === "review") {
                   rawCategory = ["GAME REVIEW"];
                 } else {
@@ -83,18 +101,25 @@ export default async function SearchPage(props: {
                   } else if (item.category && item.category.length > 0) {
                     rawCategory = item.category;
                   } else if (item.categories && item.categories.length > 0) {
-                    rawCategory = item.categories.map((c: any) => typeof c === 'string' ? c : c.name);
+                    rawCategory = item.categories.map((c: any) =>
+                      safeStringify(c),
+                    );
                   }
                 }
 
                 let finalCategory: string[] = ["Berita"];
                 if (Array.isArray(rawCategory)) {
-                  finalCategory = rawCategory;
+                  finalCategory = rawCategory
+                    .map((c) => safeStringify(c))
+                    .filter(Boolean);
                 } else if (typeof rawCategory === "string") {
                   try {
-                    finalCategory = rawCategory.startsWith("[")
+                    const parsed = rawCategory.startsWith("[")
                       ? JSON.parse(rawCategory)
                       : [rawCategory];
+                    finalCategory = Array.isArray(parsed)
+                      ? parsed.map((c) => safeStringify(c)).filter(Boolean)
+                      : [safeStringify(parsed)];
                   } catch {
                     finalCategory = [rawCategory];
                   }
@@ -102,17 +127,20 @@ export default async function SearchPage(props: {
 
                 return (
                   <NewsFeedCard
-                    key={`${item.type}-${item.id}`}
+                    key={`${item.type || "post"}-${item.id}`}
                     category={finalCategory}
                     categoryColor="yellow"
-                    title={item.title}
-                    summary={item.summary}
+                    title={safeStringify(item.title)}
+                    summary={safeStringify(item.summary)}
                     imageUrl={formatImageUrl(
-                      item.image_url || item.image_full_url || item.thumbnail || item.thumbnail_url,
-                      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
+                      item.image_url ||
+                        item.image_full_url ||
+                        item.thumbnail ||
+                        item.thumbnail_url,
+                      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                     )}
-                    slug={item.slug}
-                    author={item.author}
+                    slug={safeStringify(item.slug)}
+                    author={safeStringify(item.author, "Redaksi")}
                     createdAt={item.created_at}
                   />
                 );
@@ -121,9 +149,13 @@ export default async function SearchPage(props: {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center border border-dashed border-dark-border rounded-2xl bg-dark-card/30">
               <AlertCircle className="h-16 w-16 text-text-muted mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Pencarian Tidak Ditemukan</h3>
+              <h3 className="text-xl font-bold text-white mb-2">
+                Pencarian Tidak Ditemukan
+              </h3>
               <p className="text-text-muted font-mono max-w-md">
-                Maaf, tidak ada artikel atau ulasan yang cocok dengan kata kunci <span className="text-[#FFD700]">"{query}"</span>. Coba gunakan kata kunci lain.
+                Maaf, tidak ada artikel atau ulasan yang cocok dengan kata kunci{" "}
+                <span className="text-[#FFD700]">"{query}"</span>. Coba gunakan
+                kata kunci lain.
               </p>
             </div>
           )}

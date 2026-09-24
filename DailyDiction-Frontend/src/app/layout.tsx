@@ -4,7 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
+  variable: "--font-font-geist-sans",
   subsets: ["latin"],
 });
 
@@ -14,11 +14,28 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Daily Diction",
-  description: "Portal Berita dan Ulasan Game",
+  metadataBase: new URL("https://dailydiction.id"),
+  title: {
+    default: "Daily Diction - Portal Berita & Ulasan Game",
+    template: "%s | Daily Diction",
+  },
+  description:
+    "Pusat informasi berita game, rilisan konsol, hardware PC, ulasan game, dan tren pop-culture terbaru.",
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
+  },
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    url: "https://dailydiction.id",
+    siteName: "Daily Diction",
+    title: "Daily Diction - Portal Berita & Ulasan Game",
+    description:
+      "Pusat informasi berita game, rilisan konsol, hardware PC, ulasan game, dan tren pop-culture terbaru.",
   },
 };
 
@@ -29,12 +46,12 @@ export default function RootLayout({
 }) {
   return (
     <html
-      lang="en"
+      lang="id"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
-        {/* AdSense HTML murni tanpa atribut data-nscript bawaan Next.js */}
+        {/* AdSense HTML murni */}
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9670478748166310"

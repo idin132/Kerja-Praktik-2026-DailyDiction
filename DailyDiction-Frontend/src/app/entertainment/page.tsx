@@ -24,8 +24,8 @@ interface ArticleItem {
   id: number;
   title: string;
   slug: string;
-  category_input?: string | string[];
-  category?: string | string[];
+  category_input?: any;
+  category?: any;
   categories?: any[];
   category_color?: string;
   summary: string;
@@ -37,9 +37,23 @@ interface ArticleItem {
   image?: string;
   read_time?: string;
   created_at?: string;
-  author?: string;
+  author?: any;
   type?: string;
   views?: number;
+}
+
+function safeStringify(val: any, fallback: string = ""): string {
+  if (val === null || val === undefined) return fallback;
+  if (typeof val === "string") return val || fallback;
+  if (typeof val === "number" || typeof val === "boolean") return String(val);
+  if (typeof val === "object") {
+    if (val.name) return String(val.name);
+    if (val.title) return String(val.title);
+    if (val.label) return String(val.label);
+    if (val.username) return String(val.username);
+    if (val.slug) return String(val.slug);
+  }
+  return fallback;
 }
 
 function formatImage(item: ArticleItem): string {
@@ -53,7 +67,7 @@ function formatImage(item: ArticleItem): string {
   const fallback =
     "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800";
 
-  if (!rawUrl) return fallback;
+  if (!rawUrl || typeof rawUrl !== "string") return fallback;
 
   const clean = rawUrl.trim();
 
@@ -148,9 +162,7 @@ export default function EntertainmentPage() {
     let rawCats: any[] = [];
 
     if (item.categories && item.categories.length > 0) {
-      rawCats = item.categories.map((c: any) =>
-        typeof c === "string" ? c : c.name,
-      );
+      rawCats = item.categories.map((c: any) => safeStringify(c));
     } else if (item.category_input) {
       rawCats = Array.isArray(item.category_input)
         ? item.category_input
@@ -169,7 +181,9 @@ export default function EntertainmentPage() {
       }
     }
 
-    const validCats = rawCats.filter(Boolean).map(String);
+    const validCats = rawCats
+      .map((c) => safeStringify(c))
+      .filter(Boolean);
     return validCats.length > 0 ? validCats : ["ENTERTAINMENT"];
   };
 
@@ -182,9 +196,13 @@ export default function EntertainmentPage() {
     const itemCats = getCategoriesArray(item).map((c) => c.toUpperCase());
     const matchCategory =
       selectedCategory === "ALL" || itemCats.includes(selectedCategory);
+
+    const titleStr = safeStringify(item.title).toLowerCase();
+    const summaryStr = safeStringify(item.summary).toLowerCase();
     const matchSearch =
-      (item.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (item.summary?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+      titleStr.includes(searchQuery.toLowerCase()) ||
+      summaryStr.includes(searchQuery.toLowerCase());
+
     return matchCategory && matchSearch;
   });
 
@@ -199,7 +217,6 @@ export default function EntertainmentPage() {
         <Navbar />
 
         <main className="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-8">
-          {/* Header */}
           <div className="mb-8 border-b border-dark-border pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -227,9 +244,7 @@ export default function EntertainmentPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12">
-            {/* Article List */}
             <div className="lg:col-span-8 2xl:col-span-9 space-y-6">
-              {/* Category Pills */}
               {categoriesList.length > 1 && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none font-mono text-xs">
                   <span className="flex items-center gap-1 text-text-muted mr-2 shrink-0">
@@ -274,6 +289,8 @@ export default function EntertainmentPage() {
                     >
                       {filteredArticles.map((item) => {
                         const itemCategories = getCategoriesArray(item);
+                        const itemSlug = safeStringify(item.slug);
+
                         return (
                           <article
                             key={item.id}
@@ -282,7 +299,7 @@ export default function EntertainmentPage() {
                             <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
                               <img
                                 src={formatImage(item)}
-                                alt={item.title}
+                                alt={safeStringify(item.title)}
                                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                 onError={(e) => {
                                   (e.target as HTMLImageElement).src =
@@ -305,14 +322,14 @@ export default function EntertainmentPage() {
                               <div>
                                 <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-[#FFD700] line-clamp-2 leading-snug">
                                   <Link
-                                    href={`/artikel/${item.slug}`}
+                                    href={`/artikel/${itemSlug}`}
                                     className="before:absolute before:inset-0 before:z-10 focus:outline-none"
                                   >
-                                    {item.title}
+                                    {safeStringify(item.title)}
                                   </Link>
                                 </h2>
                                 <p className="mt-2.5 text-xs text-text-muted line-clamp-2 leading-relaxed relative z-20 pointer-events-none">
-                                  {item.summary}
+                                  {safeStringify(item.summary)}
                                 </p>
                               </div>
 
@@ -321,7 +338,7 @@ export default function EntertainmentPage() {
                                   <div className="flex items-center gap-1.5">
                                     <User className="h-3.5 w-3.5 text-[#FFD700]" />
                                     <span className="truncate max-w-[90px] xl:max-w-[120px] font-semibold text-white">
-                                      {item.author || "Redaksi"}
+                                      {safeStringify(item.author, "Redaksi")}
                                     </span>
                                   </div>
                                   {item.created_at && (
@@ -414,9 +431,7 @@ export default function EntertainmentPage() {
               )}
             </div>
 
-            {/* Sidebar */}
             <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
-              {/* Space Iklan Sidebar */}
               <div className="w-full h-[250px] rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
                 <AdCarousel
                   ads={sidebarAds}
@@ -427,7 +442,6 @@ export default function EntertainmentPage() {
                 />
               </div>
 
-              {/* Widget Discord */}
               <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
                 <svg
                   viewBox="0 0 24 24"
