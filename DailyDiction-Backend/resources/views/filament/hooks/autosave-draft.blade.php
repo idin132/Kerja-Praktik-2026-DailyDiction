@@ -5,7 +5,7 @@
 
         let draftInterval = null;
         let debounceTimer = null;
-        const MAX_HISTORY = 3; // MAKSIMAL 3 DRAFT (Draft lama otomatis terhapus)
+        const MAX_HISTORY = 3;
 
         document.addEventListener('livewire:navigated', init);
         document.addEventListener('DOMContentLoaded', init);
@@ -26,6 +26,30 @@
                 `article_draft_history_edit_${editMatch[1]}` :
                 'article_draft_history_create';
 
+            // ─── HELPER MENDAPATKAN INSTANCE CKEDITOR ─────────────────────────────
+            function getCKEditorInstance() {
+                const el = document.querySelector('.ck-editor__editable');
+                if (el && el.ckeditorInstance) {
+                    return el.ckeditorInstance;
+                }
+                // Fallback untuk beberapa plugin Filament CKEditor
+                if (window.CKEDITOR && window.CKEDITOR.instances) {
+                    const keys = Object.keys(window.CKEDITOR.instances);
+                    if (keys.length > 0) return window.CKEDITOR.instances[keys[0]];
+                }
+                return null;
+            }
+
+            function getCKEditorContent() {
+                const editor = getCKEditorInstance();
+                if (editor) {
+                    return editor.getData();
+                }
+                // Fallback jika instance JS belum siap, ambil dari textarea bawaan
+                const textarea = document.querySelector('textarea.ck-editor') || document.querySelector('textarea[id*="content"]');
+                return textarea ? textarea.value : null;
+            }
+
             function getLivewireComponent() {
                 const names = [
                     'app.filament.resources.article-resource.pages.create-article',
@@ -40,10 +64,9 @@
 
             function collectFormData() {
                 const component = getLivewireComponent();
-                const proseMirror = document.querySelector('.tiptap.ProseMirror');
-                const content = proseMirror ? proseMirror.innerHTML : null;
+                const content = getCKEditorContent();
 
-                if (!proseMirror || content === null) return null;
+                if (content === null) return null;
 
                 const state = component ? (component.get('data') || {}) : {};
 
@@ -87,14 +110,13 @@
                     const last = history[0];
                     if (last.title === data.title && last.content === data.content) return;
 
-                    // Safety Guard: Cegah simpan jika form mendadak reset/expired
+                    // Safety Guard: Batalkan simpan jika form mendadak reset/empty
                     const lastText = last.content ? last.content.replace(/<[^>]*>/g, '').trim() : '';
                     if (lastText.length > 50 && plainText.length < 10) return;
                 }
 
                 history.unshift(data);
 
-                // Hapus draft lama jika sudah lebih dari 3
                 if (history.length > MAX_HISTORY) {
                     history = history.slice(0, MAX_HISTORY);
                 }
@@ -107,6 +129,7 @@
                 localStorage.removeItem(DRAFT_KEY);
             }
 
+            // ─── PULIHKAN DATA KE CKEDITOR & LIVEWIRE ─────────────────────────────
             function restoreDraft(draft) {
                 const component = getLivewireComponent();
 
@@ -124,20 +147,25 @@
                 }
 
                 if (draft.content) {
-                    waitForTiptap(function(editor) {
-                        editor.commands.setContent(draft.content);
+                    waitForCKEditor(function(editor) {
+                        editor.setData(draft.content);
+                        // Trigger Livewire sync jika CKEditor terhubung ke Livewire state
+                        if (component) {
+                            component.set('data.content', draft.content);
+                        }
                     });
                 }
             }
 
-            function waitForTiptap(callback, attempts) {
+            function waitForCKEditor(callback, attempts) {
                 attempts = attempts || 0;
-                if (attempts > 20) return;
-                const el = document.querySelector('.tiptap.ProseMirror');
-                if (el && el.editor) {
-                    callback(el.editor);
+                if (attempts > 25) return;
+
+                const editor = getCKEditorInstance();
+                if (editor) {
+                    callback(editor);
                 } else {
-                    setTimeout(() => waitForTiptap(callback, attempts + 1), 100);
+                    setTimeout(() => waitForCKEditor(callback, attempts + 1), 150);
                 }
             }
 
@@ -248,7 +276,6 @@
                     }
                 }
 
-                // Event Listener Pulihkan (TIDAK KELUAR MODAL, BISA MINGGIR SEMENTARA)
                 dialog.querySelectorAll('.draft-restore-item-btn').forEach(btn => {
                     btn.addEventListener('click', function(e) {
                         e.stopPropagation();
@@ -257,8 +284,7 @@
                         const selectedDraft = history[idx];
                         if (selectedDraft) {
                             restoreDraft(selectedDraft);
-                            showToast(`Draft versi #${idx + 1} dipulihkan ✓`);
-                            // Otomatis disusutkan ke pojok kanan bawah agar pengguna bisa cek teks dulu
+                            showToast(`Draft versi #${idx + 1} dipulihkan ke CKEditor ✓`);
                             if (!isMinimized) toggleMinimize();
                         }
                     });
@@ -305,8 +331,9 @@
 
                 draftInterval = setInterval(saveDraft, 30000);
 
+                // Listener ketikan pada CKEditor & input biasa
                 document.addEventListener('input', function(e) {
-                    if (e.target.closest('.tiptap.ProseMirror') || e.target.closest('input') || e.target.closest('textarea')) {
+                    if (e.target.closest('.ck-editor__editable') || e.target.closest('input') || e.target.closest('textarea')) {
                         clearTimeout(debounceTimer);
                         debounceTimer = setTimeout(saveDraft, 1500);
                     }
