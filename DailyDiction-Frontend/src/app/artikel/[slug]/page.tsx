@@ -465,13 +465,13 @@ export default async function DetailArtikel({
 
         .rich-text-content {
           font-size: 1.125rem;
-          line-height: 1.15;
+          line-height: 1.6;
           color: #d1d5db;
         }
 
         .rich-text-content p {
           margin-bottom: 1.25em;
-          line-height: 1.15;
+          line-height: 1.6;
           text-align: justify;
         }
 
@@ -485,7 +485,7 @@ export default async function DetailArtikel({
           font-weight: 900 !important;
           margin-top: 1.75em !important;
           margin-bottom: 0.75em !important;
-          line-height: 1.15 !important;
+          line-height: 1.25 !important;
           text-align: justify !important;
         }
 
@@ -494,41 +494,44 @@ export default async function DetailArtikel({
         .rich-text-content p[style*="text-align: right"] { text-align: right !important; }
         .rich-text-content p[style*="text-align: justify"] { text-align: justify !important; }
 
+        /* Layout Pembungkus Gambar & Caption CKEditor */
+        .rich-text-content figure.image,
         .rich-text-content p:has(img) {
-          text-align: center !important;
           display: flex !important;
-          justify-content: center !important;
+          flex-direction: column !important;
           align-items: center !important;
+          justify-content: center !important;
           width: 100% !important;
-          margin-top: 2rem;
-          margin-bottom: 2rem;
+          margin-top: 2rem !important;
+          margin-bottom: 2rem !important;
+          text-align: center !important;
         }
 
         .rich-text-content img {
-          max-width: 100%;
-          height: auto;
-          border-radius: 0.75rem;
-          margin-top: 1.5rem;
-          margin-bottom: 1.5rem;
-          margin-left: auto !important;
-          margin-right: auto !important;
+          max-width: 100% !important;
+          height: auto !important;
+          border-radius: 0.75rem !important;
+          margin: 0 auto !important;
           display: block !important;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .rich-text-content figure.image {
-          display: flex !important;
-          justify-content: center !important;
-          align-items: center !important;
-          width: 100% !important;
-          margin-top: 2rem;
-          margin-bottom: 2rem;
-          text-align: center !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
 
         .rich-text-content figure.image img {
           margin-top: 0 !important;
           margin-bottom: 0 !important;
+        }
+
+        /* Style Teks Keterangan Gambar (Caption) */
+        .rich-text-content figcaption,
+        .rich-text-content .image-caption {
+          margin-top: 0.75rem !important;
+          font-size: 0.875rem !important;
+          line-height: 1.4 !important;
+          color: #9ca3af !important;
+          text-align: center !important;
+          font-style: italic !important;
+          width: 100% !important;
+          max-width: 90% !important;
         }
 
         .rich-text-content a {
