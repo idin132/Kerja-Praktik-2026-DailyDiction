@@ -212,7 +212,7 @@ export default function EntertainmentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black flex flex-col justify-between font-sans">
+    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black flex flex-col justify-between font-sans overflow-x-hidden">
       <div>
         <Navbar />
 
@@ -243,8 +243,8 @@ export default function EntertainmentPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12">
-            <div className="lg:col-span-8 2xl:col-span-9 space-y-6">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 2xl:gap-12 items-start">
+            <div className="xl:col-span-8 2xl:col-span-9 space-y-6 min-w-0">
               {categoriesList.length > 1 && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none font-mono text-xs">
                   <span className="flex items-center gap-1 text-text-muted mr-2 shrink-0">
@@ -285,7 +285,7 @@ export default function EntertainmentPage() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -16 }}
                       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                      className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8"
+                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6 xl:gap-8"
                     >
                       {filteredArticles.map((item) => {
                         const itemCategories = getCategoriesArray(item);
@@ -294,9 +294,9 @@ export default function EntertainmentPage() {
                         return (
                           <article
                             key={item.id}
-                            className="group relative flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/60 hover:-translate-y-1 shadow-lg h-full duration-300 cursor-pointer"
+                            className="group relative flex flex-col overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/60 hover:-translate-y-1 shadow-lg h-full duration-300 cursor-pointer"
                           >
-                            <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
+                            <div className="relative h-48 w-full flex-shrink-0 overflow-hidden border-b border-dark-border/50">
                               <img
                                 src={formatImage(item)}
                                 alt={safeStringify(item.title)}
@@ -333,49 +333,41 @@ export default function EntertainmentPage() {
                                 </p>
                               </div>
 
-                              <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4 relative z-20">
-                                <div className="flex items-center gap-3">
-                                  <div className="flex items-center gap-1.5">
-                                    <User className="h-3.5 w-3.5 text-[#FFD700]" />
-                                    <span className="truncate max-w-[90px] xl:max-w-[120px] font-semibold text-white">
-                                      {safeStringify(item.author, "Redaksi")}
-                                    </span>
-                                  </div>
+                              {/* Footer Meta Info Rapi */}
+                              <div className="mt-5 flex items-center justify-between gap-2 text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4 relative z-20">
+                                <div className="flex items-center gap-2 min-w-0 shrink">
+                                  <User className="h-3.5 w-3.5 text-[#FFD700] shrink-0" />
+                                  <span className="truncate font-semibold text-white max-w-[100px] sm:max-w-[120px]">
+                                    {safeStringify(item.author, "Redaksi")}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-2 shrink-0">
                                   {item.created_at && (
-                                    <>
-                                      <span className="text-dark-border hidden sm:inline-block">
-                                        •
+                                    <div className="items-center gap-1.5 hidden sm:flex">
+                                      <Calendar className="h-3.5 w-3.5 text-text-muted shrink-0" />
+                                      <span>
+                                        {new Date(
+                                          item.created_at,
+                                        ).toLocaleDateString("id-ID", {
+                                          day: "numeric",
+                                          month: "short",
+                                          year: "numeric",
+                                        })}
                                       </span>
-                                      <div className="items-center gap-1.5 hidden sm:flex">
-                                        <Calendar className="h-3.5 w-3.5 text-text-muted" />
-                                        <span>
-                                          {new Date(
-                                            item.created_at,
-                                          ).toLocaleDateString("id-ID", {
-                                            day: "numeric",
-                                            month: "short",
-                                            year: "numeric",
-                                          })}
-                                        </span>
-                                      </div>
-                                    </>
+                                    </div>
                                   )}
+
                                   {item.views !== undefined &&
                                     item.views > 0 && (
-                                      <>
-                                        <span className="text-dark-border hidden sm:inline-block">
-                                          •
-                                        </span>
-                                        <div className="items-center gap-1.5 hidden sm:flex">
-                                          <Eye className="h-3.5 w-3.5 text-text-muted" />
-                                          <span>
-                                            {formatViews(item.views)} views
-                                          </span>
-                                        </div>
-                                      </>
+                                      <div className="items-center gap-1 hidden md:flex">
+                                        <Eye className="h-3.5 w-3.5 text-text-muted shrink-0" />
+                                        <span>{formatViews(item.views)}</span>
+                                      </div>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-1 font-bold text-[#FFD700] group-hover:underline shrink-0 ml-1">
+
+                                <div className="flex items-center gap-1 font-bold text-[#FFD700] group-hover:underline shrink-0 ml-auto">
                                   <span className="hidden sm:inline">BACA</span>
                                   <ArrowUpRight className="h-3.5 w-3.5" />
                                 </div>
@@ -431,7 +423,7 @@ export default function EntertainmentPage() {
               )}
             </div>
 
-            <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
+            <aside className="xl:col-span-4 2xl:col-span-3 space-y-6 w-full">
               <div className="w-full h-[250px] rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
                 <AdCarousel
                   ads={sidebarAds}

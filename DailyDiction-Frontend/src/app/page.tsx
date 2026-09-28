@@ -17,7 +17,6 @@ import { getYouTubeVideos } from "@/lib/youtube";
 import { Flame, Star, ArrowRight } from "lucide-react";
 import TrendingSection from "@/components/TrendingSection";
 
-// OPTIMASI LCP: Ubah dari 0 ke ISR (Cache 60 Detik) agar Homepage dibuka instan dari Edge
 export const revalidate = 60;
 
 function formatImageUrl(
@@ -45,7 +44,6 @@ function formatImageUrl(
   return `https://dailydiction.id/storage/${clean.replace(/^\/+/, "")}`;
 }
 
-// HELPER SANITASI STRING AGAR TIDAK ERROR #60 (MENDUKUNG 2 ARGUMEN)
 function safeStringify(val: any, fallback: string = ""): string {
   if (val === null || val === undefined) return fallback;
   if (typeof val === "string") return val || fallback;
@@ -78,7 +76,6 @@ export default async function Home() {
   const adsList: any[] =
     adsData?.data || (Array.isArray(adsData) ? adsData : []);
 
-  // PEMFILTERAN IKLAN PRESISI BERDASARKAN POSISI
   const horizontalBannerAds = adsList.filter(
     (ad: any) => ad.position === "horizontal",
   );
@@ -153,16 +150,17 @@ export default async function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
+    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black overflow-x-hidden">
       <Navbar />
       <HeroSection />
 
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
         <YoutubeHero videos={longVideosList} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12 mt-8">
+        {/* Gunakan xl:grid-cols-12 agar layout iPad Pro tidak offside */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 2xl:gap-12 mt-8 items-start">
           {/* KOLOM KIRI */}
-          <div className="lg:col-span-8 2xl:col-span-9 space-y-8 2xl:space-y-12">
+          <div className="xl:col-span-8 2xl:col-span-9 space-y-8 2xl:space-y-12 min-w-0">
             {/* BANNER HORIZONTAL */}
             <div className="w-full aspect-[4/1] sm:aspect-[6/1] md:aspect-[8/1] max-h-[160px] rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden">
               <AdCarousel
@@ -192,7 +190,7 @@ export default async function Home() {
                 </a>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {newsArticles.slice(0, 6).map((item: any) => {
                   let rawCategory = ["Berita"];
 
@@ -233,7 +231,7 @@ export default async function Home() {
               </div>
             </section>
 
-            {/* Game Reviews Section */}
+            {/* Game Reviews Section (BATAS MAKSIMAL 9 ITEM CARD) */}
             <section>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
@@ -251,9 +249,9 @@ export default async function Home() {
                 </a>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {reviews.length > 0 ? (
-                  reviews.map((review: any) => {
+                  reviews.slice(0, 9).map((review: any) => {
                     const rawPlatform = review.platform || review.category || ["PC"];
                     const finalPlatform = Array.isArray(rawPlatform)
                       ? rawPlatform.map((p) => safeStringify(p, "PC"))
@@ -279,7 +277,7 @@ export default async function Home() {
                     );
                   })
                 ) : (
-                  <p className="text-xs font-mono text-text-muted col-span-2 2xl:col-span-3">
+                  <p className="text-xs font-mono text-text-muted col-span-full">
                     Belum ada ulasan game yang dipublikasikan dari Admin Panel.
                   </p>
                 )}
@@ -292,7 +290,7 @@ export default async function Home() {
           </div>
 
           {/* KOLOM KANAN (SIDEBAR) */}
-          <aside className="lg:col-span-4 2xl:col-span-3 space-y-8">
+          <aside className="xl:col-span-4 2xl:col-span-3 space-y-8 w-full">
             <div className="w-full h-[250px] rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
               <AdCarousel
                 ads={sidebarAds}
