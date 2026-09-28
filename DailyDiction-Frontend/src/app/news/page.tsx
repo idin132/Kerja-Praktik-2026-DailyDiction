@@ -235,7 +235,7 @@ export default function NewsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black flex flex-col justify-between font-sans">
+    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black flex flex-col justify-between font-sans overflow-x-hidden">
       <div>
         <Navbar />
 
@@ -266,8 +266,8 @@ export default function NewsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12">
-            <div className="lg:col-span-8 2xl:col-span-9 space-y-6">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 2xl:gap-12 items-start">
+            <div className="xl:col-span-8 2xl:col-span-9 space-y-6 min-w-0">
               {categoriesList.length > 1 && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none font-mono text-xs">
                   <span className="flex items-center gap-1 text-text-muted mr-2 shrink-0">
@@ -317,7 +317,7 @@ export default function NewsPage() {
                         return (
                           <article
                             key={item.id}
-                            className="group relative flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/60 hover:-translate-y-1 shadow-lg h-full duration-300 cursor-pointer"
+                            className="group relative flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/60 hover:-translate-y-1 shadow-lg h-full xl:h-44 duration-300 cursor-pointer"
                           >
                             <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
                               <img
@@ -448,14 +448,14 @@ export default function NewsPage() {
               )}
             </div>
 
-            <aside className="lg:col-span-4 2xl:col-span-3 space-y-6">
-              <div className="w-full h-[250px] rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
+            <aside className="xl:col-span-4 2xl:col-span-3 space-y-6 w-full">
+              <div className="w-full max-w-[330px] aspect-[4/3] mx-auto rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group flex items-center justify-center">
                 <AdCarousel
                   ads={sidebarAds}
                   interval={5000}
                   fallbackText="Space Iklan Sidebar"
                   dimensions="300 x 250 px"
-                  objectFit="object-cover"
+                  objectFit="object-contain"
                 />
               </div>
 

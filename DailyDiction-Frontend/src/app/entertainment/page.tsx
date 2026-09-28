@@ -16,7 +16,6 @@ import {
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
-  Eye,
 } from "lucide-react";
 import TrendingSection from "@/components/TrendingSection";
 
@@ -39,7 +38,6 @@ interface ArticleItem {
   created_at?: string;
   author?: any;
   type?: string;
-  views?: number;
 }
 
 function safeStringify(val: any, fallback: string = ""): string {
@@ -281,7 +279,7 @@ export default function EntertainmentPage() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -16 }}
                       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                      className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                      className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8"
                     >
                       {filteredArticles.map((item) => {
                         const itemCategories = getCategoriesArray(item);
@@ -290,10 +288,9 @@ export default function EntertainmentPage() {
                         return (
                           <article
                             key={item.id}
-                            className="group relative flex flex-col sm:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/60 hover:-translate-y-0.5 shadow-lg h-44 duration-300 cursor-pointer"
+                            className="group relative flex flex-col xl:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/60 hover:-translate-y-1 shadow-lg h-full xl:h-44 duration-300 cursor-pointer"
                           >
-                            {/* Sisi Kiri: Gambar disamakan ukurannya dengan News Card */}
-                            <div className="relative h-full sm:w-[42%] shrink-0 overflow-hidden border-b sm:border-b-0 sm:border-r border-dark-border/50">
+                            <div className="relative h-48 xl:h-auto xl:w-48 2xl:w-60 flex-shrink-0 overflow-hidden border-b xl:border-b-0 xl:border-r border-dark-border/50">
                               <img
                                 src={formatImage(item)}
                                 alt={safeStringify(item.title)}
@@ -303,11 +300,11 @@ export default function EntertainmentPage() {
                                     "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800";
                                 }}
                               />
-                              <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1 z-20">
+                              <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-20">
                                 {itemCategories.map((cat, idx) => (
                                   <span
                                     key={idx}
-                                    className="rounded bg-[#FFD700] px-2 py-0.5 text-[9px] font-bold uppercase text-black shadow-sm font-mono"
+                                    className="rounded bg-[#FFD700] px-2 py-0.5 text-[10px] font-bold uppercase text-black shadow-sm font-mono"
                                   >
                                     {cat}
                                   </span>
@@ -315,10 +312,9 @@ export default function EntertainmentPage() {
                               </div>
                             </div>
 
-                            {/* Sisi Kanan: Konten Teks disamakan ukurannya dengan News Card */}
-                            <div className="flex flex-1 flex-col justify-between p-4 min-w-0 bg-dark-card">
-                              <div className="space-y-1.5">
-                                <h2 className="text-sm font-bold text-text-primary transition-colors group-hover:text-[#FFD700] line-clamp-2 leading-snug">
+                            <div className="flex flex-1 flex-col justify-between p-5 min-w-0 bg-dark-card">
+                              <div>
+                                <h2 className="text-base lg:text-lg font-bold text-text-primary transition-colors group-hover:text-[#FFD700] line-clamp-2 leading-snug">
                                   <Link
                                     href={`/artikel/${itemSlug}`}
                                     className="before:absolute before:inset-0 before:z-10 focus:outline-none"
@@ -326,38 +322,42 @@ export default function EntertainmentPage() {
                                     {safeStringify(item.title)}
                                   </Link>
                                 </h2>
-                                <p className="text-[11px] text-text-muted line-clamp-2 leading-relaxed pointer-events-none">
+                                <p className="mt-2.5 text-xs text-text-muted line-clamp-2 leading-relaxed relative z-20 pointer-events-none">
                                   {safeStringify(item.summary)}
                                 </p>
                               </div>
 
-                              {/* Footer Metadata */}
-                              <div className="mt-3 flex items-center justify-between text-[10px] font-mono text-text-muted border-t border-dark-border/40 pt-2.5 relative z-20">
-                                <div className="flex items-center gap-1.5 min-w-0 shrink">
-                                  <User className="h-3 w-3 text-[#FFD700] shrink-0" />
-                                  <span className="truncate font-semibold text-white max-w-[80px]">
-                                    {safeStringify(item.author, "Redaksi")}
-                                  </span>
-                                </div>
+                              <div className="mt-5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-text-muted border-t border-dark-border/40 pt-4 relative z-20">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-1.5">
+                                    <User className="h-3.5 w-3.5 text-[#FFD700]" />
+                                    <span className="truncate max-w-[90px] xl:max-w-[120px] font-semibold text-white">
+                                      {safeStringify(item.author, "Redaksi")}
+                                    </span>
+                                  </div>
 
-                                <div className="flex items-center gap-2 shrink-0">
                                   {item.created_at && (
-                                    <div className="flex items-center gap-1">
-                                      <Calendar className="h-3 w-3 text-text-muted shrink-0" />
-                                      <span>
-                                        {new Date(item.created_at).toLocaleDateString("id-ID", {
-                                          day: "numeric",
-                                          month: "short",
-                                          year: "numeric",
-                                        })}
+                                    <>
+                                      <span className="text-dark-border hidden sm:inline-block">
+                                        •
                                       </span>
-                                    </div>
+                                      <div className="items-center gap-1.5 hidden sm:flex">
+                                        <Calendar className="h-3.5 w-3.5 text-text-muted" />
+                                        <span>
+                                          {new Date(item.created_at).toLocaleDateString("id-ID", {
+                                            day: "numeric",
+                                            month: "short",
+                                            year: "numeric",
+                                          })}
+                                        </span>
+                                      </div>
+                                    </>
                                   )}
                                 </div>
 
-                                <div className="flex items-center gap-0.5 font-bold text-[#FFD700] group-hover:underline shrink-0">
-                                  <span>BACA</span>
-                                  <ArrowUpRight className="h-3 w-3" />
+                                <div className="flex items-center gap-1 font-bold text-[#FFD700] group-hover:underline shrink-0 ml-1">
+                                  <span className="hidden sm:inline">BACA</span>
+                                  <ArrowUpRight className="h-3.5 w-3.5" />
                                 </div>
                               </div>
                             </div>
@@ -412,13 +412,13 @@ export default function EntertainmentPage() {
             </div>
 
             <aside className="xl:col-span-4 2xl:col-span-3 space-y-6 w-full">
-              <div className="w-full max-w-[300px] h-[250px] mx-auto rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
+              <div className="w-full max-w-[330px] aspect-[4/3] mx-auto rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group flex items-center justify-center">
                 <AdCarousel
                   ads={sidebarAds}
                   interval={5000}
                   fallbackText="Space Iklan Sidebar"
                   dimensions="300 x 250 px"
-                  objectFit="object-cover"
+                  objectFit="object-contain"
                 />
               </div>
 
