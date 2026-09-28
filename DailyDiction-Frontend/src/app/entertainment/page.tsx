@@ -290,10 +290,10 @@ export default function EntertainmentPage() {
                         return (
                           <article
                             key={item.id}
-                            className="group relative flex flex-col sm:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/60 hover:-translate-y-0.5 shadow-lg h-full duration-300 cursor-pointer"
+                            className="group relative flex flex-col sm:flex-row overflow-hidden rounded-2xl border border-dark-border bg-dark-card transition-all hover:border-[#FFD700]/60 hover:-translate-y-0.5 shadow-lg h-44 duration-300 cursor-pointer"
                           >
-                            {/* Gambar Kiri Sesuai Style Card News */}
-                            <div className="relative h-48 sm:h-auto sm:w-2/5 shrink-0 overflow-hidden border-b sm:border-b-0 sm:border-r border-dark-border/50">
+                            {/* Sisi Kiri: Gambar disamakan ukurannya dengan News Card */}
+                            <div className="relative h-full sm:w-[42%] shrink-0 overflow-hidden border-b sm:border-b-0 sm:border-r border-dark-border/50">
                               <img
                                 src={formatImage(item)}
                                 alt={safeStringify(item.title)}
@@ -315,7 +315,7 @@ export default function EntertainmentPage() {
                               </div>
                             </div>
 
-                            {/* Konten Kanan */}
+                            {/* Sisi Kanan: Konten Teks disamakan ukurannya dengan News Card */}
                             <div className="flex flex-1 flex-col justify-between p-4 min-w-0 bg-dark-card">
                               <div className="space-y-1.5">
                                 <h2 className="text-sm font-bold text-text-primary transition-colors group-hover:text-[#FFD700] line-clamp-2 leading-snug">
@@ -331,8 +331,8 @@ export default function EntertainmentPage() {
                                 </p>
                               </div>
 
-                              {/* Meta Info Rapi Ala News Card */}
-                              <div className="mt-4 flex items-center justify-between text-[10px] font-mono text-text-muted border-t border-dark-border/40 pt-3 relative z-20">
+                              {/* Footer Metadata */}
+                              <div className="mt-3 flex items-center justify-between text-[10px] font-mono text-text-muted border-t border-dark-border/40 pt-2.5 relative z-20">
                                 <div className="flex items-center gap-1.5 min-w-0 shrink">
                                   <User className="h-3 w-3 text-[#FFD700] shrink-0" />
                                   <span className="truncate font-semibold text-white max-w-[80px]">
@@ -411,7 +411,6 @@ export default function EntertainmentPage() {
               )}
             </div>
 
-            {/* Sidebar dengan pembatas rasio Iklan Rapi */}
             <aside className="xl:col-span-4 2xl:col-span-3 space-y-6 w-full">
               <div className="w-full max-w-[300px] h-[250px] mx-auto rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group">
                 <AdCarousel
