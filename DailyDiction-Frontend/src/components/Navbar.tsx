@@ -16,6 +16,7 @@ import {
   Star,
   Cpu,
   Tv2,
+  Sparkles,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -34,6 +35,7 @@ export default function Navbar() {
     { name: "REVIEW", href: "/review", icon: Star },
     { name: "TECHNOLOGY", href: "/technology", icon: Cpu },
     { name: "ENTERTAINMENT", href: "/entertainment", icon: Tv2 },
+    { name: "HOLIDAY RUSH", href: "/holiday-rush", icon: Sparkles },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
