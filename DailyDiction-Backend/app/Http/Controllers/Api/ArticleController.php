@@ -11,10 +11,19 @@ use Throwable;
 
 class ArticleController extends Controller
 {
+    private function publishedQuery()
+    {
+        return Article::where('is_published', true)
+            ->where(function ($q) {
+                $q->whereNull('published_at')
+                    ->orWhere('published_at', '<=', now());
+            });
+    }
+
     public function index(Request $request)
     {
         try {
-            $query = Article::query();
+            $query = $this->publishedQuery();
 
             if ($request->has('type') && $request->type !== 'all') {
                 $query->where('type', $request->type);
@@ -31,7 +40,7 @@ class ArticleController extends Controller
     public function show($slug)
     {
         try {
-            $article = Article::where('slug', $slug)->first();
+            $article = $this->publishedQuery()->where('slug', $slug)->first();
 
             if (!$article) {
                 return response()->json([
@@ -77,7 +86,7 @@ class ArticleController extends Controller
     public function featured()
     {
         try {
-            $featured = Article::orderBy('created_at', 'desc')->take(5)->get();
+            $featured = $this->publishedQuery()->orderBy('created_at', 'desc')->take(5)->get();
 
             return response()->json([
                 'status' => 'success',
@@ -92,7 +101,8 @@ class ArticleController extends Controller
     {
         try {
             $perPage = $request->get('per_page', 8);
-            $technologies = Article::where('type', 'technology')
+            $technologies = $this->publishedQuery()
+                ->where('type', 'technology')
                 ->orderBy('created_at', 'desc')
                 ->paginate($perPage);
 
@@ -128,7 +138,8 @@ class ArticleController extends Controller
             $startOfWeek = now()->startOfWeek(); // Senin 00:00
             $endOfWeek   = now()->endOfWeek();   // Minggu 23:59
 
-            $articles = Article::whereBetween('created_at', [$startOfWeek, $endOfWeek])
+            $articles = $this->publishedQuery()
+                ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
                 ->orderBy('views', 'desc')
                 ->limit(5)
                 ->get();
@@ -250,7 +261,8 @@ class ArticleController extends Controller
     {
         try {
             $limit = $request->get('limit', 12);
-            $reviews = Article::where('type', 'review')
+            $reviews = $this->publishedQuery()
+                ->where('type', 'review')
                 ->orderBy('created_at', 'desc')
                 ->paginate($limit);
 
