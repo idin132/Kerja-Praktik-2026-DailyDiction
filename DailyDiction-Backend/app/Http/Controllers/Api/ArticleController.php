@@ -51,12 +51,14 @@ class ArticleController extends Controller
 
             $type = $article->type ?? 'article';
 
-            $prevArticle = Article::where('id', '<', $article->id)
+            $prevArticle = $this->publishedQuery()
+                ->where('id', '<', $article->id)
                 ->where('type', $type)
                 ->orderBy('id', 'desc')
                 ->first(['id', 'slug', 'title', 'image_url', 'image_path', 'type']);
 
-            $nextArticle = Article::where('id', '>', $article->id)
+            $nextArticle = $this->publishedQuery()
+                ->where('id', '>', $article->id)
                 ->where('type', $type)
                 ->orderBy('id', 'asc')
                 ->first(['id', 'slug', 'title', 'image_url', 'image_path', 'type']);
@@ -77,6 +79,28 @@ class ArticleController extends Controller
             return response()->json([
                 'status' => 'success',
                 'data' => $articleData
+            ]);
+        } catch (Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function preview($slug)
+    {
+        try {
+            $article = Article::where('slug', $slug)->first();
+
+            if (!$article) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Konten tidak ditemukan'
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'is_preview' => true,
+                'data' => $article
             ]);
         } catch (Throwable $e) {
             return response()->json(['error' => $e->getMessage()], 500);

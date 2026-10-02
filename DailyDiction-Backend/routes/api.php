@@ -15,10 +15,10 @@ Route::get('/user', function (Request $request) {
 
 // SEMUA ROUTE DI BAWAH INI PUNYA PREFIX /v1/
 Route::prefix('v1')->group(function () {
-    // Cuma butuh 3 baris ini untuk artikel & review!
     Route::get('/articles', [ArticleController::class, 'index']);
     Route::get('/articles/featured', [ArticleController::class, 'featured']);
-    Route::get('/articles/trending', [ArticleController::class, 'trending']);  // ← HARUS di atas ini
+    Route::get('/articles/trending', [ArticleController::class, 'trending']);
+    Route::get('/articles/preview/{slug}', [ArticleController::class, 'preview'])->middleware('auth:sanctum');
     Route::post('/articles/{slug}/view', [ArticleController::class, 'trackView']);
     Route::get('/articles/{slug}', [ArticleController::class, 'show']);
 
