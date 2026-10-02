@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ArticleResource\Pages;
 use App\Models\Article;
+use App\Models\Category;
 use App\Models\User;
 use Kahusoftware\FilamentCkeditorField\CKEditor;
 use Filament\Forms\Set;
@@ -14,7 +15,6 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
-use App\Models\Category;
 use Illuminate\Support\Str;
 
 class ArticleResource extends Resource
@@ -47,7 +47,7 @@ class ArticleResource extends Resource
                     ->label('Title')
                     ->required()
                     ->maxLength(255)
-                    ->live(onBlur: true) // OPTIMASI 1: Jangan kirim request setiap ketik huruf, hanya saat kursor keluar (blur)
+                    ->live(onBlur: true)
                     ->extraInputAttributes(['autocomplete' => 'off'])
                     ->afterStateUpdated(function (string $operation, ?string $state, Set $set) {
                         if ($operation === 'create' && !empty($state)) {
@@ -59,7 +59,7 @@ class ArticleResource extends Resource
                     ? Forms\Components\Select::make('author')
                     ->label('Author (Penulis)')
                     ->searchable()
-                    ->getSearchResultsUsing(fn (string $search): array => User::where('name', 'like', "%{$search}%")->limit(20)->pluck('name', 'name')->toArray()) // OPTIMASI 2: Paging/Lazy query saat ketik nama
+                    ->getSearchResultsUsing(fn (string $search): array => User::where('name', 'like', "%{$search}%")->limit(20)->pluck('name', 'name')->toArray())
                     ->getOptionLabelUsing(fn ($value): ?string => $value)
                     ->default(fn() => auth()->user()?->name)
                     ->required()
@@ -78,7 +78,6 @@ class ArticleResource extends Resource
                     ->maxLength(255),
 
                 // ================= 3. FORM HYBRID (KONDISIONAL SESUAI TIPE) =================
-
                 Forms\Components\Grid::make(2)
                     ->schema([
                         Forms\Components\TagsInput::make('category_input')
@@ -108,7 +107,7 @@ class ArticleResource extends Resource
                             ->native(false),
                     ]),
 
-                // C. KHUSUS REVIEW: Platform Game
+                // KHUSUS REVIEW: Platform Game
                 Forms\Components\Select::make('platform')
                     ->label('Platform')
                     ->multiple()
@@ -130,14 +129,14 @@ class ArticleResource extends Resource
                     ->maxLength(255)
                     ->default('crimson'),
 
-                // ================= 4. KONTEN ARTIKEL =================
+                // ================= 4. THUMBNAIL / GAMBAR =================
                 Forms\Components\Radio::make('thumbnail_mode')
                     ->label('Sumber Thumbnail')
                     ->options([
                         'url' => 'URL Gambar (External)',
-                        'file' => 'Upload File',
+                        'file' => 'Upload File Lokal',
                     ])
-                    ->default('url')
+                    ->default(fn($record) => ($record && $record->image_path) ? 'file' : 'url')
                     ->live()
                     ->dehydrated(false)
                     ->columnSpanFull(),
@@ -152,29 +151,36 @@ class ArticleResource extends Resource
                     ->dehydrated(fn(Get $get) => $get('thumbnail_mode') !== 'file'),
 
                 Forms\Components\FileUpload::make('image_path')
-                    ->label('Upload Thumbnail')
+                    ->label('Upload Thumbnail File Lokal')
                     ->image()
                     ->disk('public')
                     ->directory('thumbnails')
                     ->visibility('public')
-                    ->maxSize(2048) // Maksimal 2MB
+                    ->maxSize(2048)
                     ->imagePreviewHeight('192')
                     ->columnSpanFull()
-                    // OPTIMASI 3: Dihapus imageResizeMode('cover') & imageCropAspectRatio('16:9') yang memberatkan server PHP saat submit
                     ->visible(fn(Get $get) => $get('thumbnail_mode') === 'file')
                     ->required(fn(Get $get) => $get('thumbnail_mode') === 'file')
                     ->dehydrated(fn(Get $get) => $get('thumbnail_mode') === 'file'),
 
                 Forms\Components\Placeholder::make('image_preview')
-                    ->label('Preview Thumbnail')
-                    ->content(function (Get $get) {
+                    ->label('Preview Thumbnail Active')
+                    ->content(function ($record, Get $get) {
                         $mode = $get('thumbnail_mode');
 
                         if ($mode === 'file') {
-                            return new HtmlString('<span class="text-xs text-gray-400">Preview tersedia di area upload di atas.</span>');
+                            if ($record && $record->image_path) {
+                                $fullPath = asset('storage/' . $record->image_path);
+                                return new HtmlString('
+                                    <div class="mt-1">
+                                        <img src="' . e($fullPath) . '" alt="Thumbnail Preview" class="max-h-48 rounded-lg object-cover border border-gray-200 shadow-sm"/>
+                                    </div>
+                                ');
+                            }
+                            return new HtmlString('<span class="text-xs text-gray-400">Preview file baru akan tampil pada komponen upload di atas saat dipilih.</span>');
                         }
 
-                        $url = $get('image_url');
+                        $url = $get('image_url') ?? ($record ? $record->image_url : null);
 
                         if (!$url) {
                             return new HtmlString('<span class="text-xs text-gray-400">Belum ada preview (masukkan URL gambar di atas)</span>');
@@ -223,10 +229,10 @@ class ArticleResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('thumbnail')
+                Tables\Columns\ImageColumn::make('thumbnail_display')
                     ->label('Thumbnail')
                     ->square()
-                    ->disk('public')
+                    ->getStateUsing(fn($record) => $record->image_path ? asset('storage/' . $record->image_path) : $record->image_url)
                     ->defaultImageUrl('https://placehold.co/100x100?text=No+Image'),
 
                 Tables\Columns\TextColumn::make('type')
@@ -258,18 +264,6 @@ class ArticleResource extends Resource
                     ->badge()
                     ->separator(','),
 
-                Tables\Columns\TextColumn::make('category_color')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('read_time')
-                    ->label('Waktu Baca')
-                    ->searchable(),
-
-                Tables\Columns\IconColumn::make('is_featured')
-                    ->boolean()
-                    ->hidden(),
-
                 Tables\Columns\IconColumn::make('is_published')
                     ->label('Tayang')
                     ->boolean()
@@ -295,7 +289,6 @@ class ArticleResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
             ])
-
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('type')
@@ -311,7 +304,6 @@ class ArticleResource extends Resource
                     ->label('Status Publikasi')
                     ->options([
                         '1' => 'Publik (Tayang)',
-                        '0' => 'Draft (Pribadi)',
                         '0' => 'Draft (Pribadi)',
                     ]),
             ])

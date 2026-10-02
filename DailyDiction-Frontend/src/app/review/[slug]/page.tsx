@@ -32,6 +32,7 @@ interface NavReviewItem {
   thumbnail_url?: string;
   thumbnail?: string;
   image_url?: string;
+  image_path?: string;
   image?: string;
 }
 
@@ -44,6 +45,7 @@ interface ReviewItem {
   summary?: string;
   content?: any;
   image_url?: string;
+  image_path?: string;
   image_full_url?: string;
   image?: string;
   thumbnail_url?: string;
@@ -70,15 +72,26 @@ function safeStringify(val: any, fallback: string = ""): string {
 }
 
 function formatImageUrl(
-  imageUrl: any,
+  item: any,
   fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
 ): string {
-  const cleanUrl = safeStringify(imageUrl);
+  if (!item) return fallback;
+
+  const rawUrl =
+    typeof item === "string"
+      ? item
+      : item.image_full_url ||
+        item.thumbnail_url ||
+        item.image_path ||
+        item.image_url ||
+        item.thumbnail ||
+        item.image;
+
+  const cleanUrl = safeStringify(rawUrl);
   if (!cleanUrl) return fallback;
 
   const clean = cleanUrl.trim();
 
-  // Handle URL Eksternal (http:// atau https://)
   if (clean.startsWith("http://") || clean.startsWith("https://")) {
     if (clean.includes("dailydiction.id/storage/http")) {
       return clean.replace(
@@ -89,7 +102,6 @@ function formatImageUrl(
     return clean;
   }
 
-  // Handle Storage Lokal Laravel
   let cleanPath = clean.replace(/^\/+/, "");
   if (!cleanPath.startsWith("storage/")) {
     cleanPath = `storage/${cleanPath}`;
@@ -240,14 +252,10 @@ export default async function DetailReview({
       <ViewTracker slug={slug} />
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          {/* Container Grid Utama */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
-            
-            {/* Kolom Kiri: Detail Review */}
             <div className="lg:col-span-8 min-w-0">
               <article>
                 <div className="mb-8 space-y-6">
-                  {/* Badge Platform Game */}
                   {platforms.length > 0 && (
                     <div className="flex flex-wrap items-center gap-2">
                       {platforms.map((plat: string, idx: number) => (
@@ -262,12 +270,10 @@ export default async function DetailReview({
                     </div>
                   )}
 
-                  {/* Judul Review */}
                   <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-tight">
                     {safeStringify(review.title)}
                   </h1>
 
-                  {/* Meta Info */}
                   <div className="flex flex-wrap items-center gap-6 text-sm font-mono text-text-muted border-y border-dark-border py-4">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-[#FFD700]" />
@@ -296,7 +302,6 @@ export default async function DetailReview({
                     </div>
                   </div>
 
-                  {/* Summary / Ringkasan Ulasan */}
                   <p className="text-base sm:text-lg text-text-muted text-justify font-medium border-l-4 border-[#FFD700] pl-4 bg-dark-card/30 p-4 rounded-r-lg">
                     {safeStringify(
                       review.summary,
@@ -305,15 +310,10 @@ export default async function DetailReview({
                   </p>
                 </div>
 
-                {/* Feature Image / Banner Utama Game */}
                 <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-dark-border mb-8 shadow-2xl">
                   <img
                     src={formatImageUrl(
-                      review.image_url ||
-                        review.image_full_url ||
-                        review.image ||
-                        review.thumbnail_url ||
-                        review.thumbnail,
+                      review,
                       "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
                     )}
                     alt={safeStringify(review.title)}
@@ -321,7 +321,6 @@ export default async function DetailReview({
                   />
                 </div>
 
-                {/* Teks Konten Review */}
                 <ArticleContent content={parsedContent} />
 
                 {review.id && (
@@ -332,7 +331,6 @@ export default async function DetailReview({
                 )}
               </article>
 
-              {/* Navigasi Review Sebelum / Sesudah */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-dark-border pt-8 mt-8">
                 {prevReview ? (
                   <Link
@@ -351,10 +349,7 @@ export default async function DetailReview({
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
                       <img
                         src={formatImageUrl(
-                          prevReview.thumbnail_url ||
-                            prevReview.thumbnail ||
-                            prevReview.image_url ||
-                            prevReview.image,
+                          prevReview,
                           "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                         )}
                         alt={safeStringify(prevReview.title)}
@@ -374,10 +369,7 @@ export default async function DetailReview({
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
                       <img
                         src={formatImageUrl(
-                          nextReview.thumbnail_url ||
-                            nextReview.thumbnail ||
-                            nextReview.image_url ||
-                            nextReview.image,
+                          nextReview,
                           "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
                         )}
                         alt={safeStringify(nextReview.title)}
@@ -400,7 +392,6 @@ export default async function DetailReview({
               </div>
             </div>
 
-            {/* Kolom Kanan: Sidebar Sticky */}
             <aside className="lg:col-span-4 w-full">
               <div className="lg:sticky lg:top-24 space-y-6">
                 <ShareWidget title={safeStringify(review.title)} />
@@ -475,105 +466,6 @@ export default async function DetailReview({
       </main>
 
       <Footer />
-
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-          .rich-text-content {
-            font-size: 1.125rem;
-            line-height: 1.6;
-            color: #d1d5db;
-          }
-
-          .rich-text-content p {
-            margin-bottom: 1.25em;
-            line-height: 1.6;
-            text-align: justify;
-          }
-
-          .rich-text-content h1,
-          .rich-text-content h2,
-          .rich-text-content h3,
-          .rich-text-content h4,
-          .rich-text-content h5,
-          .rich-text-content h6 {
-            color: #FFD700;
-            font-weight: 900 !important;
-            margin-top: 1.75em !important;
-            margin-bottom: 0.75em !important;
-            line-height: 1.25 !important;
-            text-align: justify !important;
-          }
-
-          .rich-text-content p[style*="text-align: left"] { text-align: left !important; }
-          .rich-text-content p[style*="text-align: center"] { text-align: center !important; }
-          .rich-text-content p[style*="text-align: right"] { text-align: right !important; }
-          .rich-text-content p[style*="text-align: justify"] { text-align: justify !important; }
-
-          .rich-text-content figure.image,
-          .rich-text-content p:has(img) {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 100% !important;
-            margin-top: 2rem !important;
-            margin-bottom: 2rem !important;
-            text-align: center !important;
-          }
-
-          .rich-text-content img {
-            max-width: 100% !important;
-            height: auto !important;
-            border-radius: 0.75rem !important;
-            margin: 0 auto !important;
-            display: block !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-          }
-
-          .rich-text-content figure.image img {
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-          }
-
-          .rich-text-content figcaption,
-          .rich-text-content .image-caption {
-            margin-top: 0.75rem !important;
-            font-size: 0.875rem !important;
-            line-height: 1.4 !important;
-            color: #9ca3af !important;
-            text-align: center !important;
-            font-style: italic !important;
-            width: 100% !important;
-            max-width: 90% !important;
-          }
-
-          .rich-text-content a {
-            color: #FFD700;
-            text-decoration: none;
-          }
-          .rich-text-content a:hover { text-decoration: underline; }
-          .rich-text-content strong { color: white; }
-          
-          .rich-text-content figure.media {
-            width: 100% !important;
-            display: block !important;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-          }
-
-          .rich-text-content iframe {
-            width: 100% !important;
-            aspect-ratio: 16/9;
-            border-radius: 0.75rem;
-            margin-top: 1.5rem;
-            margin-bottom: 1.5rem;
-            border: 0 !important;
-            display: block !important;
-          }
-        `,
-        }}
-      />
     </div>
   );
 }

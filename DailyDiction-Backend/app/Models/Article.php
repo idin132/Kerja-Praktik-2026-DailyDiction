@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 
 class Article extends Model
@@ -31,6 +32,7 @@ class Article extends Model
         'last_viewed_at',
         'published_at',
     ];
+
     protected static function booted()
     {
         static::saving(function ($article) {
@@ -52,44 +54,60 @@ class Article extends Model
         });
     }
 
-
     protected $casts = [
         'content' => 'array',
         'is_featured' => 'boolean',
         'is_published' => 'boolean',
-        'platform' => 'array', // <--- Tambahin ini biar ngebaca multiple select
+        'platform' => 'array',
         'category_input' => 'array',
         'last_viewed_at' => 'datetime',
         'published_at' => 'datetime',
     ];
 
-    // Menyertakan 'image_full_url' secara otomatis saat dipanggil sebagai JSON/API
-    protected $appends = ['image_full_url'];
+    // Menyertakan accessor otomatis ke response JSON API
+    protected $appends = ['image_full_url', 'thumbnail_url'];
 
-    public function getImageFullUrlAttribute()
+    /**
+     * Accessor untuk mendapatkan URL Gambar Lengkap (Handling File Upload & External URL)
+     */
+    public function getImageFullUrlAttribute(): ?string
     {
-        if (!$this->image_url) {
-            return null;
+        // 1. Prioritas Utama: Hasil Upload File Lokal Filament
+        if (!empty($this->image_path)) {
+            if (Str::startsWith($this->image_path, ['http://', 'https://'])) {
+                return $this->image_path;
+            }
+            return asset('storage/' . ltrim($this->image_path, '/'));
         }
 
-        // Jika sudah link lengkap (http:// atau https://), kembalikan langsung
-        if (Str::startsWith($this->image_url, ['http://', 'https://'])) {
-            return $this->image_url;
+        // 2. Prioritas Kedua: URL Gambar External
+        if (!empty($this->image_url)) {
+            if (Str::startsWith($this->image_url, ['http://', 'https://'])) {
+                return $this->image_url;
+            }
+            return asset('storage/' . ltrim($this->image_url, '/'));
         }
 
-        // Jika file lokal dari storage
-        return asset('storage/' . $this->image_url);
+        return null;
     }
 
+    /**
+     * Accessor untuk Thumbnail URL
+     */
+    public function getThumbnailUrlAttribute(): ?string
+    {
+        return $this->getImageFullUrlAttribute();
+    }
+
+    /**
+     * Accessor Legacy untuk getThumbnailAttribute
+     */
     public function getThumbnailAttribute(): ?string
     {
-        if ($this->image_path) {
-            return asset('storage/' . $this->image_path);
-        }
-        return $this->image_url ?: null;
+        return $this->getImageFullUrlAttribute();
     }
 
-    public function categories(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class, 'article_category');
     }

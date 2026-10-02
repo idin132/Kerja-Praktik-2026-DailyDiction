@@ -3,20 +3,20 @@ import Footer from "@/components/Footer";
 import { getArticleBySlug, getAdvertisements } from "@/lib/api";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import ShareWidget from "@/components/ShareWidget";
 import {
-  User,
-  Clock,
   ChevronLeft,
   ChevronRight,
+  User,
   Calendar,
+  Clock,
   Send,
 } from "lucide-react";
+import ShareWidget from "@/components/ShareWidget";
 import ArticleInteractions from "@/components/ArticleInteractions";
 import ViewTracker from "@/components/ViewTracker";
 import ArticleContent from "@/components/ArticleContent";
-import LatestNewsSection from "@/components/LatestNewsSection";
 import TrendingSection from "@/components/TrendingSection";
+import LatestNewsSection from "@/components/LatestNewsSection";
 
 export const revalidate = 60;
 
@@ -27,7 +27,32 @@ interface NavArticleItem {
   thumbnail_url?: string;
   thumbnail?: string;
   image_url?: string;
+  image_path?: string;
   image?: string;
+}
+
+interface ArticleDetail {
+  id?: number;
+  title: string;
+  slug: string;
+  type?: string;
+  category?: any;
+  category_input?: any;
+  categories?: any[];
+  summary?: string;
+  content?: any;
+  image_url?: string;
+  image_path?: string;
+  image_full_url?: string;
+  image?: string;
+  thumbnail_url?: string;
+  thumbnail?: string;
+  created_at?: string;
+  author?: any;
+  read_time?: string;
+  likes_count?: number;
+  prev?: NavArticleItem | null;
+  next?: NavArticleItem | null;
 }
 
 function safeStringify(val: any, fallback: string = ""): string {
@@ -44,26 +69,46 @@ function safeStringify(val: any, fallback: string = ""): string {
   return fallback;
 }
 
-function parseCategoriesToSafeStrings(raw: any): string[] {
-  if (!raw) return [];
-  if (Array.isArray(raw)) {
-    return raw.map((item) => safeStringify(item)).filter(Boolean);
-  }
-  if (typeof raw === "string") {
-    try {
-      const parsed = raw.startsWith("[") ? JSON.parse(raw) : [raw];
-      if (Array.isArray(parsed)) {
-        return parsed.map((item) => safeStringify(item)).filter(Boolean);
-      }
-    } catch {
-      return [raw];
+/**
+ * Helper universal penanganan gambar Frontend
+ */
+function formatImageUrl(
+  item: any,
+  fallback: string = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1600",
+): string {
+  if (!item) return fallback;
+
+  const rawUrl =
+    typeof item === "string"
+      ? item
+      : item.image_full_url ||
+        item.thumbnail_url ||
+        item.image_path ||
+        item.image_url ||
+        item.thumbnail ||
+        item.image;
+
+  const cleanUrl = safeStringify(rawUrl);
+  if (!cleanUrl) return fallback;
+
+  const clean = cleanUrl.trim();
+
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    if (clean.includes("dailydiction.id/storage/http")) {
+      return clean.replace(
+        /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
+        "$1",
+      );
     }
+    return clean;
   }
-  if (typeof raw === "object") {
-    const str = safeStringify(raw);
-    return str ? [str] : [];
+
+  let cleanPath = clean.replace(/^\/+/, "");
+  if (!cleanPath.startsWith("storage/")) {
+    cleanPath = `storage/${cleanPath}`;
   }
-  return [];
+
+  return `https://dailydiction.id/${cleanPath}`;
 }
 
 function parseContentMedia(content: any): string {
@@ -115,31 +160,34 @@ function parseContentMedia(content: any): string {
   );
 }
 
-function formatImageUrl(
-  imageUrl: any,
-  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
-): string {
-  const cleanUrl = safeStringify(imageUrl);
-  if (!cleanUrl) return fallback;
+function getCategoriesArray(article: ArticleDetail): string[] {
+  let rawCats: any[] = [];
 
-  const clean = cleanUrl.trim();
-
-  if (clean.startsWith("http://") || clean.startsWith("https://")) {
-    if (clean.includes("dailydiction.id/storage/http")) {
-      return clean.replace(
-        /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
-        "$1",
-      );
+  if (article.categories && article.categories.length > 0) {
+    rawCats = article.categories.map((c: any) => safeStringify(c));
+  } else if (article.category_input) {
+    rawCats = Array.isArray(article.category_input)
+      ? article.category_input
+      : [article.category_input];
+  } else if (article.category) {
+    if (
+      typeof article.category === "string" &&
+      article.category.startsWith("[")
+    ) {
+      try {
+        rawCats = JSON.parse(article.category);
+      } catch {
+        rawCats = [article.category];
+      }
+    } else {
+      rawCats = Array.isArray(article.category)
+        ? article.category
+        : [article.category];
     }
-    return clean;
   }
 
-  let cleanPath = clean.replace(/^\/+/, "");
-  if (!cleanPath.startsWith("storage/")) {
-    cleanPath = `storage/${cleanPath}`;
-  }
-
-  return `https://dailydiction.id/${cleanPath}`;
+  const validCats = rawCats.map((c) => safeStringify(c)).filter(Boolean);
+  return validCats.length > 0 ? validCats : ["BERITA"];
 }
 
 export default async function DetailArtikel({
@@ -156,13 +204,12 @@ export default async function DetailArtikel({
     getAdvertisements().catch(() => null),
   ]);
 
-  const rawArticle = (articleRes as any)?.data || articleRes;
+  let article: ArticleDetail | null = (articleRes as any)?.data || articleRes;
 
-  if (!rawArticle || !rawArticle.title) {
+  if (!article || !article.title) {
     notFound();
   }
 
-  const article = rawArticle;
   const sidebarAd =
     adsData?.data && Array.isArray(adsData.data)
       ? adsData.data[0]
@@ -170,22 +217,16 @@ export default async function DetailArtikel({
         ? adsData[0]
         : null;
 
-  const prevArticle: NavArticleItem | null = article.prev || null;
-  const nextArticle: NavArticleItem | null = article.next || null;
+  const prevArticle = article.prev || null;
+  const nextArticle = article.next || null;
 
-  const articleTitle = safeStringify(article.title, "Artikel");
-  const authorName = safeStringify(article.author, "Redaksi");
-  const summaryText = safeStringify(
-    article.summary,
-    "Simak berita selengkapnya di bawah ini.",
-  );
-  const readTimeText = safeStringify(article.read_time, "3 MIN READ");
-
-  let categoryList: string[] = parseCategoriesToSafeStrings(
-    article.category_input || article.category || article.categories,
-  );
-
+  const categories = getCategoriesArray(article);
   const parsedContent = parseContentMedia(article.content);
+
+  const authorName =
+    typeof article.author === "string"
+      ? article.author
+      : article.author?.name || article.author?.username || "Redaksi";
 
   const getArticleHref = (item: NavArticleItem | null) => {
     if (!item) return "#";
@@ -194,49 +235,43 @@ export default async function DetailArtikel({
     return `/artikel/${itemSlug}`;
   };
 
+  const articleBannerImage = formatImageUrl(
+    article,
+    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1600",
+  );
+
   return (
     <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
       <Navbar />
       <ViewTracker slug={slug} />
-
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
-            
-            {/* Kolom Kiri: Detail Artikel */}
             <div className="lg:col-span-8 min-w-0">
               <article>
-                <div className="animate-fade-up-1 mb-8 space-y-6">
-                  {/* Badge Kategori */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    {categoryList.length > 0 ? (
-                      categoryList.map((cat, idx) => (
+                <div className="mb-8 space-y-6">
+                  {categories.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {categories.map((cat: string, idx: number) => (
                         <span
                           key={idx}
-                          className="rounded bg-[#FFD700]/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#FFD700] border border-[#FFD700]/30"
+                          className="rounded bg-[#FFD700] px-3 py-1 text-xs font-bold uppercase tracking-wider text-black font-mono shadow-sm"
                         >
-                          {safeStringify(cat, "Berita")}
+                          {String(cat)}
                         </span>
-                      ))
-                    ) : (
-                      <span className="rounded bg-[#FFD700]/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#FFD700] border border-[#FFD700]/30">
-                        Berita Utama
-                      </span>
-                    )}
-                  </div>
+                      ))}
+                    </div>
+                  )}
 
-                  {/* Judul Utama */}
                   <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-tight">
-                    {articleTitle}
+                    {safeStringify(article.title)}
                   </h1>
 
-                  {/* Meta Info */}
                   <div className="flex flex-wrap items-center gap-6 text-sm font-mono text-text-muted border-y border-dark-border py-4">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-[#FFD700]" />
                       <span className="font-bold text-white">{authorName}</span>
                     </div>
-
                     {article.created_at && (
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
@@ -252,49 +287,40 @@ export default async function DetailArtikel({
                         </span>
                       </div>
                     )}
-
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-[#FFD700]" />
-                      <span>{readTimeText}</span>
+                      <span>
+                        {safeStringify(article.read_time, "3 MIN READ")}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Gambar Banner Utama */}
-                  <div className="mb-10 w-full overflow-hidden rounded-2xl border border-dark-border bg-dark-card shadow-2xl">
-                    <img
-                      src={formatImageUrl(
-                        article.image_url ||
-                          article.image_full_url ||
-                          article.thumbnail ||
-                          article.thumbnail_url ||
-                          article.banner_image ||
-                          article.image,
-                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
-                      )}
-                      alt={articleTitle}
-                      className="w-full aspect-[16/9] object-cover"
-                    />
-                  </div>
-
-                  {/* Summary / Ringkasan */}
-                  <p className="text-base sm:text-lg text-text-muted text-justify font-medium border-l-4 border-[#FFD700] pl-4 bg-dark-card/30 p-4 rounded-r-lg">
-                    {summaryText}
-                  </p>
+                  {article.summary && (
+                    <p className="text-base sm:text-lg text-text-muted text-justify font-medium border-l-4 border-[#FFD700] pl-4 bg-dark-card/30 p-4 rounded-r-lg">
+                      {safeStringify(article.summary)}
+                    </p>
+                  )}
                 </div>
 
-                {/* Body Content */}
+                <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-dark-border mb-8 shadow-2xl">
+                  <img
+                    src={articleBannerImage}
+                    alt={safeStringify(article.title)}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+
                 <ArticleContent content={parsedContent} />
 
                 {article.id && (
                   <ArticleInteractions
                     articleId={article.id}
-                    initialLikes={Number((article as any).likes_count) || 0}
+                    initialLikes={Number(article.likes_count) || 0}
                   />
                 )}
               </article>
 
-              {/* Prev / Next Nav */}
-              <div className="animate-fade-up-3 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-dark-border pt-8 mt-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-dark-border pt-8 mt-8">
                 {prevArticle ? (
                   <Link
                     href={getArticleHref(prevArticle)}
@@ -303,7 +329,7 @@ export default async function DetailArtikel({
                     <ChevronLeft className="h-6 w-6 text-text-muted group-hover:text-[#FFD700] shrink-0" />
                     <div className="flex-1 min-w-0 text-right md:text-left">
                       <p className="text-xs font-mono text-text-muted mb-1">
-                        ARTIKEL SEBELUMNYA
+                        BERITA SEBELUMNYA
                       </p>
                       <h4 className="text-sm font-bold text-white group-hover:text-[#FFD700] truncate transition-colors">
                         {safeStringify(prevArticle.title)}
@@ -312,10 +338,7 @@ export default async function DetailArtikel({
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
                       <img
                         src={formatImageUrl(
-                          prevArticle.thumbnail ||
-                            prevArticle.thumbnail_url ||
-                            prevArticle.image ||
-                            prevArticle.image_url,
+                          prevArticle,
                           "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
                         )}
                         alt={safeStringify(prevArticle.title)}
@@ -335,10 +358,7 @@ export default async function DetailArtikel({
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md hidden sm:block">
                       <img
                         src={formatImageUrl(
-                          nextArticle.thumbnail ||
-                            nextArticle.thumbnail_url ||
-                            nextArticle.image ||
-                            nextArticle.image_url,
+                          nextArticle,
                           "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
                         )}
                         alt={safeStringify(nextArticle.title)}
@@ -347,7 +367,7 @@ export default async function DetailArtikel({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-mono text-text-muted mb-1">
-                        ARTIKEL SELANJUTNYA
+                        BERITA SELANJUTNYA
                       </p>
                       <h4 className="text-sm font-bold text-white group-hover:text-[#FFD700] truncate transition-colors">
                         {safeStringify(nextArticle.title)}
@@ -361,12 +381,11 @@ export default async function DetailArtikel({
               </div>
             </div>
 
-            {/* Kolom Kanan: Sidebar Sticky */}
             <aside className="lg:col-span-4 w-full">
               <div className="lg:sticky lg:top-24 space-y-6">
-                <ShareWidget title={articleTitle} />
+                <ShareWidget title={safeStringify(article.title)} />
 
-                <div className="animate-fade-up-2">
+                <div>
                   {sidebarAd ? (
                     <a
                       href={safeStringify(sidebarAd.url_link, "#")}
@@ -395,7 +414,7 @@ export default async function DetailArtikel({
                   )}
                 </div>
 
-                <div className="animate-fade-up-3 w-full max-w-[320px] mx-auto">
+                <div className="w-full max-w-[320px] mx-auto">
                   <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
                     <svg
                       viewBox="0 0 24 24"
@@ -422,7 +441,7 @@ export default async function DetailArtikel({
                       className="inline-flex w-full items-center justify-center gap-2 bg-white text-black font-mono font-bold text-xs uppercase py-3 px-4 rounded-xl hover:bg-white/90 transition-all shadow-lg relative z-10"
                     >
                       <Send className="h-3.5 w-3.5 fill-current" />
-                      <span>Masuk Server</span>
+                      <span>Masuk Server (Gratis)</span>
                     </a>
                   </div>
                 </div>
@@ -436,128 +455,6 @@ export default async function DetailArtikel({
       </main>
 
       <Footer />
-
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        @keyframes cinematicFadeUp {
-          0% {
-            opacity: 0;
-            transform: translateY(36px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fade-up-1 {
-          animation: cinematicFadeUp 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-
-        .animate-fade-up-2 {
-          animation: cinematicFadeUp 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
-        }
-
-        .animate-fade-up-3 {
-          animation: cinematicFadeUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
-        }
-
-        .rich-text-content {
-          font-size: 1.125rem;
-          line-height: 1.6;
-          color: #d1d5db;
-        }
-
-        .rich-text-content p {
-          margin-bottom: 1.25em;
-          line-height: 1.6;
-          text-align: justify;
-        }
-
-        .rich-text-content h1,
-        .rich-text-content h2,
-        .rich-text-content h3,
-        .rich-text-content h4,
-        .rich-text-content h5,
-        .rich-text-content h6 {
-          color: #FFD700;
-          font-weight: 900 !important;
-          margin-top: 1.75em !important;
-          margin-bottom: 0.75em !important;
-          line-height: 1.25 !important;
-          text-align: justify !important;
-        }
-
-        .rich-text-content p[style*="text-align: left"] { text-align: left !important; }
-        .rich-text-content p[style*="text-align: center"] { text-align: center !important; }
-        .rich-text-content p[style*="text-align: right"] { text-align: right !important; }
-        .rich-text-content p[style*="text-align: justify"] { text-align: justify !important; }
-
-        .rich-text-content figure.image,
-        .rich-text-content p:has(img) {
-          display: flex !important;
-          flex-direction: column !important;
-          align-items: center !important;
-          justify-content: center !important;
-          width: 100% !important;
-          margin-top: 2rem !important;
-          margin-bottom: 2rem !important;
-          text-align: center !important;
-        }
-
-        .rich-text-content img {
-          max-width: 100% !important;
-          height: auto !important;
-          border-radius: 0.75rem !important;
-          margin: 0 auto !important;
-          display: block !important;
-          border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        }
-
-        .rich-text-content figure.image img {
-          margin-top: 0 !important;
-          margin-bottom: 0 !important;
-        }
-
-        .rich-text-content figcaption,
-        .rich-text-content .image-caption {
-          margin-top: 0.75rem !important;
-          font-size: 0.875rem !important;
-          line-height: 1.4 !important;
-          color: #9ca3af !important;
-          text-align: center !important;
-          font-style: italic !important;
-          width: 100% !important;
-          max-width: 90% !important;
-        }
-
-        .rich-text-content a {
-          color: #FFD700;
-          text-decoration: none;
-        }
-        .rich-text-content a:hover { text-decoration: underline; }
-        .rich-text-content strong { color: white; }
-        
-        .rich-text-content figure.media {
-          width: 100% !important;
-          display: block !important;
-          margin-top: 2rem;
-          margin-bottom: 2rem;
-        }
-
-        .rich-text-content iframe {
-          width: 100% !important;
-          aspect-ratio: 16/9;
-          border-radius: 0.75rem;
-          margin-top: 1.5rem;
-          margin-bottom: 1.5rem;
-          border: 0 !important;
-          display: block !important;
-        }
-      `,
-        }}
-      />
     </div>
   );
 }

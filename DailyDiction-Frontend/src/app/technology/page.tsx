@@ -30,6 +30,9 @@ interface TechItem {
   content: string;
   image_url?: string;
   image_full_url?: string;
+  thumbnail?: string;
+  thumbnail_url?: string;
+  image?: string;
   read_time: string;
   created_at: string;
   author?: any;
@@ -52,30 +55,37 @@ function safeStringify(val: any, fallback: string = ""): string {
 }
 
 function formatTechImage(item: TechItem): string {
-  const rawUrl = item.image_url || item.image_full_url;
+  const rawUrl =
+    item.image_url ||
+    item.thumbnail_url ||
+    item.thumbnail ||
+    item.image_full_url ||
+    item.image;
+
   const fallback =
     "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800";
 
-  if (!rawUrl || typeof rawUrl !== "string") return fallback;
+  const cleanUrl = safeStringify(rawUrl);
+  if (!cleanUrl) return fallback;
 
-  const clean = rawUrl.trim();
+  const clean = cleanUrl.trim();
 
   if (clean.startsWith("http://") || clean.startsWith("https://")) {
-    if (clean.includes("https://dailydiction.id/storage/http")) {
+    if (clean.includes("dailydiction.id/storage/http")) {
       return clean.replace(
-        /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
+        /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
         "$1",
       );
     }
     return clean;
   }
 
-  const cleanPath = clean.startsWith("/") ? clean.slice(1) : clean;
-  if (cleanPath.startsWith("storage/")) {
-    return `https://dailydiction.id/${cleanPath}`;
+  let cleanPath = clean.replace(/^\/+/, "");
+  if (!cleanPath.startsWith("storage/")) {
+    cleanPath = `storage/${cleanPath}`;
   }
 
-  return `https://dailydiction.id/storage/${cleanPath}`;
+  return `https://dailydiction.id/${cleanPath}`;
 }
 
 export default function TechnologyPage() {
