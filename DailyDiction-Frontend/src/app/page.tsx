@@ -17,7 +17,7 @@ import { getYouTubeVideos } from "@/lib/youtube";
 import { Flame, Star, ArrowRight } from "lucide-react";
 import TrendingSection from "@/components/TrendingSection";
 
-// OPTIMASI LCP: Ubah dari 0 ke ISR (Cache 60 Detik) agar Homepage dibuka instan dari Edge
+// OPTIMASI LCP: ISR (Cache 60 Detik)
 export const revalidate = 60;
 
 function formatImageUrl(
@@ -28,24 +28,27 @@ function formatImageUrl(
 
   const clean = imageUrl.trim();
 
-  if (clean.includes("dailydiction.id/storage/")) {
-    return clean;
-  }
-
+  // Handle URL Eksternal (http:// atau https://)
   if (clean.startsWith("http://") || clean.startsWith("https://")) {
-    if (clean.includes("https://dailydiction.id/storage/http")) {
+    if (clean.includes("dailydiction.id/storage/http")) {
       return clean.replace(
-        /http:\/\/127\.0\.0\.1:8000\/storage\/(https?:\/\/)/,
+        /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
         "$1",
       );
     }
     return clean;
   }
 
-  return `https://dailydiction.id/storage/${clean.replace(/^\/+/, "")}`;
+  // Handle Storage Lokal Laravel
+  let cleanPath = clean.replace(/^\/+/, "");
+  if (!cleanPath.startsWith("storage/")) {
+    cleanPath = `storage/${cleanPath}`;
+  }
+
+  return `https://dailydiction.id/${cleanPath}`;
 }
 
-// HELPER SANITASI STRING AGAR TIDAK ERROR #60 (MENDUKUNG 2 ARGUMEN)
+// HELPER SANITASI STRING
 function safeStringify(val: any, fallback: string = ""): string {
   if (val === null || val === undefined) return fallback;
   if (typeof val === "string") return val || fallback;
@@ -78,7 +81,6 @@ export default async function Home() {
   const adsList: any[] =
     adsData?.data || (Array.isArray(adsData) ? adsData : []);
 
-  // PEMFILTERAN IKLAN PRESISI BERDASARKAN POSISI
   const horizontalBannerAds = adsList.filter(
     (ad: any) => ad.position === "horizontal",
   );
@@ -160,7 +162,6 @@ export default async function Home() {
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
         <YoutubeHero videos={longVideosList} />
 
-        {/* Breakpoint xl:grid-cols-12 agar layout iPad Pro tidak offside */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 2xl:gap-12 mt-8 items-start">
           {/* KOLOM KIRI */}
           <div className="xl:col-span-8 2xl:col-span-9 space-y-8 2xl:space-y-12 min-w-0">
@@ -234,7 +235,7 @@ export default async function Home() {
               </div>
             </section>
 
-            {/* Game Reviews Section (Maksimal 9 Card) */}
+            {/* Game Reviews Section */}
             <section>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
@@ -294,7 +295,6 @@ export default async function Home() {
 
           {/* KOLOM KANAN (SIDEBAR) */}
           <aside className="xl:col-span-4 2xl:col-span-3 space-y-8 w-full">
-            {/* Iklan dikunci rasionya biar pas & tidak ditarik gepeng di iPad Pro */}
             <div className="w-full flex justify-center">
               <div className="w-full max-w-[330px] aspect-[4/3] rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group flex items-center justify-center">
                 <AdCarousel

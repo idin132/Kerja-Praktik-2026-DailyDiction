@@ -124,23 +124,22 @@ function formatImageUrl(
 
   const clean = cleanUrl.trim();
 
-  if (
-    clean.includes("/storage/http://") ||
-    clean.includes("/storage/https://")
-  ) {
-    return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
-  }
-
   if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    if (clean.includes("dailydiction.id/storage/http")) {
+      return clean.replace(
+        /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
+        "$1",
+      );
+    }
     return clean;
   }
 
-  const cleanPath = clean.replace(/^\/+/, "");
-  if (cleanPath.startsWith("storage/")) {
-    return `https://dailydiction.id/${cleanPath}`;
+  let cleanPath = clean.replace(/^\/+/, "");
+  if (!cleanPath.startsWith("storage/")) {
+    cleanPath = `storage/${cleanPath}`;
   }
 
-  return `https://dailydiction.id/storage/${cleanPath}`;
+  return `https://dailydiction.id/${cleanPath}`;
 }
 
 export default async function DetailArtikel({
@@ -202,7 +201,6 @@ export default async function DetailArtikel({
 
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          {/* Container Grid Utama dengan items-start */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
             
             {/* Kolom Kiri: Detail Artikel */}
@@ -266,11 +264,11 @@ export default async function DetailArtikel({
                     <img
                       src={formatImageUrl(
                         article.image_url ||
-                          article.image ||
+                          article.image_full_url ||
                           article.thumbnail ||
                           article.thumbnail_url ||
                           article.banner_image ||
-                          article.image_full_url,
+                          article.image,
                         "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
                       )}
                       alt={articleTitle}
@@ -315,6 +313,7 @@ export default async function DetailArtikel({
                       <img
                         src={formatImageUrl(
                           prevArticle.thumbnail ||
+                            prevArticle.thumbnail_url ||
                             prevArticle.image ||
                             prevArticle.image_url,
                           "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
@@ -337,6 +336,7 @@ export default async function DetailArtikel({
                       <img
                         src={formatImageUrl(
                           nextArticle.thumbnail ||
+                            nextArticle.thumbnail_url ||
                             nextArticle.image ||
                             nextArticle.image_url,
                           "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
@@ -361,7 +361,7 @@ export default async function DetailArtikel({
               </div>
             </div>
 
-            {/* Kolom Kanan: Sidebar Sticky Mulus Mengikuti Scroll */}
+            {/* Kolom Kanan: Sidebar Sticky */}
             <aside className="lg:col-span-4 w-full">
               <div className="lg:sticky lg:top-24 space-y-6">
                 <ShareWidget title={articleTitle} />
@@ -494,7 +494,6 @@ export default async function DetailArtikel({
         .rich-text-content p[style*="text-align: right"] { text-align: right !important; }
         .rich-text-content p[style*="text-align: justify"] { text-align: justify !important; }
 
-        /* Layout Pembungkus Gambar & Caption CKEditor */
         .rich-text-content figure.image,
         .rich-text-content p:has(img) {
           display: flex !important;
@@ -521,7 +520,6 @@ export default async function DetailArtikel({
           margin-bottom: 0 !important;
         }
 
-        /* Style Teks Keterangan Gambar (Caption) */
         .rich-text-content figcaption,
         .rich-text-content .image-caption {
           margin-top: 0.75rem !important;

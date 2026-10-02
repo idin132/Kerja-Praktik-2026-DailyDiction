@@ -70,30 +70,32 @@ function safeStringify(val: any, fallback: string = ""): string {
 }
 
 function formatImageUrl(
-  imageUrl: string | null | undefined,
-  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
+  imageUrl: any,
+  fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
 ): string {
-  if (!imageUrl || typeof imageUrl !== "string") return fallback;
+  const cleanUrl = safeStringify(imageUrl);
+  if (!cleanUrl) return fallback;
 
-  const clean = imageUrl.trim();
+  const clean = cleanUrl.trim();
 
-  if (
-    clean.includes("/storage/http://") ||
-    clean.includes("/storage/https://")
-  ) {
-    return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
-  }
-
+  // Handle URL Eksternal (http:// atau https://)
   if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    if (clean.includes("dailydiction.id/storage/http")) {
+      return clean.replace(
+        /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
+        "$1",
+      );
+    }
     return clean;
   }
 
-  const cleanPath = clean.replace(/^\/+/, "");
-  if (cleanPath.startsWith("storage/")) {
-    return `https://dailydiction.id/${cleanPath}`;
+  // Handle Storage Lokal Laravel
+  let cleanPath = clean.replace(/^\/+/, "");
+  if (!cleanPath.startsWith("storage/")) {
+    cleanPath = `storage/${cleanPath}`;
   }
 
-  return `https://dailydiction.id/storage/${cleanPath}`;
+  return `https://dailydiction.id/${cleanPath}`;
 }
 
 function parseContentMedia(content: any): string {
@@ -238,7 +240,7 @@ export default async function DetailReview({
       <ViewTracker slug={slug} />
       <main className="mx-auto max-w-[1600px] px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          {/* Container Grid Utama dengan items-start agar Sticky Sidebar Berjalan */}
+          {/* Container Grid Utama */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
             
             {/* Kolom Kiri: Detail Review */}
@@ -304,26 +306,20 @@ export default async function DetailReview({
                 </div>
 
                 {/* Feature Image / Banner Utama Game */}
-                {(review.image_url ||
-                  review.image_full_url ||
-                  review.image ||
-                  review.thumbnail_url ||
-                  review.thumbnail) && (
-                  <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-dark-border mb-8 shadow-2xl">
-                    <img
-                      src={formatImageUrl(
-                        review.image_url ||
-                          review.image_full_url ||
-                          review.image ||
-                          review.thumbnail_url ||
-                          review.thumbnail,
-                        "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
-                      )}
-                      alt={safeStringify(review.title)}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                )}
+                <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-dark-border mb-8 shadow-2xl">
+                  <img
+                    src={formatImageUrl(
+                      review.image_url ||
+                        review.image_full_url ||
+                        review.image ||
+                        review.thumbnail_url ||
+                        review.thumbnail,
+                      "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600",
+                    )}
+                    alt={safeStringify(review.title)}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
 
                 {/* Teks Konten Review */}
                 <ArticleContent content={parsedContent} />
@@ -404,7 +400,7 @@ export default async function DetailReview({
               </div>
             </div>
 
-            {/* Kolom Kanan: Sidebar Sticky Mulus Mengikuti Scroll */}
+            {/* Kolom Kanan: Sidebar Sticky */}
             <aside className="lg:col-span-4 w-full">
               <div className="lg:sticky lg:top-24 space-y-6">
                 <ShareWidget title={safeStringify(review.title)} />
@@ -514,7 +510,6 @@ export default async function DetailReview({
           .rich-text-content p[style*="text-align: right"] { text-align: right !important; }
           .rich-text-content p[style*="text-align: justify"] { text-align: justify !important; }
 
-          /* Layout Pembungkus Gambar & Caption CKEditor */
           .rich-text-content figure.image,
           .rich-text-content p:has(img) {
             display: flex !important;
@@ -541,7 +536,6 @@ export default async function DetailReview({
             margin-bottom: 0 !important;
           }
 
-          /* Style Teks Keterangan Gambar (Caption) */
           .rich-text-content figcaption,
           .rich-text-content .image-caption {
             margin-top: 0.75rem !important;
