@@ -107,18 +107,16 @@ class ArticleResource extends Resource
                             ->native(false),
                     ]),
 
-                // KHUSUS REVIEW: Platform Game
+                // KHUSUS REVIEW: Platform Game (Disederhanakan)
                 Forms\Components\Select::make('platform')
                     ->label('Platform')
                     ->multiple()
                     ->options([
-                        'PC' => 'PC',
-                        'PS4' => 'PS4',
-                        'PS5' => 'PS5',
-                        'Xbox One' => 'Xbox One',
-                        'Xbox Series X/S' => 'Xbox Series X/S',
-                        'Switch' => 'Nintendo Switch',
-                        'Mobile' => 'Mobile',
+                        'PC'          => 'PC',
+                        'PlayStation' => 'PlayStation',
+                        'Xbox'        => 'Xbox',
+                        'Nintendo'    => 'Nintendo',
+                        'Mobile'      => 'Mobile',
                     ])
                     ->visible(fn(Get $get) => $get('type') === 'review')
                     ->required(fn(Get $get) => $get('type') === 'review'),

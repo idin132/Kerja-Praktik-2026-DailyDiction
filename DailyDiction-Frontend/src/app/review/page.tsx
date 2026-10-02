@@ -25,6 +25,7 @@ interface ReviewItem {
   summary: string;
   content?: string;
   image_url?: string;
+  image_path?: string;
   image_full_url?: string;
   thumbnail?: string;
   thumbnail_url?: string;
@@ -48,10 +49,22 @@ function safeStringify(val: any, fallback: string = ""): string {
 }
 
 function formatImageUrl(
-  imageUrl: any,
+  item: any,
   fallback: string = "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
 ): string {
-  const cleanUrl = safeStringify(imageUrl);
+  if (!item) return fallback;
+
+  const rawUrl =
+    typeof item === "string"
+      ? item
+      : item.image_full_url ||
+        item.thumbnail_url ||
+        item.image_path ||
+        item.image_url ||
+        item.thumbnail ||
+        item.image;
+
+  const cleanUrl = safeStringify(rawUrl);
   if (!cleanUrl) return fallback;
 
   const clean = cleanUrl.trim();
@@ -73,6 +86,9 @@ function formatImageUrl(
 
   return `https://dailydiction.id/${cleanPath}`;
 }
+
+// Opsi Platform Sesuai Filament Admin Terbaru
+const PLATFORM_OPTIONS = ["ALL", "PC", "PlayStation", "Xbox", "Nintendo", "Mobile"];
 
 export default function ReviewPage() {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
@@ -160,27 +176,6 @@ export default function ReviewPage() {
     setCurrentPage(1);
   }, [searchQuery, selectedPlatform]);
 
-  const [platforms, setPlatforms] = useState<string[]>(["ALL"]);
-
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
-        const res = await fetch(`${apiUrl}/categories`, { cache: "no-store" });
-        if (!res.ok) return;
-        const json = await res.json();
-        const names: string[] = (json.data || []).map((c: any) =>
-          safeStringify(c).toUpperCase(),
-        );
-        setPlatforms(["ALL", ...names]);
-      } catch (err) {
-        console.error("Gagal fetch categories:", err);
-      }
-    }
-    fetchCategories();
-  }, []);
-
   const getPlatformsArray = (review: ReviewItem): string[] => {
     const raw = review.platform || review.category || ["PC"];
     let parsedList: any[] = [];
@@ -204,11 +199,18 @@ export default function ReviewPage() {
   const filteredReviews = reviews.filter((review) => {
     const plats = getPlatformsArray(review).map((p) => p.toUpperCase());
 
-    const matchPlatform =
-      selectedPlatform === "ALL" ||
-      plats.some(
-        (p) => p.includes(selectedPlatform) || selectedPlatform.includes(p),
-      );
+    let matchPlatform = selectedPlatform === "ALL";
+
+    if (!matchPlatform) {
+      const selectedUpper = selectedPlatform.toUpperCase();
+      matchPlatform = plats.some((p) => {
+        if (p === selectedUpper) return true;
+        if (selectedUpper === "PLAYSTATION" && (p.includes("PS") || p.includes("PLAYSTATION"))) return true;
+        if (selectedUpper === "XBOX" && p.includes("XBOX")) return true;
+        if (selectedUpper === "NINTENDO" && (p.includes("SWITCH") || p.includes("NINTENDO"))) return true;
+        return p.includes(selectedUpper);
+      });
+    }
 
     const titleStr = safeStringify(review.title).toLowerCase();
     const summaryStr = safeStringify(review.summary).toLowerCase();
@@ -265,6 +267,7 @@ export default function ReviewPage() {
               />
             </div>
           </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 2xl:gap-12">
             <div className="lg:col-span-8 2xl:col-span-9">
               {isLoading ? (
@@ -278,13 +281,7 @@ export default function ReviewPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
                       <div className="relative aspect-video md:aspect-auto lg:col-span-3 overflow-hidden">
                         <img
-                          src={formatImageUrl(
-                            featuredReview.image_url ||
-                              featuredReview.image_full_url ||
-                              featuredReview.thumbnail_url ||
-                              featuredReview.thumbnail ||
-                              featuredReview.image,
-                          )}
+                          src={formatImageUrl(featuredReview)}
                           alt={safeStringify(featuredReview.title)}
                           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
@@ -324,34 +321,24 @@ export default function ReviewPage() {
                 </div>
               ) : null}
 
+              {/* BAR FILTER PLATFORM TERUPDATE */}
               <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-2 font-mono">
                 <span className="flex items-center gap-2 text-xs text-text-muted uppercase tracking-widest mr-2 shrink-0">
                   FILTER:
                 </span>
-                {platforms.length === 1 ? (
-                  <>
-                    {[1, 2, 3, 4].map((n) => (
-                      <div
-                        key={n}
-                        className="h-8 w-20 rounded-lg bg-dark-card border border-dark-border animate-pulse shrink-0"
-                      />
-                    ))}
-                  </>
-                ) : (
-                  platforms.map((filter) => (
-                    <button
-                      key={filter}
-                      onClick={() => setSelectedPlatform(filter)}
-                      className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
-                        selectedPlatform === filter
-                          ? "bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.4)]"
-                          : "bg-dark-card border border-dark-border text-text-muted hover:border-[#FFD700]/50 hover:text-white"
-                      }`}
-                    >
-                      {filter}
-                    </button>
-                  ))
-                )}
+                {PLATFORM_OPTIONS.map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setSelectedPlatform(filter)}
+                    className={`rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
+                      selectedPlatform === filter
+                        ? "bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.4)]"
+                        : "bg-dark-card border border-dark-border text-text-muted hover:border-[#FFD700]/50 hover:text-white"
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                ))}
               </div>
 
               {isLoading ? (
@@ -386,13 +373,7 @@ export default function ReviewPage() {
                           >
                             <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-dark-border/50 shrink-0">
                               <img
-                                src={formatImageUrl(
-                                  review.image_url ||
-                                    review.image_full_url ||
-                                    review.thumbnail_url ||
-                                    review.thumbnail ||
-                                    review.image,
-                                )}
+                                src={formatImageUrl(review)}
                                 alt={safeStringify(review.title)}
                                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                               />
