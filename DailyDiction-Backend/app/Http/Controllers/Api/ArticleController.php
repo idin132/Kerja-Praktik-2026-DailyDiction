@@ -125,16 +125,20 @@ class ArticleController extends Controller
     public function trending()
     {
         try {
-            $articles = Article::orderBy('views', 'desc')->limit(5)->get();
+            $startOfWeek = now()->startOfWeek(); // Senin 00:00
+            $endOfWeek   = now()->endOfWeek();   // Minggu 23:59
 
+            $articles = Article::whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                ->orderBy('views', 'desc')
+                ->limit(5)
+                ->get();
+
+            // Fallback kalau minggu ini belum ada artikel
             if ($articles->isEmpty()) {
                 $articles = Article::orderBy('created_at', 'desc')->limit(5)->get();
             }
 
-            return response()->json([
-                'status' => 'success',
-                'data' => $articles
-            ]);
+            return response()->json(['status' => 'success', 'data' => $articles]);
         } catch (Throwable $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
