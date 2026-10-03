@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ArticleController;
 use App\Models\Sponsor;
 use App\Models\Advertisement;
-use App\Models\Category;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\YoutubeController;
 
@@ -20,10 +19,15 @@ Route::prefix('v1')->group(function () {
     Route::get('/articles/trending', [ArticleController::class, 'trending']);
     Route::get('/articles/preview/{slug}', [ArticleController::class, 'preview'])->middleware('auth:sanctum');
     Route::post('/articles/{slug}/view', [ArticleController::class, 'trackView']);
+    
+    // Route Tunggal & Jamak Artikel
     Route::get('/articles/{slug}', [ArticleController::class, 'show']);
+    Route::get('/article/{slug}', [ArticleController::class, 'show']);
 
+    // Route Tunggal & Jamak Review
     Route::get('/reviews', [ArticleController::class, 'reviews']);
     Route::get('/reviews/{slug}', [ArticleController::class, 'showReview']);
+    Route::get('/review/{slug}', [ArticleController::class, 'showReview']);
 
     Route::get('/categories', function () {
         $platforms = \App\Models\Article::where('type', 'review')
@@ -42,6 +46,7 @@ Route::prefix('v1')->group(function () {
             'data' => $platforms->map(fn($p) => ['id' => $p, 'name' => $p, 'slug' => \Illuminate\Support\Str::slug($p)])
         ]);
     });
+    
     Route::get('/reels', [ArticleController::class, 'reels']);
 
     Route::get('/youtube-videos', [YoutubeController::class, 'getVideos']);
@@ -88,14 +93,14 @@ Route::prefix('v1')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
     });
 
-    // Jembatan untuk Sponsor (Dari Rizqi)
+    // Sponsor
     Route::get('/sponsors', function () {
         return response()->json([
             'data' => Sponsor::latest()->get()
         ]);
     });
 
-    // Jembatan untuk Iklan (Dari Rizqi) - INI YANG KITA PAKE!
+    // Iklan
     Route::get('/advertisements', function () {
         return response()->json([
             'data' => Advertisement::latest()->get()

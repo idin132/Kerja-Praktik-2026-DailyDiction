@@ -134,7 +134,6 @@ export async function getArticleBySlug(
     if (!res.ok) return null;
     const json = await res.json();
 
-    // Unbox data dari json.data jika ada
     const result = json.data || json;
 
     if (!result || !result.title) return null;
@@ -266,7 +265,6 @@ export async function getSponsors(): Promise<{ data: any[] }> {
   }
 }
 
-// Dipanggil saat artikel/review dibuka
 export async function trackArticleView(slug: string): Promise<void> {
   try {
     await fetch(`${API_BASE_URL}/articles/${slug}/view`, {
@@ -274,7 +272,7 @@ export async function trackArticleView(slug: string): Promise<void> {
       headers: { Accept: "application/json" },
     });
   } catch {
-    // Silent fail — jangan sampai ganggu UX kalau endpoint gagal
+    // Silent fail
   }
 }
 
@@ -282,7 +280,7 @@ export async function getTrendingArticles(): Promise<ArticleItem[]> {
   try {
     const res = await fetch(`${API_BASE_URL}/articles/trending`, {
       headers: { Accept: "application/json" },
-      next: { revalidate: 300 }, // cache 5 menit
+      next: { revalidate: 300 },
     });
 
     if (!res.ok) return [];

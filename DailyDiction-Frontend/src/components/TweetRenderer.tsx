@@ -42,6 +42,7 @@ function sanitizeContent(html: string): string {
     .replace(/%3Cdiv/gi, "")
     .replace(/div%3E%3Cdiv/gi, "");
 
+  // Memperbaiki URL gambar berlipat dari storage Laravel
   clean = clean.replace(
     /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/gi,
     "$1"
@@ -61,9 +62,10 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
 
   const cleaned = sanitizeContent(htmlContent);
 
-  // Jika tidak mengandung link Tweet/X, render HTML secara langsung utuh 100%
+  // Cek apakah benar-benar ada link Tweet/X status ID di dalam artikel
   const hasTweet = /(?:x|twitter)\.com\/[^\/]+\/status\/\d+/i.test(cleaned);
 
+  // JIKA TIDAK ADA TWEET: Render HTML utuh 100% tanpa dipotong-potong Regex
   if (!isMounted || !hasTweet) {
     return (
       <>
@@ -78,16 +80,17 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           .rich-text-content h4,
           .rich-text-content h5,
           .rich-text-content h6 {
-            color: #FFD700;
+            color: #FFD700 !important;
             font-weight: 900 !important;
-            line-height: 1.25 !important;
-            margin-top: 1.75em !important;
+            line-height: 1.3 !important;
+            margin-top: 2em !important;
             margin-bottom: 0.75em !important;
             text-align: left !important;
+            display: block !important;
           }
 
           .rich-text-content p {
-            line-height: 1.7 !important;
+            line-height: 1.75 !important;
             text-align: justify !important;
             margin-bottom: 1.25em !important;
           }
@@ -100,13 +103,15 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
             align-items: center !important;
           }
 
-          .rich-text-content img {
+          .rich-text-content img,
+          .rich-text-content figure img {
             max-width: 100% !important;
             height: auto !important;
             display: block !important;
             margin: 1.5rem auto !important;
             border-radius: 0.75rem !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
           }
 
           .rich-text-content figcaption {
@@ -121,7 +126,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
             width: 100% !important;
             aspect-ratio: 16/9;
             border-radius: 0.75rem;
-            margin: 1.5rem 0 !important;
+            margin: 2rem 0 !important;
             border: 0 !important;
             display: block !important;
           }
@@ -130,7 +135,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
     );
   }
 
-  // JIKA Terdapat Tweet
+  // JIKA TERDAPAT EMBED TWEET: Gunakan penanda terisolasi hanya pada tag oembed x.com / twitter.com
   const marker = "___TWEET_BLOCK_";
   const markerEnd = "___";
 
@@ -189,16 +194,17 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
         .rich-text-content h4,
         .rich-text-content h5,
         .rich-text-content h6 {
-          color: #FFD700;
+          color: #FFD700 !important;
           font-weight: 900 !important;
-          line-height: 1.25 !important;
-          margin-top: 1.75em !important;
+          line-height: 1.3 !important;
+          margin-top: 2em !important;
           margin-bottom: 0.75em !important;
           text-align: left !important;
+          display: block !important;
         }
 
         .rich-text-content p {
-          line-height: 1.7 !important;
+          line-height: 1.75 !important;
           text-align: justify !important;
           margin-bottom: 1.25em !important;
         }
@@ -211,13 +217,15 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           align-items: center !important;
         }
 
-        .rich-text-content img {
+        .rich-text-content img,
+        .rich-text-content figure img {
           max-width: 100% !important;
           height: auto !important;
           display: block !important;
           margin: 1.5rem auto !important;
           border-radius: 0.75rem !important;
           border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
         }
 
         .rich-text-content figcaption {
@@ -232,7 +240,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           width: 100% !important;
           aspect-ratio: 16/9;
           border-radius: 0.75rem;
-          margin: 1.5rem 0 !important;
+          margin: 2rem 0 !important;
           border: 0 !important;
           display: block !important;
         }
