@@ -13,16 +13,15 @@ const TweetRenderer = dynamic(() => import("@/components/TweetRenderer"), {
   ),
 });
 
-// SANITIZER UNTUK MENGONVERSI SETIAP BENTUK OBJECT/ARRAY MEDIA MENJADI STRING MOUNT
 function safeContentToString(content: any): string {
   if (!content) return "";
 
-  if (typeof content === "string") {
-    return content;
-  }
+  let rawString = "";
 
-  if (Array.isArray(content)) {
-    return content
+  if (typeof content === "string") {
+    rawString = content;
+  } else if (Array.isArray(content)) {
+    rawString = content
       .map((item) => {
         if (typeof item === "string") return item;
         if (typeof item === "object" && item !== null) {
@@ -31,16 +30,19 @@ function safeContentToString(content: any): string {
         return String(item);
       })
       .join("");
+  } else if (typeof content === "object" && content !== null) {
+    rawString = content.content || content.html || content.text || content.value || content.url || "";
+  } else {
+    rawString = String(content);
   }
 
-  if (typeof content === "object" && content !== null) {
-    return content.content || content.html || content.text || content.value || content.url || "";
-  }
-
-  return String(content);
+  return rawString;
 }
 
 export default function ArticleContent({ content }: { content: any }) {
   const safeHtml = safeContentToString(content);
+
+  if (!safeHtml) return null;
+
   return <TweetRenderer htmlContent={safeHtml} />;
 }

@@ -32,16 +32,24 @@ class SafeTweetBoundary extends Component<
   }
 }
 
-// FUNGSI PEMBERSIH KARAKTER ANEH & POTONGAN TAG BROKEN
+// FUNGSI PEMBERSIH KARAKTER & SANITASI URL MEDIA
 function sanitizeContent(html: string): string {
   if (!html) return "";
 
-  return html
+  let clean = html
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, "")
     .replace(/class="w-full h-full border-0 rounded-xl"[^>]*>/gi, "")
     .replace(/%3Cdiv%3E/gi, "")
     .replace(/%3Cdiv/gi, "")
     .replace(/div%3E%3Cdiv/gi, "");
+
+  // Fix URL Gambar ganda atau http yang terblokir Mixed Content
+  clean = clean.replace(
+    /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/gi,
+    "$1"
+  );
+
+  return clean;
 }
 
 export default function TweetRenderer({ htmlContent }: { htmlContent: string }) {
@@ -55,8 +63,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
 
   const cleaned = sanitizeContent(htmlContent);
 
-  // SAAT SERVER-SIDE RENDERING ATAU ARTIKEL POLOS:
-  // Gunakan Fragment (<></>) agar <style> TIDAK berada di dalam div yang punya dangerouslySetInnerHTML
+  // SAAT SSR ATAU ARTIKEL TANPA EMBED TWEET:
   if (!isMounted || !/(?:x|twitter)\.com\/[^\/]+\/status\/\d+/i.test(cleaned)) {
     return (
       <>
@@ -76,12 +83,30 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
             line-height: 1.2 !important;
             margin-top: 1.5em !important;
             margin-bottom: 0.5em !important;
+            text-align: left !important;
           }
 
           .rich-text-content p {
-            line-height: 1.25 !important;
+            line-height: 1.7 !important;
             text-align: justify !important;
-            margin-bottom: 1em !important;
+            margin-bottom: 1.25em !important;
+          }
+
+          .rich-text-content img {
+            max-width: 100% !important;
+            height: auto !important;
+            display: block !important;
+            margin: 1.5rem auto !important;
+            border-radius: 0.75rem !important;
+          }
+
+          .rich-text-content iframe {
+            width: 100% !important;
+            aspect-ratio: 16/9;
+            border-radius: 0.75rem;
+            margin: 1.5rem 0 !important;
+            border: 0 !important;
+            display: block !important;
           }
 
           .react-tweet-theme {
@@ -96,7 +121,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
     );
   }
 
-  // Jika artikel MEMILIKI Tweet
+  // JIKA ARTIKEL MEMILIKI EMBED TWEET
   const marker = "___TWEET_BLOCK_";
   const markerEnd = "___";
 
@@ -108,10 +133,6 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
     /<p[^>]*>\s*(?:<a[^>]*>)?\s*https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*(?:<\/a>)?\s*<\/p>/gi,
     `${marker}$1${markerEnd}`
   );
-  parsed = parsed.replace(
-    /(?:<a[^>]*>)?https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*(?:<\/a>)?/gi,
-    (match, tweetId) => (tweetId ? `${marker}${tweetId}${markerEnd}` : match)
-  );
 
   const regexSplit = new RegExp(`${marker}(\\d+)${markerEnd}`, "g");
   const parts: (string | { tweetId: string })[] = [];
@@ -120,16 +141,17 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
 
   while ((match = regexSplit.exec(parsed)) !== null) {
     if (match.index > lastIndex) {
-      const textChunk = parsed.substring(lastIndex, match.index).trim();
-      if (textChunk) parts.push(textChunk);
+      const textChunk = parsed.substring(lastIndex, match.index);
+      // PENTING: Jangan gunakan .trim() agar tag <img> atau <iframe> YouTube tanpa teks tidak terbuang
+      if (textChunk && textChunk.length > 0) parts.push(textChunk);
     }
     parts.push({ tweetId: match[1] });
     lastIndex = regexSplit.lastIndex;
   }
 
   if (lastIndex < parsed.length) {
-    const remainingChunk = parsed.substring(lastIndex).trim();
-    if (remainingChunk) parts.push(remainingChunk);
+    const remainingChunk = parsed.substring(lastIndex);
+    if (remainingChunk && remainingChunk.length > 0) parts.push(remainingChunk);
   }
 
   return (
@@ -138,7 +160,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
         {parts.map((item, index) => {
           if (typeof item === "object" && item.tweetId) {
             return (
-              <div key={`tweet-${index}`} className="flex justify-center w-full my-0 py-0 not-prose">
+              <div key={`tweet-${index}`} className="flex justify-center w-full my-6 py-0 not-prose">
                 <div className="w-full max-w-lg">
                   <SafeTweetBoundary>
                     <Tweet id={item.tweetId} />
@@ -168,12 +190,30 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           line-height: 1.2 !important;
           margin-top: 1.5em !important;
           margin-bottom: 0.5em !important;
+          text-align: left !important;
         }
 
         .rich-text-content p {
-          line-height: 1.25 !important;
+          line-height: 1.7 !important;
           text-align: justify !important;
-          margin-bottom: 1em !important;
+          margin-bottom: 1.25em !important;
+        }
+
+        .rich-text-content img {
+          max-width: 100% !important;
+          height: auto !important;
+          display: block !important;
+          margin: 1.5rem auto !important;
+          border-radius: 0.75rem !important;
+        }
+
+        .rich-text-content iframe {
+          width: 100% !important;
+          aspect-ratio: 16/9;
+          border-radius: 0.75rem;
+          margin: 1.5rem 0 !important;
+          border: 0 !important;
+          display: block !important;
         }
 
         .react-tweet-theme {
