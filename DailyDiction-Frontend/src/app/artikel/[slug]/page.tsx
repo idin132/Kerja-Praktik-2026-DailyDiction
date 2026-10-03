@@ -128,34 +128,82 @@ function parseContentMedia(content: any): string {
     stringContent = String(content || "");
   }
 
-  let cleanContent = stringContent.replace(
-    /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
-    "",
+  if (!stringContent) return "";
+
+  // 1. PERBAIKI URL GAMBAR DALAM KONTEN (TERMASUK BASE64 & HTTP/HTTPS)
+  let processedContent = stringContent.replace(
+    /<img\s+([^>]*?)src=["']([^"']+)["']([^>]*?)>/gi,
+    (match, prefix, src, suffix) => {
+      let cleanSrc = src.trim();
+
+      if (cleanSrc.startsWith("data:image")) {
+        return `<img ${prefix}src="${cleanSrc}" ${suffix}>`;
+      }
+
+      if (cleanSrc.startsWith("http://")) {
+        cleanSrc = cleanSrc.replace("http://", "https://");
+      }
+
+      if (!cleanSrc.startsWith("https://")) {
+        cleanSrc = cleanSrc.replace(/^\/+/, "");
+        if (!cleanSrc.startsWith("storage/")) {
+          cleanSrc = `storage/${cleanSrc}`;
+        }
+        cleanSrc = `https://dailydiction.id/${cleanSrc}`;
+      } else if (cleanSrc.includes("dailydiction.id/storage/http")) {
+        cleanSrc = cleanSrc.replace(
+          /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
+          "$1",
+        );
+      }
+
+      return `<img ${prefix}src="${cleanSrc}" ${suffix}>`;
+    },
   );
 
-  return cleanContent.replace(
+  // 2. CONVERT TAG <oembed> CKEDITOR / YOUTUBE EMBED
+  processedContent = processedContent.replace(
     /<oembed\s+[^>]*?url=["']([^"']+)["'][^>]*?>\s*<\/oembed>/gi,
     (match, url) => {
       if (!url) return match;
+
       if (url.includes("twitter.com") || url.includes("x.com")) {
         return match;
       }
 
       let embedUrl = url;
 
-      if (url.includes("youtube.com") || url.includes("youtu.be")) {
-        const regExp =
-          /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        const matches = url.match(regExp);
+      const ytRegExp =
+        /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const matchYt = url.match(ytRegExp);
 
-        if (matches && matches[2].length === 11) {
-          embedUrl = `https://www.youtube.com/embed/${matches[2]}`;
-        }
+      if (matchYt && matchYt[2] && matchYt[2].length === 11) {
+        embedUrl = `https://www.youtube.com/embed/${matchYt[2]}`;
+        return `<div class="aspect-video w-full my-6 overflow-hidden rounded-xl bg-black/50 shadow-xl"><iframe src="${embedUrl}" class="w-full h-full border-0 rounded-xl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
       }
 
-      return `<div class="aspect-video w-full my-6 overflow-hidden rounded-xl"><iframe src="${embedUrl}" class="w-full h-full border-0 rounded-xl" allowfullscreen></iframe></div>`;
+      return match;
     },
   );
+
+  // 3. CONVERT PARAGRAF LINK YOUTUBE POLOS MENJADI IFRAME
+  processedContent = processedContent.replace(
+    /<p>\s*(https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\/[^\s<]+)\s*<\/p>/gi,
+    (match, url) => {
+      const ytRegExp =
+        /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const matchYt = url.match(ytRegExp);
+
+      if (matchYt && matchYt[2] && matchYt[2].length === 11) {
+        const embedUrl = `https://www.youtube.com/embed/${matchYt[2]}`;
+        return `<div class="aspect-video w-full my-6 overflow-hidden rounded-xl bg-black/50 shadow-xl"><iframe src="${embedUrl}" class="w-full h-full border-0 rounded-xl" allowfullscreen></iframe></div>`;
+      }
+
+      return match;
+    },
+  );
+
+  return processedContent;
 }
 
 function getCategoriesArray(article: ArticleDetail): string[] {
@@ -379,7 +427,7 @@ export default async function DetailArtikel({
               </div>
             </div>
 
-            {/* SIDEBAR STICKY DENGAN EFEK NYAMAN */}
+            {/* SIDEBAR STICKY */}
             <aside className="lg:col-span-4 w-full self-start lg:sticky lg:top-24 space-y-6">
               <ShareWidget title={safeStringify(article.title)} />
 
@@ -500,13 +548,15 @@ export default async function DetailArtikel({
             text-align: center !important;
           }
 
-          .rich-text-content img {
+          .rich-text-content img,
+          .rich-text-content figure img {
             max-width: 100% !important;
             height: auto !important;
             border-radius: 0.75rem !important;
-            margin: 0 auto !important;
+            margin: 1.5rem auto !important;
             display: block !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
           }
 
           .rich-text-content figure.image img {
