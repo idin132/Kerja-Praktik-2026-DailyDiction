@@ -132,7 +132,11 @@ function parseContentMedia(content: any): string {
 
   let processedContent = stringContent;
 
-  // 1. DUKUNGAN UNTUK URL GAMBAR LOKAL & HTTPS
+  // 1. BUANG TAG GAMBAR KOSONG DARI CKEDITOR (<img> TANPA SRC) YANG BIKIN REACT STUCK/CRASH
+  processedContent = processedContent.replace(/<figure[^>]*>\s*<img\s*\/?>\s*<\/figure>/gi, "");
+  processedContent = processedContent.replace(/<img(?![^>]*src=)[^>]*>/gi, "");
+
+  // 2. DUKUNGAN UNTUK URL GAMBAR LOKAL & HTTPS
   processedContent = processedContent.replace(
     /<img\s+([^>]*?)src=["']([^"']+)["']([^>]*?)>/gi,
     (match, prefix, src, suffix) => {
@@ -163,7 +167,7 @@ function parseContentMedia(content: any): string {
     },
   );
 
-  // 2. CONVERT TAG OEMBED YOUTUBE CKEDITOR KE IFRAME
+  // 3. CONVERT TAG OEMBED YOUTUBE CKEDITOR KE IFRAME
   processedContent = processedContent.replace(
     /<oembed\s+[^>]*?url=["']([^"']+)["'][^>]*?>\s*<\/oembed>/gi,
     (match, url) => {
