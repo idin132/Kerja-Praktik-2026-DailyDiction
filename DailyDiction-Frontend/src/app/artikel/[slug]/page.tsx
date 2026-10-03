@@ -130,8 +130,10 @@ function parseContentMedia(content: any): string {
 
   if (!stringContent) return "";
 
-  // 1. PERBAIKI URL GAMBAR DALAM KONTEN (TERMASUK BASE64 & HTTP/HTTPS)
-  let processedContent = stringContent.replace(
+  let processedContent = stringContent;
+
+  // 1. DUKUNGAN UNTUK URL GAMBAR LOKAL & HTTPS
+  processedContent = processedContent.replace(
     /<img\s+([^>]*?)src=["']([^"']+)["']([^>]*?)>/gi,
     (match, prefix, src, suffix) => {
       let cleanSrc = src.trim();
@@ -161,7 +163,7 @@ function parseContentMedia(content: any): string {
     },
   );
 
-  // 2. CONVERT TAG <oembed> CKEDITOR / YOUTUBE EMBED
+  // 2. CONVERT TAG OEMBED YOUTUBE TANPA MERUSAK STRUKTUR FIGURE PARENT
   processedContent = processedContent.replace(
     /<oembed\s+[^>]*?url=["']([^"']+)["'][^>]*?>\s*<\/oembed>/gi,
     (match, url) => {
@@ -171,32 +173,13 @@ function parseContentMedia(content: any): string {
         return match;
       }
 
-      let embedUrl = url;
-
-      const ytRegExp =
-        /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-      const matchYt = url.match(ytRegExp);
-
-      if (matchYt && matchYt[2] && matchYt[2].length === 11) {
-        embedUrl = `https://www.youtube.com/embed/${matchYt[2]}`;
-        return `<div class="aspect-video w-full my-6 overflow-hidden rounded-xl bg-black/50 shadow-xl"><iframe src="${embedUrl}" class="w-full h-full border-0 rounded-xl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
-      }
-
-      return match;
-    },
-  );
-
-  // 3. CONVERT PARAGRAF LINK YOUTUBE POLOS MENJADI IFRAME
-  processedContent = processedContent.replace(
-    /<p>\s*(https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\/[^\s<]+)\s*<\/p>/gi,
-    (match, url) => {
       const ytRegExp =
         /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|\&v=)([^#\&\?]*).*/;
       const matchYt = url.match(ytRegExp);
 
       if (matchYt && matchYt[2] && matchYt[2].length === 11) {
         const embedUrl = `https://www.youtube.com/embed/${matchYt[2]}`;
-        return `<div class="aspect-video w-full my-6 overflow-hidden rounded-xl bg-black/50 shadow-xl"><iframe src="${embedUrl}" class="w-full h-full border-0 rounded-xl" allowfullscreen></iframe></div>`;
+        return `<div class="aspect-video w-full my-6 overflow-hidden rounded-xl bg-black/50 shadow-xl"><iframe src="${embedUrl}" class="w-full h-full border-0 rounded-xl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
       }
 
       return match;
@@ -536,16 +519,12 @@ export default async function DetailArtikel({
           .rich-text-content p[style*="text-align: right"] { text-align: right !important; }
           .rich-text-content p[style*="text-align: justify"] { text-align: justify !important; }
 
-          .rich-text-content figure.image,
-          .rich-text-content p:has(img) {
+          .rich-text-content figure {
+            margin: 2rem 0 !important;
+            width: 100% !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
-            justify-content: center !important;
-            width: 100% !important;
-            margin-top: 2rem !important;
-            margin-bottom: 2rem !important;
-            text-align: center !important;
           }
 
           .rich-text-content img,

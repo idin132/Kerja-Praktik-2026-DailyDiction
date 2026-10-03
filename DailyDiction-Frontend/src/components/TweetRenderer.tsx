@@ -32,7 +32,6 @@ class SafeTweetBoundary extends Component<
   }
 }
 
-// FUNGSI PEMBERSIH KARAKTER & SANITASI URL MEDIA
 function sanitizeContent(html: string): string {
   if (!html) return "";
 
@@ -43,7 +42,6 @@ function sanitizeContent(html: string): string {
     .replace(/%3Cdiv/gi, "")
     .replace(/div%3E%3Cdiv/gi, "");
 
-  // Fix URL Gambar ganda atau http yang terblokir Mixed Content
   clean = clean.replace(
     /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/gi,
     "$1"
@@ -63,12 +61,14 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
 
   const cleaned = sanitizeContent(htmlContent);
 
-  // SAAT SSR ATAU ARTIKEL TANPA EMBED TWEET:
-  if (!isMounted || !/(?:x|twitter)\.com\/[^\/]+\/status\/\d+/i.test(cleaned)) {
+  // Jika tidak mengandung link Tweet/X, render HTML secara langsung utuh 100%
+  const hasTweet = /(?:x|twitter)\.com\/[^\/]+\/status\/\d+/i.test(cleaned);
+
+  if (!isMounted || !hasTweet) {
     return (
       <>
         <div
-          className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8"
+          className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary leading-relaxed mb-8"
           dangerouslySetInnerHTML={{ __html: cleaned }}
         />
         <style jsx global>{`
@@ -80,9 +80,9 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           .rich-text-content h6 {
             color: #FFD700;
             font-weight: 900 !important;
-            line-height: 1.2 !important;
-            margin-top: 1.5em !important;
-            margin-bottom: 0.5em !important;
+            line-height: 1.25 !important;
+            margin-top: 1.75em !important;
+            margin-bottom: 0.75em !important;
             text-align: left !important;
           }
 
@@ -92,12 +92,29 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
             margin-bottom: 1.25em !important;
           }
 
+          .rich-text-content figure {
+            margin: 2rem 0 !important;
+            width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+          }
+
           .rich-text-content img {
             max-width: 100% !important;
             height: auto !important;
             display: block !important;
             margin: 1.5rem auto !important;
             border-radius: 0.75rem !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          }
+
+          .rich-text-content figcaption {
+            margin-top: 0.5rem !important;
+            font-size: 0.875rem !important;
+            color: #9ca3af !important;
+            text-align: center !important;
+            font-style: italic !important;
           }
 
           .rich-text-content iframe {
@@ -108,29 +125,17 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
             border: 0 !important;
             display: block !important;
           }
-
-          .react-tweet-theme {
-            margin: 0 !important;
-            --tweet-container-margin: 0 !important;
-          }
-          [class*="react-tweet-container"] {
-            margin: 0 !important;
-          }
         `}</style>
       </>
     );
   }
 
-  // JIKA ARTIKEL MEMILIKI EMBED TWEET
+  // JIKA Terdapat Tweet
   const marker = "___TWEET_BLOCK_";
   const markerEnd = "___";
 
   let parsed = cleaned.replace(
     /<figure[^>]*>\s*<oembed[^>]*url=["']https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>\s*<\/oembed>\s*<\/figure>/gi,
-    `${marker}$1${markerEnd}`
-  );
-  parsed = parsed.replace(
-    /<p[^>]*>\s*(?:<a[^>]*>)?\s*https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*(?:<\/a>)?\s*<\/p>/gi,
     `${marker}$1${markerEnd}`
   );
 
@@ -142,8 +147,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
   while ((match = regexSplit.exec(parsed)) !== null) {
     if (match.index > lastIndex) {
       const textChunk = parsed.substring(lastIndex, match.index);
-      // PENTING: Jangan gunakan .trim() agar tag <img> atau <iframe> YouTube tanpa teks tidak terbuang
-      if (textChunk && textChunk.length > 0) parts.push(textChunk);
+      if (textChunk) parts.push(textChunk);
     }
     parts.push({ tweetId: match[1] });
     lastIndex = regexSplit.lastIndex;
@@ -151,12 +155,12 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
 
   if (lastIndex < parsed.length) {
     const remainingChunk = parsed.substring(lastIndex);
-    if (remainingChunk && remainingChunk.length > 0) parts.push(remainingChunk);
+    if (remainingChunk) parts.push(remainingChunk);
   }
 
   return (
     <>
-      <div className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8">
+      <div className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary leading-relaxed mb-8">
         {parts.map((item, index) => {
           if (typeof item === "object" && item.tweetId) {
             return (
@@ -187,9 +191,9 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
         .rich-text-content h6 {
           color: #FFD700;
           font-weight: 900 !important;
-          line-height: 1.2 !important;
-          margin-top: 1.5em !important;
-          margin-bottom: 0.5em !important;
+          line-height: 1.25 !important;
+          margin-top: 1.75em !important;
+          margin-bottom: 0.75em !important;
           text-align: left !important;
         }
 
@@ -199,12 +203,29 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           margin-bottom: 1.25em !important;
         }
 
+        .rich-text-content figure {
+          margin: 2rem 0 !important;
+          width: 100% !important;
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+        }
+
         .rich-text-content img {
           max-width: 100% !important;
           height: auto !important;
           display: block !important;
           margin: 1.5rem auto !important;
           border-radius: 0.75rem !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .rich-text-content figcaption {
+          margin-top: 0.5rem !important;
+          font-size: 0.875rem !important;
+          color: #9ca3af !important;
+          text-align: center !important;
+          font-style: italic !important;
         }
 
         .rich-text-content iframe {
@@ -214,14 +235,6 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           margin: 1.5rem 0 !important;
           border: 0 !important;
           display: block !important;
-        }
-
-        .react-tweet-theme {
-          margin: 0 !important;
-          --tweet-container-margin: 0 !important;
-        }
-        [class*="react-tweet-container"] {
-          margin: 0 !important;
         }
       `}</style>
     </>
