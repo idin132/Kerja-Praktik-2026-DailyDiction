@@ -165,7 +165,7 @@ function parseContentMedia(content: any): string {
     },
   );
 
-  // 2. CONVERT TAG OEMBED YOUTUBE TANPA MERUSAK STRUKTUR FIGURE PARENT
+  // 2. CONVERT TAG OEMBED YOUTUBE CKEDITOR KE IFRAME
   processedContent = processedContent.replace(
     /<oembed\s+[^>]*?url=["']([^"']+)["'][^>]*?>\s*<\/oembed>/gi,
     (match, url) => {

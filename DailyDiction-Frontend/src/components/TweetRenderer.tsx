@@ -42,7 +42,7 @@ function sanitizeContent(html: string): string {
     .replace(/%3Cdiv/gi, "")
     .replace(/div%3E%3Cdiv/gi, "");
 
-  // Memperbaiki URL gambar berlipat dari storage Laravel
+  // Fix URL Gambar ganda dari storage Laravel
   clean = clean.replace(
     /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/gi,
     "$1"
@@ -65,7 +65,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
   // Cek apakah benar-benar ada link Tweet/X status ID di dalam artikel
   const hasTweet = /(?:x|twitter)\.com\/[^\/]+\/status\/\d+/i.test(cleaned);
 
-  // JIKA TIDAK ADA TWEET: Render HTML utuh 100% tanpa dipotong-potong Regex
+  // JIKA TIDAK ADA TWEET: Render HTML utuh 100% tanpa dipotong-potong Regex!
   if (!isMounted || !hasTweet) {
     return (
       <>
@@ -135,7 +135,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
     );
   }
 
-  // JIKA TERDAPAT EMBED TWEET: Gunakan penanda terisolasi hanya pada tag oembed x.com / twitter.com
+  // JIKA TERDAPAT EMBED TWEET
   const marker = "___TWEET_BLOCK_";
   const markerEnd = "___";
 
