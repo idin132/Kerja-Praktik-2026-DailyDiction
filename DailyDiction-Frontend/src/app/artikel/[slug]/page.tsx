@@ -69,9 +69,6 @@ function safeStringify(val: any, fallback: string = ""): string {
   return fallback;
 }
 
-/**
- * Helper universal penanganan gambar Frontend
- */
 function formatImageUrl(
   item: any,
   fallback: string = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1600",
@@ -131,33 +128,69 @@ function parseContentMedia(content: any): string {
     stringContent = String(content || "");
   }
 
-  let cleanContent = stringContent.replace(
-    /class="w-full h-full border-0 rounded-xl"[^>]*>/gi,
-    "",
+  if (!stringContent) return "";
+
+  let processedContent = stringContent;
+
+  // 1. BUANG TAG GAMBAR KOSONG DARI CKEDITOR (<img> TANPA SRC) YANG BIKIN REACT STUCK/CRASH
+  processedContent = processedContent.replace(/<figure[^>]*>\s*<img\s*\/?>\s*<\/figure>/gi, "");
+  processedContent = processedContent.replace(/<img(?![^>]*src=)[^>]*>/gi, "");
+
+  // 2. DUKUNGAN UNTUK URL GAMBAR LOKAL & HTTPS
+  processedContent = processedContent.replace(
+    /<img\s+([^>]*?)src=["']([^"']+)["']([^>]*?)>/gi,
+    (match, prefix, src, suffix) => {
+      let cleanSrc = src.trim();
+
+      if (cleanSrc.startsWith("data:image")) {
+        return `<img ${prefix}src="${cleanSrc}" ${suffix}>`;
+      }
+
+      if (cleanSrc.startsWith("http://")) {
+        cleanSrc = cleanSrc.replace("http://", "https://");
+      }
+
+      if (!cleanSrc.startsWith("https://")) {
+        cleanSrc = cleanSrc.replace(/^\/+/, "");
+        if (!cleanSrc.startsWith("storage/")) {
+          cleanSrc = `storage/${cleanSrc}`;
+        }
+        cleanSrc = `https://dailydiction.id/${cleanSrc}`;
+      } else if (cleanSrc.includes("dailydiction.id/storage/http")) {
+        cleanSrc = cleanSrc.replace(
+          /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
+          "$1",
+        );
+      }
+
+      return `<img ${prefix}src="${cleanSrc}" ${suffix}>`;
+    },
   );
 
-  return cleanContent.replace(
-    /<oembed\s+url=["']([^"']+)["']\s*><\/oembed>/gi,
+  // 3. CONVERT TAG OEMBED YOUTUBE CKEDITOR KE IFRAME
+  processedContent = processedContent.replace(
+    /<oembed\s+[^>]*?url=["']([^"']+)["'][^>]*?>\s*<\/oembed>/gi,
     (match, url) => {
+      if (!url) return match;
+
       if (url.includes("twitter.com") || url.includes("x.com")) {
         return match;
       }
 
-      let embedUrl = url;
+      const ytRegExp =
+        /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const matchYt = url.match(ytRegExp);
 
-      if (url.includes("youtube.com") || url.includes("youtu.be")) {
-        const regExp =
-          /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        const matches = url.match(regExp);
-
-        if (matches && matches[2].length === 11) {
-          embedUrl = `https://www.youtube.com/embed/${matches[2]}`;
-        }
+      if (matchYt && matchYt[2] && matchYt[2].length === 11) {
+        const embedUrl = `https://www.youtube.com/embed/${matchYt[2]}`;
+        return `<div class="aspect-video w-full my-6 overflow-hidden rounded-xl bg-black/50 shadow-xl"><iframe src="${embedUrl}" class="w-full h-full border-0 rounded-xl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
       }
 
-      return `<div class="aspect-video w-full my-6 overflow-hidden rounded-xl"><iframe src="${embedUrl}" class="w-full h-full border-0 rounded-xl" allowfullscreen></iframe></div>`;
+      return match;
     },
   );
+
+  return processedContent;
 }
 
 function getCategoriesArray(article: ArticleDetail): string[] {
@@ -381,80 +414,180 @@ export default async function DetailArtikel({
               </div>
             </div>
 
-            <aside className="lg:col-span-4 w-full">
-              <div className="lg:sticky lg:top-24 space-y-6">
-                <ShareWidget title={safeStringify(article.title)} />
+            {/* SIDEBAR STICKY */}
+            <aside className="lg:col-span-4 w-full self-start lg:sticky lg:top-24 space-y-6">
+              <ShareWidget title={safeStringify(article.title)} />
 
-                <div>
-                  {sidebarAd ? (
-                    <a
-                      href={safeStringify(sidebarAd.url_link, "#")}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="relative block w-full max-w-[320px] mx-auto overflow-hidden rounded-xl group border border-dark-border/30 shadow-xl"
-                    >
-                      <img
-                        src={formatImageUrl(sidebarAd.banner_image, "")}
-                        alt={safeStringify(sidebarAd.title, "Ad")}
-                        className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <span className="absolute top-2 right-3 text-[9px] font-black tracking-widest text-white bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded">
-                        AD
-                      </span>
-                    </a>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden aspect-[3/4] w-full max-w-[320px] mx-auto">
-                      <span className="absolute top-2 right-3 text-[9px] text-text-muted/50 font-mono border border-text-muted/20 px-1 rounded">
-                        Ad
-                      </span>
-                      <span className="text-xs font-mono text-text-muted">
-                        Space Iklan Dinamis
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="w-full max-w-[320px] mx-auto">
-                  <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="w-10 h-10 fill-indigo-400 mx-auto mb-3 animate-bounce"
-                      aria-hidden="true"
-                    >
-                      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515c-.213.385-.444.905-.608 1.315a18.27 18.27 0 0 0-5.648 0c-.164-.41-.4-.93-.615-1.315A19.736 19.736 0 0 0 3.67 4.37C.533 9.046-.319 13.608.106 18.11a19.98 19.98 0 0 0 6.002 3.03c.49-.67.924-1.38 1.293-2.13-.71-.27-1.39-.61-2.04-1.01.17-.125.337-.255.5-.39 3.93 1.84 8.18 1.84 12.06 0 .164.135.33.265.5.39-.65.4-1.33.74-2.04 1.01.37.75.8 1.46 1.29 2.13a19.98 19.98 0 0 0 6.006-3.03c.5-5.22-.85-9.74-3.36-13.74ZM8.02 15.33c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Zm7.96 0c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Z" />
-                    </svg>
-
-                    <h3 className="text-base font-mono font-black text-white uppercase tracking-wide">
-                      TEMPAT NONGKRONG GAMER
-                    </h3>
-
-                    <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
-                      Join server Discord Daily Diction buat mabar, berbagi info
-                      gacha, pamer spek PC, atau sekadar gibahin industri pop
-                      culture!
-                    </p>
-
-                    <a
-                      href="https://discord.com/invite/DG6Nebkex9"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex w-full items-center justify-center gap-2 bg-white text-black font-mono font-bold text-xs uppercase py-3 px-4 rounded-xl hover:bg-white/90 transition-all shadow-lg relative z-10"
-                    >
-                      <Send className="h-3.5 w-3.5 fill-current" />
-                      <span>Masuk Server (Gratis)</span>
-                    </a>
+              <div>
+                {sidebarAd ? (
+                  <a
+                    href={safeStringify(sidebarAd.url_link, "#")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative block w-full max-w-[320px] mx-auto overflow-hidden rounded-xl group border border-dark-border/30 shadow-xl"
+                  >
+                    <img
+                      src={formatImageUrl(sidebarAd.banner_image, "")}
+                      alt={safeStringify(sidebarAd.title, "Ad")}
+                      className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <span className="absolute top-2 right-3 text-[9px] font-black tracking-widest text-white bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded">
+                      AD
+                    </span>
+                  </a>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden aspect-[3/4] w-full max-w-[320px] mx-auto">
+                    <span className="absolute top-2 right-3 text-[9px] text-text-muted/50 font-mono border border-text-muted/20 px-1 rounded">
+                      Ad
+                    </span>
+                    <span className="text-xs font-mono text-text-muted">
+                      Space Iklan Dinamis
+                    </span>
                   </div>
-                </div>
-
-                <TrendingSection />
-                <LatestNewsSection />
+                )}
               </div>
+
+              <div className="w-full max-w-[320px] mx-auto">
+                <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-[#121526] to-dark-card p-6 text-center shadow-xl">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="w-10 h-10 fill-indigo-400 mx-auto mb-3 animate-bounce"
+                    aria-hidden="true"
+                  >
+                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515c-.213.385-.444.905-.608 1.315a18.27 18.27 0 0 0-5.648 0c-.164-.41-.4-.93-.615-1.315A19.736 19.736 0 0 0 3.67 4.37C.533 9.046-.319 13.608.106 18.11a19.98 19.98 0 0 0 6.002 3.03c.49-.67.924-1.38 1.293-2.13-.71-.27-1.39-.61-2.04-1.01.17-.125.337-.255.5-.39 3.93 1.84 8.18 1.84 12.06 0 .164.135.33.265.5.39-.65.4-1.33.74-2.04 1.01.37.75.8 1.46 1.29 2.13a19.98 19.98 0 0 0 6.006-3.03c.5-5.22-.85-9.74-3.36-13.74ZM8.02 15.33c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Zm7.96 0c-1.18 0-2.15-1.08-2.15-2.4 0-1.32.95-2.4 2.15-2.4 1.21 0 2.17 1.08 2.15 2.4 0 1.32-.95 2.4-2.15 2.4Z" />
+                  </svg>
+
+                  <h3 className="text-base font-mono font-black text-white uppercase tracking-wide">
+                    TEMPAT NONGKRONG GAMER
+                  </h3>
+
+                  <p className="text-text-muted text-xs mt-2 mb-5 leading-relaxed">
+                    Join server Discord Daily Diction buat mabar, berbagi info
+                    gacha, pamer spek PC, atau sekadar gibahin industri pop
+                    culture!
+                  </p>
+
+                  <a
+                    href="https://discord.com/invite/DG6Nebkex9"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex w-full items-center justify-center gap-2 bg-white text-black font-mono font-bold text-xs uppercase py-3 px-4 rounded-xl hover:bg-white/90 transition-all shadow-lg relative z-10"
+                  >
+                    <Send className="h-3.5 w-3.5 fill-current" />
+                    <span>Masuk Server (Gratis)</span>
+                  </a>
+                </div>
+              </div>
+
+              <TrendingSection />
+              <LatestNewsSection />
             </aside>
           </div>
         </div>
       </main>
 
       <Footer />
+
+      {/* STYLE CSS GLOBAL UNTUK CONTENT ARTIKEL */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+          .rich-text-content {
+            font-size: 1.125rem;
+            line-height: 1.7;
+            color: #d1d5db;
+          }
+
+          .rich-text-content p {
+            margin-bottom: 1.25em;
+            line-height: 1.7;
+            text-align: justify !important;
+          }
+
+          .rich-text-content h1,
+          .rich-text-content h2,
+          .rich-text-content h3,
+          .rich-text-content h4,
+          .rich-text-content h5,
+          .rich-text-content h6 {
+            color: #FFD700;
+            font-weight: 900 !important;
+            margin-top: 1.75em !important;
+            margin-bottom: 0.75em !important;
+            line-height: 1.25 !important;
+            text-align: left !important;
+          }
+
+          .rich-text-content p[style*="text-align: left"] { text-align: left !important; }
+          .rich-text-content p[style*="text-align: center"] { text-align: center !important; }
+          .rich-text-content p[style*="text-align: right"] { text-align: right !important; }
+          .rich-text-content p[style*="text-align: justify"] { text-align: justify !important; }
+
+          .rich-text-content figure {
+            margin: 2rem 0 !important;
+            width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+          }
+
+          .rich-text-content img,
+          .rich-text-content figure img {
+            max-width: 100% !important;
+            height: auto !important;
+            border-radius: 0.75rem !important;
+            margin: 1.5rem auto !important;
+            display: block !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+          }
+
+          .rich-text-content figure.image img {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+          }
+
+          .rich-text-content figcaption,
+          .rich-text-content .image-caption {
+            margin-top: 0.75rem !important;
+            font-size: 0.875rem !important;
+            line-height: 1.4 !important;
+            color: #9ca3af !important;
+            text-align: center !important;
+            font-style: italic !important;
+            width: 100% !important;
+            max-width: 90% !important;
+          }
+
+          .rich-text-content a {
+            color: #FFD700;
+            text-decoration: none;
+          }
+          .rich-text-content a:hover { text-decoration: underline; }
+          .rich-text-content strong { color: white; }
+          
+          .rich-text-content figure.media {
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+            margin-top: 2rem !important;
+            margin-bottom: 2rem !important;
+          }
+
+          .rich-text-content iframe {
+            width: 100% !important;
+            aspect-ratio: 16/9;
+            border-radius: 0.75rem;
+            margin-top: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            border: 0 !important;
+            display: block !important;
+          }
+        `,
+        }}
+      />
     </div>
   );
 }
