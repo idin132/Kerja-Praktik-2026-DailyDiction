@@ -92,7 +92,7 @@ class ArticleController extends Controller
                 ->where('slug', $slug)
                 ->where(function ($q) {
                     $q->where('type', 'review')
-                      ->orWhere('type', 'reviews');
+                        ->orWhere('type', 'reviews');
                 })
                 ->first();
 
@@ -215,19 +215,18 @@ class ArticleController extends Controller
     public function trending()
     {
         try {
-            $startOfWeek = now()->startOfWeek();
-            $endOfWeek   = now()->endOfWeek();
-
             $articles = $this->publishedQuery()
-                ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                ->where('created_at', '>=', now()->subDays(7))  // konten max 7 hari dari sekarang
                 ->orderBy('views', 'desc')
                 ->limit(5)
                 ->get();
 
             if ($articles->isEmpty()) {
-                $articles = Article::orderBy('created_at', 'desc')->limit(5)->get();
+                $articles = $this->publishedQuery()
+                    ->orderBy('views', 'desc')
+                    ->limit(5)
+                    ->get();
             }
-
             return response()->json(['status' => 'success', 'data' => $articles]);
         } catch (Throwable $e) {
             return response()->json(['error' => $e->getMessage()], 500);

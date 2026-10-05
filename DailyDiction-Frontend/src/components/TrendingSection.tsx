@@ -32,12 +32,7 @@ export default function TrendingSection() {
       headers: { Accept: "application/json" },
     })
       .then((res) => (res.ok ? res.json() : { data: [] }))
-      .then((json) => {
-        const data = Array.isArray(json.data) ? json.data : [];
-        setArticles(
-          data.sort((a: any, b: any) => (b.views ?? 0) - (a.views ?? 0)),
-        );
-      })
+      .then((json) => setArticles(Array.isArray(json.data) ? json.data : []))
       .catch(() => setArticles([]))
       .finally(() => setIsLoading(false));
   }, []);
