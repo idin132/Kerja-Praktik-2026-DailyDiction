@@ -328,15 +328,15 @@ class ArticleResource extends Resource
                             </span>
                         ")->implode('');
 
-                                        $authorName = is_string($record->author) ? $record->author : ($record->author['name'] ?? 'Redaksi');
-                                        $createdAt = $record->created_at ? \Carbon\Carbon::parse($record->created_at)->translatedFormat('d F Y') : '-';
-                                        $summary = e($record->summary ?? '');
-                                        $title = e($record->title ?? '');
-                                        $readTime = e($record->read_time ?? '1 MIN READ');
-                                        $content = $record->content ?? '';
+                        $authorName = is_string($record->author) ? $record->author : ($record->author['name'] ?? 'Redaksi');
+                        $createdAt = $record->created_at ? \Carbon\Carbon::parse($record->created_at)->translatedFormat('d F Y') : '-';
+                        $summary = e($record->summary ?? '');
+                        $title = e($record->title ?? '');
+                        $readTime = e($record->read_time ?? '1 MIN READ');
+                        $content = $record->content ?? '';
 
-                                        $isUnpublished = !$record->is_published;
-                                        $previewBanner = $isUnpublished ? "
+                        $isUnpublished = !$record->is_published;
+                        $previewBanner = $isUnpublished ? "
                             <div style='background:#FFD700; color:black; text-align:center; padding:8px; font-size:11px; font-weight:900; letter-spacing:2px; text-transform:uppercase;'>
                                 ⚠ PREVIEW MODE — Konten ini belum dipublish
                             </div>
