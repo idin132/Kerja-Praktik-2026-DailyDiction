@@ -38,7 +38,7 @@ export default function HolidayRushPage() {
     },
     {
       name: "32 Kartu Efek",
-      file: "/image/holiday-rush/Kartu_efek.jpg",
+      file: "/image/holiday-rush/Kartu_Efek.jpg",
       type: "cards",
       desc: "Kartu sabotase, jebakan, dan event gokil tak terduga.",
     },
