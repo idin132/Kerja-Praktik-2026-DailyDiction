@@ -32,16 +32,23 @@ class SafeTweetBoundary extends Component<
   }
 }
 
-// FUNGSI PEMBERSIH KARAKTER ANEH & POTONGAN TAG BROKEN
 function sanitizeContent(html: string): string {
   if (!html) return "";
 
-  return html
+  let clean = html
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, "")
     .replace(/class="w-full h-full border-0 rounded-xl"[^>]*>/gi, "")
     .replace(/%3Cdiv%3E/gi, "")
     .replace(/%3Cdiv/gi, "")
     .replace(/div%3E%3Cdiv/gi, "");
+
+  // Fix URL Gambar ganda dari storage Laravel
+  clean = clean.replace(
+    /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/gi,
+    "$1"
+  );
+
+  return clean;
 }
 
 export default function TweetRenderer({ htmlContent }: { htmlContent: string }) {
@@ -55,13 +62,15 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
 
   const cleaned = sanitizeContent(htmlContent);
 
-  // SAAT SERVER-SIDE RENDERING ATAU ARTIKEL POLOS:
-  // Gunakan Fragment (<></>) agar <style> TIDAK berada di dalam div yang punya dangerouslySetInnerHTML
-  if (!isMounted || !/(?:x|twitter)\.com\/[^\/]+\/status\/\d+/i.test(cleaned)) {
+  // Cek apakah benar-benar ada link Tweet/X status ID di dalam artikel
+  const hasTweet = /(?:x|twitter)\.com\/[^\/]+\/status\/\d+/i.test(cleaned);
+
+  // JIKA TIDAK ADA TWEET: Render HTML utuh 100% tanpa dipotong-potong Regex!
+  if (!isMounted || !hasTweet) {
     return (
       <>
         <div
-          className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8"
+          className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary leading-relaxed mb-8"
           dangerouslySetInnerHTML={{ __html: cleaned }}
         />
         <style jsx global>{`
@@ -71,46 +80,68 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
           .rich-text-content h4,
           .rich-text-content h5,
           .rich-text-content h6 {
-            color: #FFD700;
+            color: #FFD700 !important;
             font-weight: 900 !important;
-            line-height: 1.2 !important;
-            margin-top: 1.5em !important;
-            margin-bottom: 0.5em !important;
+            line-height: 1.3 !important;
+            margin-top: 2em !important;
+            margin-bottom: 0.75em !important;
+            text-align: left !important;
+            display: block !important;
           }
 
           .rich-text-content p {
-            line-height: 1.25 !important;
+            line-height: 1.75 !important;
             text-align: justify !important;
-            margin-bottom: 1em !important;
+            margin-bottom: 1.25em !important;
           }
 
-          .react-tweet-theme {
-            margin: 0 !important;
-            --tweet-container-margin: 0 !important;
+          .rich-text-content figure {
+            margin: 2rem 0 !important;
+            width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
           }
-          [class*="react-tweet-container"] {
-            margin: 0 !important;
+
+          .rich-text-content img,
+          .rich-text-content figure img {
+            max-width: 100% !important;
+            height: auto !important;
+            display: block !important;
+            margin: 1.5rem auto !important;
+            border-radius: 0.75rem !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+          }
+
+          .rich-text-content figcaption {
+            margin-top: 0.5rem !important;
+            font-size: 0.875rem !important;
+            color: #9ca3af !important;
+            text-align: center !important;
+            font-style: italic !important;
+          }
+
+          .rich-text-content iframe {
+            width: 100% !important;
+            aspect-ratio: 16/9;
+            border-radius: 0.75rem;
+            margin: 2rem 0 !important;
+            border: 0 !important;
+            display: block !important;
           }
         `}</style>
       </>
     );
   }
 
-  // Jika artikel MEMILIKI Tweet
+  // JIKA TERDAPAT EMBED TWEET
   const marker = "___TWEET_BLOCK_";
   const markerEnd = "___";
 
   let parsed = cleaned.replace(
     /<figure[^>]*>\s*<oembed[^>]*url=["']https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>\s*<\/oembed>\s*<\/figure>/gi,
     `${marker}$1${markerEnd}`
-  );
-  parsed = parsed.replace(
-    /<p[^>]*>\s*(?:<a[^>]*>)?\s*https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*(?:<\/a>)?\s*<\/p>/gi,
-    `${marker}$1${markerEnd}`
-  );
-  parsed = parsed.replace(
-    /(?:<a[^>]*>)?https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^\s<]*(?:<\/a>)?/gi,
-    (match, tweetId) => (tweetId ? `${marker}${tweetId}${markerEnd}` : match)
   );
 
   const regexSplit = new RegExp(`${marker}(\\d+)${markerEnd}`, "g");
@@ -120,7 +151,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
 
   while ((match = regexSplit.exec(parsed)) !== null) {
     if (match.index > lastIndex) {
-      const textChunk = parsed.substring(lastIndex, match.index).trim();
+      const textChunk = parsed.substring(lastIndex, match.index);
       if (textChunk) parts.push(textChunk);
     }
     parts.push({ tweetId: match[1] });
@@ -128,17 +159,17 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
   }
 
   if (lastIndex < parsed.length) {
-    const remainingChunk = parsed.substring(lastIndex).trim();
+    const remainingChunk = parsed.substring(lastIndex);
     if (remainingChunk) parts.push(remainingChunk);
   }
 
   return (
     <>
-      <div className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary text-justify leading-relaxed mb-8">
+      <div className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary leading-relaxed mb-8">
         {parts.map((item, index) => {
           if (typeof item === "object" && item.tweetId) {
             return (
-              <div key={`tweet-${index}`} className="flex justify-center w-full my-0 py-0 not-prose">
+              <div key={`tweet-${index}`} className="flex justify-center w-full my-6 py-0 not-prose">
                 <div className="w-full max-w-lg">
                   <SafeTweetBoundary>
                     <Tweet id={item.tweetId} />
@@ -163,25 +194,55 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
         .rich-text-content h4,
         .rich-text-content h5,
         .rich-text-content h6 {
-          color: #FFD700;
+          color: #FFD700 !important;
           font-weight: 900 !important;
-          line-height: 1.2 !important;
-          margin-top: 1.5em !important;
-          margin-bottom: 0.5em !important;
+          line-height: 1.3 !important;
+          margin-top: 2em !important;
+          margin-bottom: 0.75em !important;
+          text-align: left !important;
+          display: block !important;
         }
 
         .rich-text-content p {
-          line-height: 1.25 !important;
+          line-height: 1.75 !important;
           text-align: justify !important;
-          margin-bottom: 1em !important;
+          margin-bottom: 1.25em !important;
         }
 
-        .react-tweet-theme {
-          margin: 0 !important;
-          --tweet-container-margin: 0 !important;
+        .rich-text-content figure {
+          margin: 2rem 0 !important;
+          width: 100% !important;
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
         }
-        [class*="react-tweet-container"] {
-          margin: 0 !important;
+
+        .rich-text-content img,
+        .rich-text-content figure img {
+          max-width: 100% !important;
+          height: auto !important;
+          display: block !important;
+          margin: 1.5rem auto !important;
+          border-radius: 0.75rem !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .rich-text-content figcaption {
+          margin-top: 0.5rem !important;
+          font-size: 0.875rem !important;
+          color: #9ca3af !important;
+          text-align: center !important;
+          font-style: italic !important;
+        }
+
+        .rich-text-content iframe {
+          width: 100% !important;
+          aspect-ratio: 16/9;
+          border-radius: 0.75rem;
+          margin: 2rem 0 !important;
+          border: 0 !important;
+          display: block !important;
         }
       `}</style>
     </>

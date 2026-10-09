@@ -155,7 +155,7 @@ export default async function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black overflow-x-hidden">
+    <div className="min-h-screen bg-dark-bg text-text-primary selection:bg-[#FFD700] selection:text-black">
       <Navbar />
       <HeroSection />
 
@@ -293,8 +293,8 @@ export default async function Home() {
             <YoutubeShorts videos={shortsList} />
           </div>
 
-          {/* KOLOM KANAN (SIDEBAR) */}
-          <aside className="xl:col-span-4 2xl:col-span-3 space-y-8 w-full">
+          {/* KOLOM KANAN (SIDEBAR STICKY) */}
+          <aside className="xl:col-span-4 2xl:col-span-3 space-y-8 w-full self-start xl:sticky xl:top-24">
             <div className="w-full flex justify-center">
               <div className="w-full max-w-[330px] aspect-[4/3] rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group flex items-center justify-center">
                 <AdCarousel
@@ -314,6 +314,17 @@ export default async function Home() {
       </main>
 
       <Footer />
+
+      {/* SCROLLBAR NATIVE STANDAR BROWSER */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+          html {
+            overflow-y: scroll;
+          }
+        `,
+        }}
+      />
     </div>
   );
 }

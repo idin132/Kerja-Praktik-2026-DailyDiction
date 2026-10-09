@@ -35,16 +35,14 @@ export default function YoutubeHero({ videos = [] }: { videos?: any[] }) {
     currentChunk.push(heroVideos[(startChunk + i) % heroVideos.length]);
   }
 
-  const mainVideo = currentChunk[activeLocalIndex];
-  const sideVideos = currentChunk
-    .filter((_, i) => i !== activeLocalIndex)
-    .slice(0, 4);
+  const mainVideo = currentChunk[activeLocalIndex] || currentChunk[0];
+  const sideVideos = currentChunk.filter((_, i) => i !== activeLocalIndex).slice(0, 4);
 
   const getThumbnail = (snippet: any) => {
     return (
-      snippet.thumbnails?.maxres?.url ||
-      snippet.thumbnails?.high?.url ||
-      snippet.thumbnails?.medium?.url ||
+      snippet?.thumbnails?.maxres?.url ||
+      snippet?.thumbnails?.high?.url ||
+      snippet?.thumbnails?.medium?.url ||
       ""
     );
   };

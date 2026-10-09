@@ -33,7 +33,12 @@ export default function YoutubeShorts({ videos = [] }: { videos?: any[] }) {
   };
 
   const getThumbnail = (snippet: any) => {
-    return snippet.thumbnails?.maxres?.url || snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || "";
+    return (
+      snippet.thumbnails?.maxres?.url ||
+      snippet.thumbnails?.high?.url ||
+      snippet.thumbnails?.medium?.url ||
+      ""
+    );
   };
 
   return (
@@ -64,11 +69,10 @@ export default function YoutubeShorts({ videos = [] }: { videos?: any[] }) {
           </button>
         )}
 
-        {/* Container Scroll */}
-        <div 
+        {/* Container Scroll dengan Scrollbar Aktif */}
+        <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 custom-horizontal-scrollbar"
         >
           {shortsLimit.map((short: any) => (
             <div
@@ -84,7 +88,7 @@ export default function YoutubeShorts({ videos = [] }: { videos?: any[] }) {
                   className="w-full h-full border-0"
                 />
               ) : (
-                <div 
+                <div
                   className="w-full h-full cursor-pointer"
                   onClick={() => setPlayingId(short.id)}
                 >
@@ -94,13 +98,13 @@ export default function YoutubeShorts({ videos = [] }: { videos?: any[] }) {
                     className="h-full w-full object-cover transition-transform duration-700 group-hover/short:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                  
+
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover/short:opacity-100">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFD700] text-black backdrop-blur-sm shadow-[0_0_20px_rgba(255,215,0,0.5)]">
                       <Play className="h-5 w-5 ml-1 fill-black" />
                     </div>
                   </div>
-                  
+
                   <div className="absolute bottom-0 left-0 p-4 w-full">
                     <h3 className="text-sm font-bold text-white line-clamp-3 leading-snug group-hover/short:text-[#FFD700] transition-colors">
                       {short.snippet.title}
@@ -120,10 +124,26 @@ export default function YoutubeShorts({ videos = [] }: { videos?: any[] }) {
             <ChevronRight className="h-6 w-6" />
           </button>
         )}
-        
-        <style jsx global>{`
-          ::-webkit-scrollbar {
-            display: none;
+
+        <style jsx>{`
+          .custom-horizontal-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            display: block;
+          }
+          .custom-horizontal-scrollbar::-webkit-scrollbar-track {
+            background: #121526;
+            border-radius: 9999px;
+          }
+          .custom-horizontal-scrollbar::-webkit-scrollbar-thumb {
+            background: #2a2f45;
+            border-radius: 9999px;
+          }
+          .custom-horizontal-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #ffd700;
+          }
+          .custom-horizontal-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #2a2f45 #121526;
           }
         `}</style>
       </div>

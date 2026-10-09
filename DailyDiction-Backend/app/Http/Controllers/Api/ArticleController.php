@@ -85,6 +85,62 @@ class ArticleController extends Controller
         }
     }
 
+    public function showReview($slug)
+    {
+        try {
+            $review = $this->publishedQuery()
+                ->where('slug', $slug)
+                ->where(function ($q) {
+                    $q->where('type', 'review')
+                        ->orWhere('type', 'reviews');
+                })
+                ->first();
+
+            if (!$review) {
+                $review = $this->publishedQuery()->where('slug', $slug)->first();
+            }
+
+            if (!$review) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Review tidak ditemukan'
+                ], 404);
+            }
+
+            $prevReview = $this->publishedQuery()
+                ->where('id', '<', $review->id)
+                ->whereIn('type', ['review', 'reviews'])
+                ->orderBy('id', 'desc')
+                ->first(['id', 'slug', 'title', 'image_url', 'image_path', 'type']);
+
+            $nextReview = $this->publishedQuery()
+                ->where('id', '>', $review->id)
+                ->whereIn('type', ['review', 'reviews'])
+                ->orderBy('id', 'asc')
+                ->first(['id', 'slug', 'title', 'image_url', 'image_path', 'type']);
+
+            $reviewData = $review->toArray();
+            $reviewData['prev'] = $prevReview ? [
+                'slug' => $prevReview->slug,
+                'title' => $prevReview->title,
+                'thumbnail' => $prevReview->image_url ?? $prevReview->image_path ?? null,
+            ] : null;
+
+            $reviewData['next'] = $nextReview ? [
+                'slug' => $nextReview->slug,
+                'title' => $nextReview->title,
+                'thumbnail' => $nextReview->image_url ?? $nextReview->image_path ?? null,
+            ] : null;
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $reviewData
+            ]);
+        } catch (Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function preview($slug)
     {
         try {
@@ -159,20 +215,18 @@ class ArticleController extends Controller
     public function trending()
     {
         try {
-            $startOfWeek = now()->startOfWeek(); // Senin 00:00
-            $endOfWeek   = now()->endOfWeek();   // Minggu 23:59
-
             $articles = $this->publishedQuery()
-                ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                ->where('created_at', '>=', now()->subDays(7))  // konten max 7 hari dari sekarang
                 ->orderBy('views', 'desc')
                 ->limit(5)
                 ->get();
 
-            // Fallback kalau minggu ini belum ada artikel
             if ($articles->isEmpty()) {
-                $articles = Article::orderBy('created_at', 'desc')->limit(5)->get();
+                $articles = $this->publishedQuery()
+                    ->orderBy('views', 'desc')
+                    ->limit(5)
+                    ->get();
             }
-
             return response()->json(['status' => 'success', 'data' => $articles]);
         } catch (Throwable $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -286,7 +340,7 @@ class ArticleController extends Controller
         try {
             $limit = $request->get('limit', 12);
             $reviews = $this->publishedQuery()
-                ->where('type', 'review')
+                ->whereIn('type', ['review', 'reviews'])
                 ->orderBy('created_at', 'desc')
                 ->paginate($limit);
 
