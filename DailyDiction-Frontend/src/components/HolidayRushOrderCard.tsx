@@ -83,11 +83,7 @@ export default function HolidayRushOrderCard() {
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-[#FFD700] shrink-0" />
-                <span>6 Karakter Unik + Kartu</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-[#FFD700] shrink-0" />
-                <span>Bonus Sticker Pack</span>
+                <span>5 Karakter Unik + Kartu</span>
               </div>
             </div>
 

@@ -20,12 +20,9 @@ export default function HolidayRushPage() {
     "all" | "board" | "cards" | "components"
   >("all");
 
-  // LINK GFORM DISAMAKAN UNTUK TOMBOL PRE-ORDER
-  const GFORM_LINK = "https://forms.gle/your-google-form-link-here"; // Sesuaikan dengan URL Google Form kamu
+  const GFORM_LINK = "https://docs.google.com/forms/d/e/1FAIpQLSdRaSZ6_7-4nh03nrY-WA8L3BlJfauJhkl4UisXLwhOYZKXRQ/viewform";
 
-  // DATA ASET KOMPONEN BOARDGAME
   const allAssets = [
-    // --- Board & Guide ---
     {
       name: "1 Map Board",
       file: "/image/holiday-rush/Map_Board.jpg",
@@ -38,8 +35,6 @@ export default function HolidayRushPage() {
       type: "board",
       desc: "Panduan lengkap aturan main, mekanisme, dan cara menang.",
     },
-
-    // --- Cards ---
     {
       name: "32 Kartu Efek",
       file: "/image/holiday-rush/Disasarin_Setan.png",
@@ -52,8 +47,6 @@ export default function HolidayRushPage() {
       type: "cards",
       desc: "Kartu penentu pergerakan & kecepatan pion di atas board.",
     },
-
-    // --- Components ---
     {
       name: "5 Pion Karakter",
       file: "/image/holiday-rush/Gamers_Ganteng.png",
@@ -79,7 +72,6 @@ export default function HolidayRushPage() {
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-b from-[#00D2FF]/20 via-[#0C1527] to-[#0C1527] pt-12 pb-20 px-4 sm:px-6 lg:px-8">
-        {/* Decorative Assets Melayang */}
         <img
           src="/image/holiday-rush/Pohon.png"
           alt="Pohon"
@@ -128,7 +120,6 @@ export default function HolidayRushPage() {
                 antar teman dalam boardgame liburan paling gokil di Indonesia.
               </p>
 
-              {/* Game Specs Badge */}
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 font-mono text-xs pt-2">
                 <div className="flex items-center gap-2 bg-[#17233B] border border-white/10 px-4 py-2.5 rounded-xl">
                   <Users className="h-4 w-4 text-[#00D2FF]" />
@@ -144,7 +135,6 @@ export default function HolidayRushPage() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
                 <a
                   href={GFORM_LINK}
@@ -170,29 +160,17 @@ export default function HolidayRushPage() {
               <div className="relative w-full max-w-md">
                 <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-[#00D2FF] via-[#FFD700] to-[#FF3E3E] opacity-40 blur-xl animate-pulse" />
                 <div className="relative rounded-2xl border border-white/15 bg-[#142035] p-6 text-center shadow-2xl space-y-4">
-                  {/* GAMBAR ANIMASI BOX BOARDGAME */}
                   <img
                     src="/image/holiday-rush/board-game.png"
                     alt="Holiday Rush Boardgame Box"
                     className="w-full h-56 object-contain hover:scale-105 transition-transform duration-500 mx-auto drop-shadow-2xl"
                   />
 
-                  <div className="flex items-center justify-center gap-3 pt-2 border-t border-white/10">
-                    <img
-                      src="/image/holiday-rush/BALI_Sign.png"
-                      alt="BALI Sign"
-                      className="h-8 w-auto object-contain"
-                    />
-                    <img
-                      src="/image/holiday-rush/Surfboard_2.png"
-                      alt="Surfboard Rockstar"
-                      className="h-10 w-auto object-contain"
-                    />
+                  <div className="pt-2 border-t border-white/10">
+                    <span className="text-xs font-mono text-[#FFD700] uppercase font-bold tracking-wider block">
+                      READY STOCK
+                    </span>
                   </div>
-
-                  <span className="text-xs font-mono text-[#FFD700] uppercase font-bold tracking-wider block">
-                    READY STOCK
-                  </span>
                 </div>
               </div>
             </div>
@@ -239,7 +217,6 @@ export default function HolidayRushPage() {
           </p>
         </div>
 
-        {/* Filter Tabs */}
         <div className="flex justify-center flex-wrap gap-2 sm:gap-4 mb-10 font-mono text-xs font-bold uppercase">
           <button
             onClick={() => setActiveTab("all")}
@@ -283,7 +260,6 @@ export default function HolidayRushPage() {
           </button>
         </div>
 
-        {/* Grid Display Aset */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-6">
           {filteredAssets.map((item, idx) => (
             <div
@@ -316,7 +292,6 @@ export default function HolidayRushPage() {
       {/* FAQ SECTION */}
       <HolidayRushFaq />
 
-      {/* Card Pemesanan Pre-Order Google Form */}
       <HolidayRushOrderCard />
 
       <Footer />
