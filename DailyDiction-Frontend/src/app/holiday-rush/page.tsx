@@ -28,7 +28,7 @@ export default function HolidayRushPage() {
     // --- Board & Guide ---
     {
       name: "1 Map Board",
-      file: "/image/holiday-rush/Map_Board.png",
+      file: "/image/holiday-rush/Map_Board.jpg",
       type: "board",
       desc: "Papan permainan interaktif jalur liburan Jawa - Bali.",
     },
@@ -202,36 +202,16 @@ export default function HolidayRushPage() {
 
       {/* Destinasi Map Showcase */}
       <section className="py-12 bg-[#09101E] border-y border-white/10">
-        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          <div className="flex items-center gap-6 rounded-2xl border border-white/10 bg-[#142035] p-6">
+        <div className="max-w-7xl mx-auto px-4 flex justify-center items-center">
+          <div className="flex items-center gap-6 rounded-2xl border border-white/10 bg-[#142035] p-6 max-w-xl w-full">
             <img
-              src="/image/holiday-rush/Stupa.png"
-              alt="Borobudur"
-              className="h-20 w-auto object-contain"
-            />
-            <div>
-              <div className="flex items-center gap-1 text-[#FFD700] font-mono text-xs font-bold uppercase mb-1">
-                <MapPin className="h-3.5 w-3.5" /> DESTINASI 1
-              </div>
-              <h3 className="text-lg font-mono font-bold text-white uppercase">
-                Candi Borobudur
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">
-                Jalur darat penuh kelok, cegatan jalan rusak, dan pamer
-                kecepatan.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-6 rounded-2xl border border-white/10 bg-[#142035] p-6">
-            <img
-              src="/image/holiday-rush/Stupa_Gate_Bali.png"
-              alt="Bali Gate"
-              className="h-20 w-auto object-contain"
+              src="/image/holiday-rush/BALI_Sign.png"
+              alt="Bali Sign"
+              className="h-16 w-auto object-contain"
             />
             <div>
               <div className="flex items-center gap-1 text-[#00D2FF] font-mono text-xs font-bold uppercase mb-1">
-                <MapPin className="h-3.5 w-3.5" /> DESTINASI 2
+                <MapPin className="h-3.5 w-3.5" /> DESTINASI
               </div>
               <h3 className="text-lg font-mono font-bold text-white uppercase">
                 Pulau Bali
