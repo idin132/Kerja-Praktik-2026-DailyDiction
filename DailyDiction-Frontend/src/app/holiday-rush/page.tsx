@@ -38,13 +38,13 @@ export default function HolidayRushPage() {
     },
     {
       name: "32 Kartu Efek",
-      file: "/image/holiday-rush/Kartu_efek.png",
+      file: "/image/holiday-rush/Kartu_efek.jpg",
       type: "cards",
       desc: "Kartu sabotase, jebakan, dan event gokil tak terduga.",
     },
     {
       name: "32 Kartu Langkah",
-      file: "/image/holiday-rush/Kartu_Langkah.png",
+      file: "/image/holiday-rush/Kartu_Langkah.jpg",
       type: "cards",
       desc: "Kartu penentu pergerakan & kecepatan pion di atas board.",
     },
@@ -156,19 +156,19 @@ export default function HolidayRushPage() {
               </div>
             </div>
 
-            {/* Box Hero Kanan */}
+            {/* Box Hero Kanan (Ukuran Gambar Diperbesar) */}
             <div className="lg:col-span-5 relative flex justify-center">
-              <div className="relative w-full max-w-md">
+              <div className="relative w-full max-w-xl">
                 <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-[#00D2FF] via-[#FFD700] to-[#FF3E3E] opacity-40 blur-xl animate-pulse" />
-                <div className="relative rounded-2xl border border-white/15 bg-[#142035] p-6 text-center shadow-2xl space-y-4">
+                <div className="relative rounded-2xl border border-white/15 bg-[#142035] p-6 sm:p-8 text-center shadow-2xl space-y-5">
                   <img
                     src="/image/holiday-rush/board-game.png"
                     alt="Holiday Rush Boardgame Box"
-                    className="w-full h-56 object-contain hover:scale-105 transition-transform duration-500 mx-auto drop-shadow-2xl"
+                    className="w-full h-72 sm:h-80 md:h-96 object-contain hover:scale-105 transition-transform duration-500 mx-auto drop-shadow-[0_20px_35px_rgba(0,0,0,0.6)]"
                   />
 
-                  <div className="pt-2 border-t border-white/10">
-                    <span className="text-xs font-mono text-[#FFD700] uppercase font-bold tracking-wider block">
+                  <div className="pt-3 border-t border-white/10">
+                    <span className="text-xs sm:text-sm font-mono text-[#FFD700] uppercase font-bold tracking-widest block">
                       READY STOCK
                     </span>
                   </div>
