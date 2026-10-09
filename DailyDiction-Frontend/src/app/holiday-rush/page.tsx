@@ -20,7 +20,7 @@ export default function HolidayRushPage() {
     "all" | "board" | "cards" | "components"
   >("all");
 
-  // LINK GFORM DISAMAKAN DENGAN UNTUK TOMBOL PRE-ORDER
+  // LINK GFORM DISAMAKAN UNTUK TOMBOL PRE-ORDER
   const GFORM_LINK = "https://forms.gle/your-google-form-link-here"; // Sesuaikan dengan URL Google Form kamu
 
   // DATA ASET KOMPONEN BOARDGAME
@@ -28,7 +28,7 @@ export default function HolidayRushPage() {
     // --- Board & Guide ---
     {
       name: "1 Map Board",
-      file: "/image/holiday-rush/Stupa_Gate_Bali.png",
+      file: "/image/holiday-rush/Map_Board.png",
       type: "board",
       desc: "Papan permainan interaktif jalur liburan Jawa - Bali.",
     },
@@ -165,16 +165,16 @@ export default function HolidayRushPage() {
               </div>
             </div>
 
-            {/* Box Hero Kanan (Gambarnya diganti jadi Box Boardgame, tetap pakai layout box original) */}
+            {/* Box Hero Kanan */}
             <div className="lg:col-span-5 relative flex justify-center">
               <div className="relative w-full max-w-md">
                 <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-[#00D2FF] via-[#FFD700] to-[#FF3E3E] opacity-40 blur-xl animate-pulse" />
                 <div className="relative rounded-2xl border border-white/15 bg-[#142035] p-6 text-center shadow-2xl space-y-4">
-                  {/* GAMBAR BOX BOARDGAME menggantikan VW VAN */}
+                  {/* GAMBAR ANIMASI BOX BOARDGAME */}
                   <img
-                    src="/image/holiday-rush/HR_Box_Art.png" // Sesuaikan dengan path file gambar box 3D kamu
+                    src="/image/holiday-rush/board-game.png"
                     alt="Holiday Rush Boardgame Box"
-                    className="w-full h-64 object-contain hover:scale-105 transition-transform duration-500 mx-auto drop-shadow-2xl"
+                    className="w-full h-56 object-contain hover:scale-105 transition-transform duration-500 mx-auto drop-shadow-2xl"
                   />
 
                   <div className="flex items-center justify-center gap-3 pt-2 border-t border-white/10">
