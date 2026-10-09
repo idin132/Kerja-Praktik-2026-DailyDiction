@@ -75,7 +75,7 @@ export default function HolidayRushOrderCard() {
             <div className="grid grid-cols-2 gap-2 font-mono text-xs text-gray-300 pt-1 max-w-md mx-auto lg:mx-0">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-[#FFD700] shrink-0" />
-                <span>Papan Map Bali & Borobudur</span>
+                <span>Papan Map Bali</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-[#FFD700] shrink-0" />
