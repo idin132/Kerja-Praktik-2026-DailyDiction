@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import HolidayRushFaq from "@/components/HolidayRushFaq";
 import HolidayRushOrderCard from "@/components/HolidayRushOrderCard";
 import {
   Sparkles,
@@ -402,6 +403,8 @@ export default function HolidayRushPage() {
           ))}
         </div>
       </section>
+      {/* FAQ SECTION (YANG SERING DITANYAIN) */}
+        <HolidayRushFaq />
 
       {/* Card Pemesanan Pre-Order Google Form */}
       <HolidayRushOrderCard />

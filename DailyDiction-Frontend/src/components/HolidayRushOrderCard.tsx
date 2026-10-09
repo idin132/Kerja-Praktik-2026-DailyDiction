@@ -115,7 +115,7 @@ export default function HolidayRushOrderCard() {
               <div className="flex flex-col items-center gap-1.5 shrink-0 bg-white/5 border border-white/10 p-3 rounded-2xl">
                 <div className="bg-white p-2 rounded-xl shadow-md border-2 border-[#00D2FF]">
                   <img
-                    src="/image/holiday-rush/qr-code.png"
+                    src="/image/holiday-rush/qr-code.jpeg"
                     alt="Scan QR Pre-Order"
                     className="w-24 h-24 sm:w-28 sm:h-28 object-contain"
                     onError={(e) => {
