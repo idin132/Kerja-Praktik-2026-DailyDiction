@@ -20,30 +20,31 @@ export default function HolidayRushPage() {
     "all" | "board" | "cards" | "components"
   >("all");
 
-  const GFORM_LINK = "https://docs.google.com/forms/d/e/1FAIpQLSdRaSZ6_7-4nh03nrY-WA8L3BlJfauJhkl4UisXLwhOYZKXRQ/viewform";
+  const GFORM_LINK =
+    "https://docs.google.com/forms/d/e/1FAIpQLSdRaSZ6_7-4nh03nrY-WA8L3BlJfauJhkl4UisXLwhOYZKXRQ/viewform";
 
   const allAssets = [
     {
       name: "1 Map Board",
-      file: "/image/holiday-rush/Map_Board.jpg",
+      file: "/image/holiday-rush/Map_Board.png",
       type: "board",
       desc: "Papan permainan interaktif jalur liburan Jawa - Bali.",
     },
     {
       name: "1 Buku Panduan",
-      file: "/image/holiday-rush/Anak_SCBD.png",
+      file: "/image/holiday-rush/Aturan_Permainan.jpg",
       type: "board",
       desc: "Panduan lengkap aturan main, mekanisme, dan cara menang.",
     },
     {
       name: "32 Kartu Efek",
-      file: "/image/holiday-rush/Disasarin_Setan.png",
+      file: "/image/holiday-rush/Kartu_efek.png",
       type: "cards",
       desc: "Kartu sabotase, jebakan, dan event gokil tak terduga.",
     },
     {
       name: "32 Kartu Langkah",
-      file: "/image/holiday-rush/Pesawats.png",
+      file: "/image/holiday-rush/Kartu_Langkah.png",
       type: "cards",
       desc: "Kartu penentu pergerakan & kecepatan pion di atas board.",
     },
@@ -55,7 +56,7 @@ export default function HolidayRushPage() {
     },
     {
       name: "7 Poin Lubang Jalan",
-      file: "/image/holiday-rush/Jalan_Rusak.png",
+      file: "/image/holiday-rush/Lubang_Jalan.png",
       type: "components",
       desc: "Token rintangan jalan rusak yang siap menghadang langkah musuh.",
     },

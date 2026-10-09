@@ -7,11 +7,11 @@ interface FaqItem {
   id: string;
   question: string;
   answer?: string;
-  items?: string[]; // Ditambahkan untuk penanganan poin-poin
+  items?: string[];
 }
 
 export default function HolidayRushFaq() {
-  const [openId, setOpenId] = useState<string | null>("01"); // Dibenerin: Default item 01 terbuka
+  const [openId, setOpenId] = useState<string | null>("01");
 
   const faqs: FaqItem[] = [
     {
@@ -118,23 +118,25 @@ export default function HolidayRushFaq() {
                     </div>
                   </button>
 
-                  {/* Isi Jawaban */}
+                  {/* Isi Jawaban ber-Frame */}
                   {isOpen && (
-                    <div className="mt-3 pl-8 sm:pl-9 pr-4 text-xs sm:text-sm text-gray-300 font-sans leading-relaxed animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="mt-3 pl-8 sm:pl-9 pr-2 animate-in fade-in slide-in-from-top-1 duration-200">
                       {faq.items ? (
-                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {faq.items.map((item, itemIdx) => (
                             <li
                               key={itemIdx}
-                              className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 font-mono text-xs text-gray-200"
+                              className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 font-mono text-xs sm:text-sm text-gray-200 shadow-inner"
                             >
-                              <span className="h-1.5 w-1.5 rounded-full bg-[#00D2FF] shrink-0" />
+                              <span className="h-2 w-2 rounded-full bg-[#00D2FF] shrink-0" />
                               <span>{item}</span>
                             </li>
                           ))}
                         </ul>
                       ) : (
-                        <p>{faq.answer}</p>
+                        <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-xs sm:text-sm text-gray-300 font-sans leading-relaxed shadow-inner">
+                          {faq.answer}
+                        </div>
                       )}
                     </div>
                   )}
