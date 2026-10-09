@@ -20,10 +20,10 @@ export default function HolidayRushPage() {
     "all" | "board" | "cards" | "components"
   >("all");
 
-  // LINK GFORM DISAMAKAN SESUAI ORDER CARD
-  const GFORM_LINK = "https://forms.gle/your-google-form-link-here"; // Sesuaikan dengan link gform kamu jika ada
+  // LINK GFORM DISAMAKAN DENGAN UNTUK TOMBOL PRE-ORDER
+  const GFORM_LINK = "https://forms.gle/your-google-form-link-here"; // Sesuaikan dengan URL Google Form kamu
 
-  // DATA ASET YANG DISESUAIKAN PERSIS DENGAN KEBUTUHAN
+  // DATA ASET KOMPONEN BOARDGAME
   const allAssets = [
     // --- Board & Guide ---
     {
@@ -103,8 +103,8 @@ export default function HolidayRushPage() {
 
         <div className="mx-auto max-w-7xl relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Teks Utama */}
-            <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
+            {/* Teks Utama Kiri */}
+            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/30 px-4 py-1.5 font-mono text-xs font-bold text-[#FFD700] uppercase">
                 <Sparkles className="h-4 w-4" />
                 <span>OFFICIAL BOARDGAME HAS ARRIVED</span>
@@ -165,9 +165,36 @@ export default function HolidayRushPage() {
               </div>
             </div>
 
-            {/* Box Order Card di Atas (Menggantikan VW Van Box) */}
-            <div className="lg:col-span-6 w-full">
-              <HolidayRushOrderCard />
+            {/* Box Hero Kanan (Gambarnya diganti jadi Box Boardgame, tetap pakai layout box original) */}
+            <div className="lg:col-span-5 relative flex justify-center">
+              <div className="relative w-full max-w-md">
+                <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-[#00D2FF] via-[#FFD700] to-[#FF3E3E] opacity-40 blur-xl animate-pulse" />
+                <div className="relative rounded-2xl border border-white/15 bg-[#142035] p-6 text-center shadow-2xl space-y-4">
+                  {/* GAMBAR BOX BOARDGAME menggantikan VW VAN */}
+                  <img
+                    src="/image/holiday-rush/HR_Box_Art.png" // Sesuaikan dengan path file gambar box 3D kamu
+                    alt="Holiday Rush Boardgame Box"
+                    className="w-full h-64 object-contain hover:scale-105 transition-transform duration-500 mx-auto drop-shadow-2xl"
+                  />
+
+                  <div className="flex items-center justify-center gap-3 pt-2 border-t border-white/10">
+                    <img
+                      src="/image/holiday-rush/BALI_Sign.png"
+                      alt="BALI Sign"
+                      className="h-8 w-auto object-contain"
+                    />
+                    <img
+                      src="/image/holiday-rush/Surfboard_2.png"
+                      alt="Surfboard Rockstar"
+                      className="h-10 w-auto object-contain"
+                    />
+                  </div>
+
+                  <span className="text-xs font-mono text-[#FFD700] uppercase font-bold tracking-wider block">
+                    READY STOCK
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -217,7 +244,7 @@ export default function HolidayRushPage() {
         </div>
       </section>
 
-      {/* Galeri Semua Aset Game (Interactive Showcase) */}
+      {/* Galeri Komponen Game */}
       <section
         id="gallery"
         className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
@@ -309,7 +336,7 @@ export default function HolidayRushPage() {
       {/* FAQ SECTION */}
       <HolidayRushFaq />
 
-      {/* Card Pemesanan Pre-Order Google Form di Bawah */}
+      {/* Card Pemesanan Pre-Order Google Form */}
       <HolidayRushOrderCard />
 
       <Footer />
