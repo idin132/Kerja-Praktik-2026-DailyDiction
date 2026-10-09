@@ -59,15 +59,15 @@ export default function HolidayRushOrderCard() {
               </h2>
 
               <div className="pt-2 flex flex-wrap items-baseline justify-center lg:justify-start gap-3">
-                <span className="font-mono text-sm sm:text-base text-text-muted line-through decoration-[#FF3E3E] decoration-2">
+                {/* <span className="font-mono text-sm sm:text-base text-text-muted line-through decoration-[#FF3E3E] decoration-2">
                   Rp 375.000
-                </span>
+                </span> */}
                 <span className="font-mono text-3xl sm:text-4xl font-black text-[#00D2FF]">
-                  Rp 325.000
+                  Rp 200.000
                 </span>
-                <span className="text-[10px] font-mono font-bold uppercase text-[#FFD700] bg-[#FFD700]/10 border border-[#FFD700]/20 px-2 py-0.5 rounded">
+                {/* <span className="text-[10px] font-mono font-bold uppercase text-[#FFD700] bg-[#FFD700]/10 border border-[#FFD700]/20 px-2 py-0.5 rounded">
                   SPECIAL PO PRICE
-                </span>
+                </span> */}
               </div>
             </div>
 

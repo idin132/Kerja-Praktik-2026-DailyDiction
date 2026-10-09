@@ -274,7 +274,7 @@ export default function HolidayRushPage() {
       {/* Destinasi Map Showcase (Borobudur & Bali Gate) */}
       <section className="py-12 bg-[#09101E] border-y border-white/10">
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          <div className="flex items-center gap-6 rounded-2xl border border-white/10 bg-[#142035] p-6">
+          {/* <div className="flex items-center gap-6 rounded-2xl border border-white/10 bg-[#142035] p-6">
             <img
               src="/image/holiday-rush/Stupa.png"
               alt="Borobudur"
@@ -292,7 +292,7 @@ export default function HolidayRushPage() {
                 kecepatan.
               </p>
             </div>
-          </div>
+          </div> */}
 
           <div className="flex items-center gap-6 rounded-2xl border border-white/10 bg-[#142035] p-6">
             <img
@@ -302,7 +302,7 @@ export default function HolidayRushPage() {
             />
             <div>
               <div className="flex items-center gap-1 text-[#00D2FF] font-mono text-xs font-bold uppercase mb-1">
-                <MapPin className="h-3.5 w-3.5" /> DESTINASI 2
+                <MapPin className="h-3.5 w-3.5" /> DESTINASI
               </div>
               <h3 className="text-lg font-mono font-bold text-white uppercase">
                 Pulau Bali
