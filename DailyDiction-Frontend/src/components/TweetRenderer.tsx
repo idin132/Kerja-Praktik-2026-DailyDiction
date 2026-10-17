@@ -42,10 +42,10 @@ function sanitizeContent(html: string): string {
     .replace(/%3Cdiv/gi, "")
     .replace(/div%3E%3Cdiv/gi, "");
 
-  // Fix URL Gambar ganda dari storage Laravel
+  // Fix URL Gambar ganda dari storage
   clean = clean.replace(
     /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/gi,
-    "$1"
+    "\$1"
   );
 
   return clean;
@@ -62,10 +62,10 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
 
   const cleaned = sanitizeContent(htmlContent);
 
-  // Cek apakah benar-benar ada link Tweet/X status ID di dalam artikel
+  // Cek apakah ada ID status Tweet/X di dalam konten
   const hasTweet = /(?:x|twitter)\.com\/[^\/]+\/status\/\d+/i.test(cleaned);
 
-  // JIKA TIDAK ADA TWEET: Render HTML utuh 100% tanpa dipotong-potong Regex!
+  // JIKA TIDAK ADA TWEET: Render HTML utuh 100%
   if (!isMounted || !hasTweet) {
     return (
       <>
@@ -139,9 +139,21 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
   const marker = "___TWEET_BLOCK_";
   const markerEnd = "___";
 
-  let parsed = cleaned.replace(
+  let parsed = cleaned;
+
+  // 1. DUKUNGAN TAG OEMBED
+  parsed = parsed.replace(
     /<figure[^>]*>\s*<oembed[^>]*url=["']https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>\s*<\/oembed>\s*<\/figure>/gi,
     `${marker}$1${markerEnd}`
+  );
+
+  // 2. DUKUNGAN LINK PLAIN TEXT ATAU ANCHOR TAG DALAM PARAGRAF <p><a href="...">https://x.com/.../status/123</a></p>
+  parsed = parsed.replace(
+    /(?:<p[^>]*>)?\s*(?:<a[^>]*href=["']https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>.*<\/a>|https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)(?:\?\S*)?)\s*(?:<\/p>)?/gi,
+    (match, id1, id2) => {
+      const tweetId = id1 || id2;
+      return `${marker}${tweetId}${markerEnd}`;
+    }
   );
 
   const regexSplit = new RegExp(`${marker}(\\d+)${markerEnd}`, "g");
