@@ -42,7 +42,6 @@ function sanitizeContent(html: string): string {
     .replace(/%3Cdiv/gi, "")
     .replace(/div%3E%3Cdiv/gi, "");
 
-  // Fix URL Gambar ganda dari storage
   clean = clean.replace(
     /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/gi,
     "\$1"
@@ -62,201 +61,102 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
 
   const cleaned = sanitizeContent(htmlContent);
 
-  // Cek apakah ada ID status Tweet/X di dalam konten
-  const hasTweet = /(?:x|twitter)\.com\/[^\/]+\/status\/\d+/i.test(cleaned);
-
-  // JIKA TIDAK ADA TWEET: Render HTML utuh 100%
-  if (!isMounted || !hasTweet) {
+  // Jika belum mounted (Server-Side Rendering / First Load Client), render HTML murni tanpa manipulasi regex
+  // Ini kunci agar TIDAK TERJADI HYDRATION ERROR di browser tertentu
+  if (!isMounted) {
     return (
-      <>
-        <div
-          className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary leading-relaxed mb-8"
-          dangerouslySetInnerHTML={{ __html: cleaned }}
-        />
-        <style jsx global>{`
-          .rich-text-content h1,
-          .rich-text-content h2,
-          .rich-text-content h3,
-          .rich-text-content h4,
-          .rich-text-content h5,
-          .rich-text-content h6 {
-            color: #FFD700 !important;
-            font-weight: 900 !important;
-            line-height: 1.3 !important;
-            margin-top: 2em !important;
-            margin-bottom: 0.75em !important;
-            text-align: left !important;
-            display: block !important;
-          }
-
-          .rich-text-content p {
-            line-height: 1.75 !important;
-            text-align: justify !important;
-            margin-bottom: 1.25em !important;
-          }
-
-          .rich-text-content figure {
-            margin: 2rem 0 !important;
-            width: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-          }
-
-          .rich-text-content img,
-          .rich-text-content figure img {
-            max-width: 100% !important;
-            height: auto !important;
-            display: block !important;
-            margin: 1.5rem auto !important;
-            border-radius: 0.75rem !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
-          }
-
-          .rich-text-content figcaption {
-            margin-top: 0.5rem !important;
-            font-size: 0.875rem !important;
-            color: #9ca3af !important;
-            text-align: center !important;
-            font-style: italic !important;
-          }
-
-          .rich-text-content iframe {
-            width: 100% !important;
-            aspect-ratio: 16/9;
-            border-radius: 0.75rem;
-            margin: 2rem 0 !important;
-            border: 0 !important;
-            display: block !important;
-          }
-        `}</style>
-      </>
+      <div
+        className="rich-text-content prose prose-invert max-w-none text-text-primary leading-relaxed mb-8"
+        dangerouslySetInnerHTML={{ __html: cleaned }}
+      />
     );
   }
 
-  // JIKA TERDAPAT EMBED TWEET
+  // Cek apakah terdapat link status Tweet/X
+  const hasTweet = /(?:x|twitter)\.com\/[^\/]+\/status\/\d+/i.test(cleaned);
+
+  if (!hasTweet) {
+    return (
+      <div
+        className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary leading-relaxed mb-8"
+        dangerouslySetInnerHTML={{ __html: cleaned }}
+      />
+    );
+  }
+
   const marker = "___TWEET_BLOCK_";
   const markerEnd = "___";
 
   let parsed = cleaned;
 
-  // 1. DUKUNGAN TAG OEMBED
+  // Replace oembed CKEditor
   parsed = parsed.replace(
     /<figure[^>]*>\s*<oembed[^>]*url=["']https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>\s*<\/oembed>\s*<\/figure>/gi,
     `${marker}$1${markerEnd}`
   );
 
-  // 2. DUKUNGAN LINK PLAIN TEXT ATAU ANCHOR TAG DALAM PARAGRAF <p><a href="...">https://x.com/.../status/123</a></p>
+  // Replace link paragraph/anchor/plain text beserta query params (?s=20)
   parsed = parsed.replace(
-    /(?:<p[^>]*>)?\s*(?:<a[^>]*href=["']https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>.*<\/a>|https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)(?:\?\S*)?)\s*(?:<\/p>)?/gi,
+    /(?:<p[^>]*>)?\s*(?:<a[^>]*href=["'][^"']*(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>.*?<\/a>|https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)(?:\?[^\s<"']*)?)\s*(?:<\/p>)?/gi,
     (match, id1, id2) => {
       const tweetId = id1 || id2;
-      return `${marker}${tweetId}${markerEnd}`;
+      return tweetId ? `${marker}${tweetId}${markerEnd}` : match;
     }
   );
 
-  const regexSplit = new RegExp(`${marker}(\\d+)${markerEnd}`, "g");
   const parts: (string | { tweetId: string })[] = [];
+  const regexSplit = new RegExp(`${marker}(\\d+)${markerEnd}`, "g");
   let lastIndex = 0;
   let match;
 
-  while ((match = regexSplit.exec(parsed)) !== null) {
-    if (match.index > lastIndex) {
-      const textChunk = parsed.substring(lastIndex, match.index);
-      if (textChunk) parts.push(textChunk);
+  try {
+    while ((match = regexSplit.exec(parsed)) !== null) {
+      if (match.index > lastIndex) {
+        const textChunk = parsed.substring(lastIndex, match.index);
+        if (textChunk) parts.push(textChunk);
+      }
+      if (match[1]) {
+        parts.push({ tweetId: match[1] });
+      }
+      lastIndex = regexSplit.lastIndex;
     }
-    parts.push({ tweetId: match[1] });
-    lastIndex = regexSplit.lastIndex;
-  }
 
-  if (lastIndex < parsed.length) {
-    const remainingChunk = parsed.substring(lastIndex);
-    if (remainingChunk) parts.push(remainingChunk);
+    if (lastIndex < parsed.length) {
+      const remainingChunk = parsed.substring(lastIndex);
+      if (remainingChunk) parts.push(remainingChunk);
+    }
+  } catch (err) {
+    console.error("Error parsing tweet split:", err);
+    return (
+      <div
+        className="rich-text-content prose prose-invert max-w-none text-text-primary leading-relaxed mb-8"
+        dangerouslySetInnerHTML={{ __html: cleaned }}
+      />
+    );
   }
 
   return (
-    <>
-      <div className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary leading-relaxed mb-8">
-        {parts.map((item, index) => {
-          if (typeof item === "object" && item.tweetId) {
-            return (
-              <div key={`tweet-${index}`} className="flex justify-center w-full my-6 py-0 not-prose">
-                <div className="w-full max-w-lg">
-                  <SafeTweetBoundary>
-                    <Tweet id={item.tweetId} />
-                  </SafeTweetBoundary>
-                </div>
-              </div>
-            );
-          }
-
+    <div className="animate-fade-up-2 rich-text-content prose prose-invert max-w-none text-text-primary leading-relaxed mb-8">
+      {parts.map((item, index) => {
+        if (typeof item === "object" && item?.tweetId) {
           return (
-            <div
-              key={`html-${index}`}
-              dangerouslySetInnerHTML={{ __html: item as string }}
-            />
+            <div key={`tweet-${index}`} className="flex justify-center w-full my-6 py-0 not-prose">
+              <div className="w-full max-w-lg">
+                <SafeTweetBoundary>
+                  <Tweet id={item.tweetId} />
+                </SafeTweetBoundary>
+              </div>
+            </div>
           );
-        })}
-      </div>
-      <style jsx global>{`
-        .rich-text-content h1,
-        .rich-text-content h2,
-        .rich-text-content h3,
-        .rich-text-content h4,
-        .rich-text-content h5,
-        .rich-text-content h6 {
-          color: #FFD700 !important;
-          font-weight: 900 !important;
-          line-height: 1.3 !important;
-          margin-top: 2em !important;
-          margin-bottom: 0.75em !important;
-          text-align: left !important;
-          display: block !important;
         }
 
-        .rich-text-content p {
-          line-height: 1.75 !important;
-          text-align: justify !important;
-          margin-bottom: 1.25em !important;
-        }
-
-        .rich-text-content figure {
-          margin: 2rem 0 !important;
-          width: 100% !important;
-          display: flex !important;
-          flex-direction: column !important;
-          align-items: center !important;
-        }
-
-        .rich-text-content img,
-        .rich-text-content figure img {
-          max-width: 100% !important;
-          height: auto !important;
-          display: block !important;
-          margin: 1.5rem auto !important;
-          border-radius: 0.75rem !important;
-          border: 1px solid rgba(255, 255, 255, 0.1) !important;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
-        }
-
-        .rich-text-content figcaption {
-          margin-top: 0.5rem !important;
-          font-size: 0.875rem !important;
-          color: #9ca3af !important;
-          text-align: center !important;
-          font-style: italic !important;
-        }
-
-        .rich-text-content iframe {
-          width: 100% !important;
-          aspect-ratio: 16/9;
-          border-radius: 0.75rem;
-          margin: 2rem 0 !important;
-          border: 0 !important;
-          display: block !important;
-        }
-      `}</style>
-    </>
+        return (
+          <div
+            key={`html-${index}`}
+            dangerouslySetInnerHTML={{ __html: String(item || "") }}
+          />
+        );
+      })}
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import TweetRenderer from "./TweetRenderer"; // Pastikan path file TweetRenderer.tsx kamu sudah benar
+import TweetRenderer from "./TweetRenderer";
 
 export default function ArticleContent({ content }: { content: string }) {
   if (!content) {
@@ -14,10 +14,8 @@ export default function ArticleContent({ content }: { content: string }) {
 
   return (
     <div className="w-full">
-      {/* RENDER KONTEN LEWAT TWEET RENDERER SUPAYA TWEET/X EMBED TERPARSE KREATIF */}
       <TweetRenderer htmlContent={content} />
 
-      {/* STYLE CSS GLOBAL BAWAAN ARTIKEL CONTENT KAMU */}
       <style jsx global>{`
         .rich-text-content {
           font-size: 1.125rem;

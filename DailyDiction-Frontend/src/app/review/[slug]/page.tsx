@@ -96,7 +96,7 @@ function formatImageUrl(
     if (clean.includes("dailydiction.id/storage/http")) {
       return clean.replace(
         /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
-        "$1",
+        "\$1",
       );
     }
     return clean;
@@ -161,7 +161,7 @@ function parseContentMedia(content: any): string {
       } else if (cleanSrc.includes("dailydiction.id/storage/http")) {
         cleanSrc = cleanSrc.replace(
           /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
-          "$1",
+          "\$1",
         );
       }
 
@@ -318,7 +318,7 @@ export default async function DetailReview({
                     {review.created_at && (
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        <span>
+                        <span suppressHydrationWarning>
                           {new Date(review.created_at).toLocaleDateString(
                             "id-ID",
                             {
@@ -501,107 +501,6 @@ export default async function DetailReview({
       </main>
 
       <Footer />
-
-      {/* STYLE CSS GLOBAL UNTUK CONTENT REVIEW */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-          .rich-text-content {
-            font-size: 1.125rem;
-            line-height: 1.7;
-            color: #d1d5db;
-          }
-
-          .rich-text-content p {
-            margin-bottom: 1.25em;
-            line-height: 1.7;
-            text-align: justify !important;
-          }
-
-          .rich-text-content h1,
-          .rich-text-content h2,
-          .rich-text-content h3,
-          .rich-text-content h4,
-          .rich-text-content h5,
-          .rich-text-content h6 {
-            color: #FFD700;
-            font-weight: 900 !important;
-            margin-top: 1.75em !important;
-            margin-bottom: 0.75em !important;
-            line-height: 1.25 !important;
-            text-align: left !important;
-          }
-
-          .rich-text-content p[style*="text-align: left"] { text-align: left !important; }
-          .rich-text-content p[style*="text-align: center"] { text-align: center !important; }
-          .rich-text-content p[style*="text-align: right"] { text-align: right !important; }
-          .rich-text-content p[style*="text-align: justify"] { text-align: justify !important; }
-
-          .rich-text-content figure {
-            margin: 2rem 0 !important;
-            width: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-          }
-
-          .rich-text-content img,
-          .rich-text-content figure img {
-            max-width: 100% !important;
-            height: auto !important;
-            border-radius: 0.75rem !important;
-            margin: 1.5rem auto !important;
-            display: block !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
-          }
-
-          .rich-text-content figure.image img {
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-          }
-
-          .rich-text-content figcaption,
-          .rich-text-content .image-caption {
-            margin-top: 0.75rem !important;
-            font-size: 0.875rem !important;
-            line-height: 1.4 !important;
-            color: #9ca3af !important;
-            text-align: center !important;
-            font-style: italic !important;
-            width: 100% !important;
-            max-width: 90% !important;
-          }
-
-          .rich-text-content a {
-            color: #FFD700;
-            text-decoration: none;
-          }
-          .rich-text-content a:hover { text-decoration: underline; }
-          .rich-text-content strong { color: white; }
-          
-          .rich-text-content figure.media {
-            width: 100% !important;
-            display: flex !important;
-            justify-content: center !important;
-            margin-top: 2rem !important;
-            margin-bottom: 2rem !important;
-          }
-
-          .rich-text-content iframe {
-            width: 100% !important;
-            aspect-ratio: 16/9;
-            border-radius: 0.75rem;
-            margin-top: 1.5rem !important;
-            margin-bottom: 1.5rem !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
-            border: 0 !important;
-            display: block !important;
-          }
-        `,
-        }}
-      />
     </div>
   );
 }
