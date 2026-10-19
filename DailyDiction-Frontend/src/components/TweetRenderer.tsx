@@ -61,8 +61,8 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
 
   const cleaned = sanitizeContent(htmlContent);
 
-  // Jika belum mounted (Server-Side Rendering / First Load Client), render HTML murni tanpa manipulasi regex
-  // Ini kunci agar TIDAK TERJADI HYDRATION ERROR di browser tertentu
+  // KUNCI UTAMA: Selama proses Server Rendering (SSR / saat di-refresh), 
+  // render HTML biasa saja tanpa parsing Tweet agar TIDAK BENTROK/HYDRATION ERROR.
   if (!isMounted) {
     return (
       <div
@@ -72,7 +72,7 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
     );
   }
 
-  // Cek apakah terdapat link status Tweet/X
+  // Setelah dimuat di browser (Client-Side), baru parse Tweet ID
   const hasTweet = /(?:x|twitter)\.com\/[^\/]+\/status\/\d+/i.test(cleaned);
 
   if (!hasTweet) {
@@ -89,13 +89,13 @@ export default function TweetRenderer({ htmlContent }: { htmlContent: string }) 
 
   let parsed = cleaned;
 
-  // Replace oembed CKEditor
+  // 1. Replace tag oembed dari CKEditor
   parsed = parsed.replace(
     /<figure[^>]*>\s*<oembed[^>]*url=["']https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>\s*<\/oembed>\s*<\/figure>/gi,
     `${marker}$1${markerEnd}`
   );
 
-  // Replace link paragraph/anchor/plain text beserta query params (?s=20)
+  // 2. Replace anchor link / plain text link Tweet
   parsed = parsed.replace(
     /(?:<p[^>]*>)?\s*(?:<a[^>]*href=["'][^"']*(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)[^"']*["'][^>]*>.*?<\/a>|https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)(?:\?[^\s<"']*)?)\s*(?:<\/p>)?/gi,
     (match, id1, id2) => {

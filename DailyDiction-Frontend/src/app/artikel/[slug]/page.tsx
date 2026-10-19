@@ -139,7 +139,7 @@ function parseContentMedia(content: any): string {
 
   let processedContent = stringContent;
 
-  // 1. BUANG TAG GAMBAR KOSONG DARI CKEDITOR (<img> TANPA SRC) YANG BIKIN REACT STUCK/CRASH
+  // 1. BUANG TAG GAMBAR KOSONG DARI CKEDITOR
   processedContent = processedContent.replace(/<figure[^>]*>\s*<img\s*\/?>\s*<\/figure>/gi, "");
   processedContent = processedContent.replace(/<img(?![^>]*src=)[^>]*>/gi, "");
 
@@ -174,7 +174,7 @@ function parseContentMedia(content: any): string {
     },
   );
 
-  // 3. CONVERT TAG OEMBED YOUTUBE CKEDITOR KE IFRAME
+  // 3. CONVERT OEMBED YOUTUBE KE IFRAME
   processedContent = processedContent.replace(
     /<oembed\s+[^>]*?url=["']([^"']+)["'][^>]*?>\s*<\/oembed>/gi,
     (match, url) => {

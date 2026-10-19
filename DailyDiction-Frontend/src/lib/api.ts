@@ -51,7 +51,7 @@ export function formatImageUrl(
     clean.includes("/storage/http://") ||
     clean.includes("/storage/https://")
   ) {
-    return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "$1");
+    return clean.replace(/^https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "\$1");
   }
 
   if (clean.startsWith("http://") || clean.startsWith("https://")) {

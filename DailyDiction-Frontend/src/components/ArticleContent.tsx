@@ -1,7 +1,19 @@
 "use client";
 
 import React from "react";
-import TweetRenderer from "./TweetRenderer";
+import dynamic from "next/dynamic";
+
+// Mematikan SSR khusus TweetRenderer agar TIDAK CRASH / HYDRATION ERROR saat di-refresh
+const TweetRenderer = dynamic(() => import("./TweetRenderer"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full my-6 p-6 rounded-xl bg-dark-card/40 border border-dark-border/40 animate-pulse flex flex-col gap-3">
+      <div className="h-4 bg-white/10 rounded w-1/3"></div>
+      <div className="h-4 bg-white/5 rounded w-full"></div>
+      <div className="h-4 bg-white/5 rounded w-2/3"></div>
+    </div>
+  ),
+});
 
 export default function ArticleContent({ content }: { content: string }) {
   if (!content) {
