@@ -75,37 +75,44 @@ function formatImageUrl(
 ): string {
   if (!item) return fallback;
 
-  const rawUrl =
-    typeof item === "string"
-      ? item
-      : item.image_full_url ||
-        item.thumbnail_url ||
-        item.image_path ||
-        item.image_url ||
-        item.thumbnail ||
-        item.image;
+  try {
+    const rawUrl =
+      typeof item === "string"
+        ? item
+        : item?.banner_image ||
+          item?.image_full_url ||
+          item?.thumbnail_url ||
+          item?.image_path ||
+          item?.image_url ||
+          item?.thumbnail ||
+          item?.image;
 
-  const cleanUrl = safeStringify(rawUrl);
-  if (!cleanUrl) return fallback;
+    if (!rawUrl) return fallback;
 
-  const clean = cleanUrl.trim();
+    const cleanUrl = safeStringify(rawUrl);
+    if (!cleanUrl) return fallback;
 
-  if (clean.startsWith("http://") || clean.startsWith("https://")) {
-    if (clean.includes("dailydiction.id/storage/http")) {
-      return clean.replace(
-        /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
-        "\$1",
-      );
+    const clean = cleanUrl.trim();
+
+    if (clean.startsWith("http://") || clean.startsWith("https://")) {
+      if (clean.includes("dailydiction.id/storage/http")) {
+        return clean.replace(
+          /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
+          "\$1",
+        );
+      }
+      return clean;
     }
-    return clean;
-  }
 
-  let cleanPath = clean.replace(/^\/+/, "");
-  if (!cleanPath.startsWith("storage/")) {
-    cleanPath = `storage/${cleanPath}`;
-  }
+    let cleanPath = clean.replace(/^\/+/, "");
+    if (!cleanPath.startsWith("storage/")) {
+      cleanPath = `storage/${cleanPath}`;
+    }
 
-  return `https://dailydiction.id/${cleanPath}`;
+    return `https://dailydiction.id/${cleanPath}`;
+  } catch (e) {
+    return fallback;
+  }
 }
 
 function parseContentMedia(content: any): string {
@@ -419,16 +426,19 @@ export default async function DetailArtikel({
               <ShareWidget title={safeStringify(article.title)} />
 
               <div>
-                {sidebarAd ? (
+                {sidebarAd && (sidebarAd.banner_image || sidebarAd.image_path) ? (
                   <a
-                    href={safeStringify(sidebarAd.url_link, "#")}
+                    href={safeStringify(sidebarAd?.url_link, "#")}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="relative block w-full max-w-[320px] mx-auto overflow-hidden rounded-xl group border border-dark-border/30 shadow-xl"
                   >
                     <img
-                      src={formatImageUrl(sidebarAd.banner_image, "")}
-                      alt={safeStringify(sidebarAd.title, "Ad")}
+                      src={formatImageUrl(
+                        sidebarAd,
+                        "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
+                      )}
+                      alt={safeStringify(sidebarAd?.title, "Ad")}
                       className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     <span className="absolute top-2 right-3 text-[9px] font-black tracking-widest text-white bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded">
