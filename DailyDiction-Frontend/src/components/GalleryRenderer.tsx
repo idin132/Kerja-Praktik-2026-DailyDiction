@@ -9,76 +9,99 @@ interface GalleryRendererProps {
 }
 
 export default function GalleryRenderer({ htmlContent }: GalleryRendererProps) {
-  const { galleryImages, finalHtml } = useMemo(() => {
-    if (!htmlContent) return { galleryImages: [], finalHtml: "" };
+  const renderedBlocks = useMemo(() => {
+    if (!htmlContent) return [];
 
-    // 1. Bersihkan sisa atribut bocor dari editor
-    let cleanHtml = htmlContent
+    // 1. Bersihkan sisa atribut bocor dari CKEditor / TipTap
+    const cleanHtml = htmlContent
       .replace(/target=["']?_blank["']?/gi, "")
       .replace(/rel=["']?noopener(?:\s+noreferrer)?["']?/gi, "")
       .replace(/["']\s*>/g, ">");
 
-    // 2. Regex untuk menangkap tag <figure><img> atau <img>
-    const imgRegex = /<figure[^>]*>\s*<img\s+[^>]*?src=["']([^"']+)["'][^>]*?>\s*(?:<figcaption[^>]*>(.*?)<\/figcaption>)?\s*<\/figure>|<img\s+[^>]*?src=["']([^"']+)["'][^>]*?>/gi;
-
-    const matches = Array.from(cleanHtml.matchAll(imgRegex));
-
-    if (matches.length === 0) {
-      return { galleryImages: [], finalHtml: cleanHtml };
+    if (typeof window === "undefined") {
+      return [<TweetRenderer key="ssr-fallback" htmlContent={cleanHtml} />];
     }
 
-    const images: GalleryImage[] = matches
-      .map((m) => ({
-        src: m[1] || m[3] || "",
-        caption: m[2] ? m[2].replace(/<[^>]+>/g, "").trim() : "",
-      }))
-      .filter((img) => img.src);
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(cleanHtml, "text/html");
+    const children = Array.from(doc.body.children);
 
-    if (images.length >= 2) {
-      // Ganti gambar PERTAMA dengan placeholder galeri
-      let isFirstReplaced = false;
-      cleanHtml = cleanHtml.replace(imgRegex, (match) => {
-        if (!isFirstReplaced) {
-          isFirstReplaced = true;
-          return `<div id="GALLERY_PLACEHOLDER"></div>`;
+    const blocks: React.ReactNode[] = [];
+    let currentGallery: GalleryImage[] = [];
+
+    const flushGallery = (keyPrefix: string) => {
+      if (currentGallery.length >= 2) {
+        // HANYA buat Galeri jika gambar berdampingan langsung >= 2
+        blocks.push(
+          <ImageGallery
+            key={`gallery-${keyPrefix}-${blocks.length}`}
+            images={[...currentGallery]}
+          />
+        );
+      } else if (currentGallery.length === 1) {
+        // Jika cuma 1 gambar (misal dipisah paragraf teks), render 1-per-1 biasa
+        const img = currentGallery[0];
+        blocks.push(
+          <div key={`single-img-${keyPrefix}-${blocks.length}`} className="my-6">
+            <img
+              src={img.src}
+              alt={img.caption || "Article Image"}
+              className="w-full h-auto rounded-xl border border-dark-border"
+            />
+            {img.caption && (
+              <p className="text-xs text-text-muted italic text-center mt-2">
+                {img.caption}
+              </p>
+            )}
+          </div>
+        );
+      }
+      currentGallery = [];
+    };
+
+    children.forEach((el, index) => {
+      const imgEl = el.tagName === "IMG" ? el : el.querySelector("img");
+      const textContent = el.textContent?.trim() || "";
+      const hasIframe = !!el.querySelector("iframe") || el.tagName === "IFRAME";
+
+      if (imgEl) {
+        // Jika ketemu gambar, kumpulkan ke grup gallery sementara
+        const src = imgEl.getAttribute("src") || "";
+        const figcaption = el.querySelector("figcaption");
+        const caption = figcaption ? figcaption.textContent || "" : "";
+
+        if (src) {
+          currentGallery.push({ src, caption });
         }
-        // Hapus gambar ke-2, ke-3, ke-4 dst agar tidak terduplikasi
-        return "";
-      });
+      } else if (textContent.length === 0 && !hasIframe) {
+        // Jika cuma elemen kosong (p kosong / br / nbsp) di antara gambar, abaikan
+        return;
+      } else {
+        // KETEMU TEKS PARAGRAF / SUBJUDUL / VIDEO YOUTUBE:
+        // Flush dulu gambar sebelum-sebelumnya (jadi galeri / foto tunggal)
+        flushGallery(`block-${index}`);
 
-      // Bersihkan paragraf/figure kosong sisa penghapusan gambar
-      cleanHtml = cleanHtml
-        .replace(/<figure[^>]*>\s*<\/figure>/gi, "")
-        .replace(/<p[^>]*>\s*(?:&nbsp;|<br\s*\/?>)?\s*<\/p>/gi, "");
-    }
+        // Render elemen teks / tweet / video YouTube ini secara utuh di posisinya!
+        blocks.push(
+          <TweetRenderer
+            key={`content-${index}`}
+            htmlContent={el.outerHTML}
+          />
+        );
+      }
+    });
 
-    return { galleryImages: images, finalHtml: cleanHtml };
+    // Flush sisa gambar di bagian paling akhir jika ada
+    flushGallery("final");
+
+    return blocks;
   }, [htmlContent]);
 
   if (!htmlContent) return null;
 
-  // Jika ada galeri foto (>= 2 gambar), split HTML tepat di placeholder agar galeri terpasang di posisi aslinya
-  if (galleryImages.length >= 2 && finalHtml.includes('<div id="GALLERY_PLACEHOLDER"></div>')) {
-    const parts = finalHtml.split('<div id="GALLERY_PLACEHOLDER"></div>');
-
-    return (
-      <div className="rich-text-content prose prose-invert max-w-none text-text-primary leading-relaxed mb-8">
-        {/* Konten sebelum galeri (Paragraf atas jika ada) */}
-        {parts[0] && <TweetRenderer htmlContent={parts[0]} />}
-
-        {/* Galeri Foto tepat di posisi aslinya */}
-        <ImageGallery images={galleryImages} />
-
-        {/* Sisa konten setelah galeri (Paragraf bawah, Tweet, & Video YouTube) */}
-        {parts[1] && <TweetRenderer htmlContent={parts[1]} />}
-      </div>
-    );
-  }
-
-  // Fallback biasa jika gambar < 2
   return (
     <div className="rich-text-content prose prose-invert max-w-none text-text-primary leading-relaxed mb-8">
-      <TweetRenderer htmlContent={finalHtml} />
+      {renderedBlocks}
     </div>
   );
 }
