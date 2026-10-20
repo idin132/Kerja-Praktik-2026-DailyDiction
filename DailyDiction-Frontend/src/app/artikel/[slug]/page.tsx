@@ -55,6 +55,16 @@ interface ArticleDetail {
   next?: NavArticleItem | null;
 }
 
+function decodeHtmlEntities(str: string): string {
+  if (!str) return "";
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
 function safeStringify(val: any, fallback: string = ""): string {
   if (val === null || val === undefined) return fallback;
   if (typeof val === "string") return val || fallback;
@@ -71,7 +81,7 @@ function safeStringify(val: any, fallback: string = ""): string {
 
 function formatImageUrl(
   item: any,
-  fallback: string = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1600",
+  fallback: string = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1600"
 ): string {
   if (!item) return fallback;
 
@@ -92,24 +102,41 @@ function formatImageUrl(
     const cleanUrl = safeStringify(rawUrl);
     if (!cleanUrl) return fallback;
 
-    const clean = cleanUrl.trim();
+    let clean = decodeHtmlEntities(cleanUrl.trim());
 
-    if (clean.startsWith("http://") || clean.startsWith("https://")) {
-      if (clean.includes("dailydiction.id/storage/http")) {
-        return clean.replace(
-          /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
-          "\$1",
-        );
+    if (clean.startsWith("data:image") || clean.startsWith("blob:")) return clean;
+
+    if (
+      clean.includes("localhost") ||
+      clean.includes("127.0.0.1") ||
+      (clean.includes("/storage/") && !clean.includes("dailydiction.id"))
+    ) {
+      const storageIdx = clean.indexOf("/storage/");
+      if (storageIdx !== -1) {
+        clean = clean.substring(storageIdx + 1);
       }
-      return clean;
     }
 
-    let cleanPath = clean.replace(/^\/+/, "");
-    if (!cleanPath.startsWith("storage/")) {
-      cleanPath = `storage/${cleanPath}`;
+    if (clean.includes("dailydiction.id/storage/http")) {
+      clean = clean.replace(
+        /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
+        "\$1"
+      );
     }
 
-    return `https://dailydiction.id/${cleanPath}`;
+    if (!clean.startsWith("http://") && !clean.startsWith("https://")) {
+      clean = clean.replace(/^\/+/, "");
+      if (!clean.startsWith("storage/")) {
+        clean = `storage/${clean}`;
+      }
+      return `https://dailydiction.id/${clean}`;
+    }
+
+    if (clean.startsWith("http://")) {
+      clean = clean.replace("http://", "https://");
+    }
+
+    return clean;
   } catch (e) {
     return fallback;
   }
@@ -125,7 +152,7 @@ function parseContentMedia(content: any): string {
       .map((b: any) =>
         typeof b === "string"
           ? b
-          : b?.content || b?.html || b?.text || b?.value || "",
+          : b?.content || b?.html || b?.text || b?.value || ""
       )
       .join("");
   } else if (typeof content === "object" && content !== null) {
@@ -139,39 +166,53 @@ function parseContentMedia(content: any): string {
 
   let processedContent = stringContent;
 
-  // 1. BUANG TAG GAMBAR KOSONG DARI CKEDITOR
-  processedContent = processedContent.replace(/<figure[^>]*>\s*<img\s*\/?>\s*<\/figure>/gi, "");
+  // 1. BUANG TAG GAMBAR KOSONG DARI CKEDITOR (<img> TANPA SRC)
+  processedContent = processedContent.replace(
+    /<figure[^>]*>\s*<img\s*\/?>\s*<\/figure>/gi,
+    ""
+  );
   processedContent = processedContent.replace(/<img(?![^>]*src=)[^>]*>/gi, "");
 
-  // 2. DUKUNGAN UNTUK URL GAMBAR LOKAL & HTTPS
+  // 2. DUKUNGAN UNTUK URL GAMBAR LOKAL & HTTPS (DECODE ENTITIES & CLEAN LOCALHOST)
   processedContent = processedContent.replace(
-    /<img\s+([^>]*?)src=["']([^"']+)["']([^>]*?)>/gi,
+    /<img\s+([^>]*?)\bsrc=["']([^"']+)["']([^>]*?)>/gi,
     (match, prefix, src, suffix) => {
-      let cleanSrc = src.trim();
+      let cleanSrc = decodeHtmlEntities(src.trim());
 
-      if (cleanSrc.startsWith("data:image")) {
+      if (cleanSrc.startsWith("data:image") || cleanSrc.startsWith("blob:")) {
         return `<img ${prefix}src="${cleanSrc}" ${suffix}>`;
       }
 
-      if (cleanSrc.startsWith("http://")) {
-        cleanSrc = cleanSrc.replace("http://", "https://");
+      if (
+        cleanSrc.includes("localhost") ||
+        cleanSrc.includes("127.0.0.1") ||
+        (cleanSrc.includes("/storage/") && !cleanSrc.includes("dailydiction.id"))
+      ) {
+        const storageIdx = cleanSrc.indexOf("/storage/");
+        if (storageIdx !== -1) {
+          cleanSrc = cleanSrc.substring(storageIdx + 1);
+        }
       }
 
-      if (!cleanSrc.startsWith("https://")) {
+      if (cleanSrc.includes("dailydiction.id/storage/http")) {
+        cleanSrc = cleanSrc.replace(
+          /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
+          "\$1"
+        );
+      }
+
+      if (!cleanSrc.startsWith("http://") && !cleanSrc.startsWith("https://")) {
         cleanSrc = cleanSrc.replace(/^\/+/, "");
         if (!cleanSrc.startsWith("storage/")) {
           cleanSrc = `storage/${cleanSrc}`;
         }
         cleanSrc = `https://dailydiction.id/${cleanSrc}`;
-      } else if (cleanSrc.includes("dailydiction.id/storage/http")) {
-        cleanSrc = cleanSrc.replace(
-          /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
-          "\$1",
-        );
+      } else if (cleanSrc.startsWith("http://")) {
+        cleanSrc = cleanSrc.replace("http://", "https://");
       }
 
       return `<img ${prefix}src="${cleanSrc}" ${suffix}>`;
-    },
+    }
   );
 
   // 3. CONVERT OEMBED YOUTUBE KE IFRAME
@@ -194,7 +235,7 @@ function parseContentMedia(content: any): string {
       }
 
       return match;
-    },
+    }
   );
 
   return processedContent;
@@ -277,7 +318,7 @@ export default async function DetailArtikel({
 
   const articleBannerImage = formatImageUrl(
     article,
-    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1600",
+    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1600"
   );
 
   return (
@@ -322,7 +363,7 @@ export default async function DetailArtikel({
                               day: "numeric",
                               month: "long",
                               year: "numeric",
-                            },
+                            }
                           )}
                         </span>
                       </div>
@@ -379,7 +420,7 @@ export default async function DetailArtikel({
                       <img
                         src={formatImageUrl(
                           prevArticle,
-                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
+                          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
                         )}
                         alt={safeStringify(prevArticle.title)}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -399,7 +440,7 @@ export default async function DetailArtikel({
                       <img
                         src={formatImageUrl(
                           nextArticle,
-                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800",
+                          "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800"
                         )}
                         alt={safeStringify(nextArticle.title)}
                         className="h-full w-full object-cover group-hover:scale-110 transition-transform"
@@ -436,7 +477,7 @@ export default async function DetailArtikel({
                     <img
                       src={formatImageUrl(
                         sidebarAd,
-                        "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800",
+                        "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800"
                       )}
                       alt={safeStringify(sidebarAd?.title, "Ad")}
                       className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"

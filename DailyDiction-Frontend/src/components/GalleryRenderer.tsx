@@ -8,14 +8,25 @@ interface GalleryRendererProps {
   htmlContent: string;
 }
 
-// Helper pembersih URL Gambar (Menghapus Localhost, 127.0.0.1, & Relative Path)
+// Helper untuk decode HTML entities (&amp; -> &) agar URL tidak 404 di React
+function decodeHtmlEntities(str: string): string {
+  if (!str) return "";
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+// Helper pembersih URL Gambar (Decodes Entities, Menghapus Localhost, 127.0.0.1, & Relative Path)
 function formatImageUrl(src: string): string {
   if (!src) return "";
-  let clean = src.trim();
+  let clean = decodeHtmlEntities(src.trim());
 
   if (clean.startsWith("data:image") || clean.startsWith("blob:")) return clean;
 
-  // Bersihkan IP / Domain lokal jika terikut di database
+  // Bersihkan IP / Domain lokal jika terikut dari database dev
   if (
     clean.includes("localhost") ||
     clean.includes("127.0.0.1") ||
@@ -46,14 +57,14 @@ function formatImageUrl(src: string): string {
   return clean;
 }
 
-// Helper ekstraksi src yang presisi (\bsrc=) agar tidak terkecoh data-src / srcset
+// Helper ekstraksi src yang presisi (\bsrc=)
 function getImgSrcFromTag(tagStr: string): string {
   if (!tagStr) return "";
   const srcMatch = tagStr.match(/\bsrc=["']([^"']+)["']/i);
   return srcMatch ? srcMatch[1] : "";
 }
 
-// Helper memperbarui semua tag <img> dalam HTML dengan URL absolute
+// Helper memperbarui semua tag <img> dalam HTML dengan URL decoded & absolute
 function formatHtmlImageSrc(html: string): string {
   if (!html) return "";
   return html.replace(
