@@ -3,14 +3,11 @@
 import React from "react";
 import dynamic from "next/dynamic";
 
-// Mematikan SSR khusus TweetRenderer agar TIDAK CRASH / HYDRATION ERROR saat di-refresh
-const TweetRenderer = dynamic(() => import("./TweetRenderer"), {
+const GalleryRenderer = dynamic(() => import("./GalleryRenderer"), {
   ssr: false,
   loading: () => (
-    <div className="w-full my-6 p-6 rounded-xl bg-dark-card/40 border border-dark-border/40 animate-pulse flex flex-col gap-3">
-      <div className="h-4 bg-white/10 rounded w-1/3"></div>
-      <div className="h-4 bg-white/5 rounded w-full"></div>
-      <div className="h-4 bg-white/5 rounded w-2/3"></div>
+    <div className="w-full my-6 aspect-video rounded-2xl bg-dark-card/40 border border-dark-border/40 animate-pulse flex items-center justify-center">
+      <span className="text-xs font-mono text-text-muted">Memuat Konten...</span>
     </div>
   ),
 });
@@ -26,7 +23,7 @@ export default function ArticleContent({ content }: { content: string }) {
 
   return (
     <div className="w-full">
-      <TweetRenderer htmlContent={content} />
+      <GalleryRenderer htmlContent={content} />
 
       <style jsx global>{`
         .rich-text-content {

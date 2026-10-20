@@ -47,6 +47,7 @@ export function formatImageUrl(
 
   const clean = imageUrl.trim();
 
+  // FIX: Menggunakan "\$1" tanpa backslash
   if (
     clean.includes("/storage/http://") ||
     clean.includes("/storage/https://")
