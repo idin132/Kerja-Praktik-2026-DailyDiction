@@ -34,6 +34,13 @@ function formatImageUrl(src: string): string {
   return clean;
 }
 
+// Helper ekstraksi src yang presisi tanpa peduli urutan atribut HTML
+function getImgSrcFromTag(tagStr: string): string {
+  if (!tagStr) return "";
+  const srcMatch = tagStr.match(/src=["']([^"']+)["']/i);
+  return srcMatch ? srcMatch[1] : "";
+}
+
 // Helper untuk memperbarui semua tag <img> dalam string HTML dengan URL absolute
 function formatHtmlImageSrc(html: string): string {
   if (!html) return "";
@@ -50,17 +57,15 @@ export default function GalleryRenderer({ htmlContent }: GalleryRendererProps) {
   const mergedBlocks = useMemo(() => {
     if (!htmlContent) return [];
 
-    // 1. Bersihkan sisa atribut tanpa merusak struktur HTML yang valid
     let cleanHtml = htmlContent
       .replace(/\s*target=["']?_blank["']?/gi, "")
       .replace(/\s*rel=["']?noopener(?:\s+noreferrer)?["']?/gi, "");
 
-    // Normalisasi semua URL tag image di dalam HTML
     cleanHtml = formatHtmlImageSrc(cleanHtml);
 
-    // 2. Regex mendeteksi tag gambar (<figure> atau <img>)
+    // Regex presisi menangkap tag gambar / figure
     const imgRegex =
-      /<figure[^>]*>\s*<img\s+[^>]*?src=["']([^"']+)["'][^>]*?>\s*(?:<figcaption[^>]*>(.*?)<\/figcaption>)?\s*<\/figure>|<img\s+[^>]*?src=["']([^"']+)["'][^>]*?>/gi;
+      /<figure[^>]*>[\s\S]*?<img\s+[^>]*?>[\s\S]*?<\/figure>|<img\s+[^>]*?>/gi;
 
     const matches = Array.from(cleanHtml.matchAll(imgRegex));
 
@@ -75,10 +80,14 @@ export default function GalleryRenderer({ htmlContent }: GalleryRendererProps) {
     matches.forEach((match) => {
       const matchStart = match.index ?? 0;
       const matchEnd = matchStart + match[0].length;
-      const rawSrc = match[1] || match[3] || "";
+      const rawTag = match[0];
+
+      // Ekstrak src & caption secara langsung dari tag HTML yang tercantum
+      const rawSrc = getImgSrcFromTag(rawTag);
       const imgSrc = formatImageUrl(rawSrc);
-      const imgCaption = match[2] ? match[2].replace(/<[^>]+>/g, "").trim() : "";
-      const rawTag = formatHtmlImageSrc(match[0]);
+
+      const captionMatch = rawTag.match(/<figcaption[^>]*>(.*?)<\/figcaption>/i);
+      const imgCaption = captionMatch ? captionMatch[1].replace(/<[^>]+>/g, "").trim() : "";
 
       if (!imgSrc) return;
 
@@ -90,28 +99,23 @@ export default function GalleryRenderer({ htmlContent }: GalleryRendererProps) {
         const prevEnd = currentGroup[currentGroup.length - 1].end;
         const textBetween = cleanHtml.substring(prevEnd, matchStart);
 
-        // Cek apakah ada embed penting (YouTube, Twitter iframe, audio, video) di antara gambar
         const hasEmbed = /<iframe|<blockquote|<script|<video|<audio/i.test(textBetween);
 
-        // Bersihkan string pembatas antar gambar dari elemen kosong bawaan editor
         const cleanedText = textBetween
           .replace(/<p[^>]*>\s*(?:&nbsp;|<br\s*\/?>)?\s*<\/p>/gi, "")
           .replace(/&nbsp;/gi, " ")
           .replace(/<br\s*\/?>|\s+/gi, "")
-          .replace(/<[^>]+>/g, ""); // Hapus semua tag HTML untuk cek isi teks asli
+          .replace(/<[^>]+>/g, "");
 
         if (cleanedText.trim().length === 0 && !hasEmbed) {
-          // Berdampingan langsung tanpa halangan teks bacaan / embed -> GABUNGKAN!
           currentGroup.push({ src: imgSrc, caption: imgCaption, raw: rawTag, end: matchEnd });
         } else {
-          // Ada teks bacaan / iframe di antaranya -> PISAHKAN GAMBAR KE POSISI ASLINYA!
           if (currentGroup.length >= 2) {
             elements.push({
               type: "gallery",
               images: currentGroup.map((img) => ({ src: img.src, caption: img.caption })),
             });
           } else {
-            // Gambar cuma 1, render tag HTML gambar aslinya (berdiri sendiri)
             elements.push(currentGroup[0].raw);
           }
 
@@ -123,7 +127,6 @@ export default function GalleryRenderer({ htmlContent }: GalleryRendererProps) {
       lastIdx = matchEnd;
     });
 
-    // Masukkan sisa grup gambar paling bawah
     if (currentGroup.length >= 2) {
       elements.push({
         type: "gallery",
@@ -137,7 +140,6 @@ export default function GalleryRenderer({ htmlContent }: GalleryRendererProps) {
       elements.push(cleanHtml.substring(lastIdx));
     }
 
-    // 3. MERGE kembali sisa pecahan HTML agar tidak ada TweetRenderer yang dipanggil dobel!
     const finalBlocks: (string | { type: "gallery"; images: GalleryImage[] })[] = [];
     for (const el of elements) {
       if (typeof el === "string") {

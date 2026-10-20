@@ -64,7 +64,9 @@ export default function ArticleContent({ content }: { content: string }) {
           clear: both !important;
         }
 
-        .rich-text-content img {
+        /* Hanya berlaku untuk gambar paragraf standar, TIDAK merusak gambar di dalam galeri (not-prose) */
+        .rich-text-content > :not(.not-prose) img,
+        .rich-text-content figure img {
           max-width: 100% !important;
           height: auto !important;
           border-radius: 0.75rem !important;
