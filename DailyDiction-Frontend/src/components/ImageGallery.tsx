@@ -12,6 +12,7 @@ export interface GalleryImage {
 export default function ImageGallery({ images }: { images: GalleryImage[] }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
 
   if (!images || images.length === 0) return null;
 
@@ -28,25 +29,36 @@ export default function ImageGallery({ images }: { images: GalleryImage[] }) {
     setSelectedIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const { naturalWidth, naturalHeight } = e.currentTarget;
+    setIsPortrait(naturalHeight > naturalWidth);
+  };
+
   return (
     <div className="w-full my-8 space-y-3 not-prose select-none">
-      {/* GAMBAR UTAMA DENGAN BADGE TOTAL FOTO */}
-      <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-dark-border bg-black/60 shadow-2xl group">
+      {/* GAMBAR UTAMA DENGAN BADGE TOTAL FOTO & AUTO ASPECT RATIO */}
+      <div
+        className={`relative w-full overflow-hidden rounded-2xl border border-dark-border bg-black/60 shadow-2xl group transition-all duration-300 ${
+          isPortrait ? "aspect-[2/3] max-w-md mx-auto" : "aspect-video"
+        }`}
+      >
         <img
+          key={mainImage.src}
           src={mainImage.src}
-          alt={mainImage.alt || `Gallery Image \${selectedIndex + 1}`}
-          className="h-full w-full object-cover transition-all duration-300"
+          alt={mainImage.alt || `Gallery Image ${selectedIndex + 1}`}
+          onLoad={handleImageLoad}
+          className="h-full w-full object-contain transition-all duration-300"
         />
 
         {/* Badge Foto Saat Ini */}
-        <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-xs font-mono font-bold text-white border border-white/10">
+        <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-xs font-mono font-bold text-white border border-white/10 z-10">
           {selectedIndex + 1} / {images.length} IMAGES
         </div>
 
         {/* Tombol Zoom Lightbox */}
         <button
           onClick={() => setIsLightboxOpen(true)}
-          className="absolute top-3 right-3 p-2 bg-black/70 backdrop-blur-md rounded-xl text-white hover:text-[#FFD700] hover:bg-black transition-all border border-white/10 opacity-0 group-hover:opacity-100"
+          className="absolute top-3 right-3 p-2 bg-black/70 backdrop-blur-md rounded-xl text-white hover:text-[#FFD700] hover:bg-black transition-all border border-white/10 opacity-0 group-hover:opacity-100 z-10"
           title="Perbesar Foto"
         >
           <Maximize2 className="h-4 w-4" />
@@ -54,7 +66,7 @@ export default function ImageGallery({ images }: { images: GalleryImage[] }) {
 
         {/* Caption jika ada */}
         {mainImage.caption && (
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 pt-10">
+          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 pt-10 z-10">
             <p className="text-xs sm:text-sm text-gray-300 italic text-center font-sans">
               {mainImage.caption}
             </p>
@@ -74,7 +86,7 @@ export default function ImageGallery({ images }: { images: GalleryImage[] }) {
                 key={idx}
                 type="button"
                 onClick={() => setSelectedIndex(idx)}
-                className={`relative aspect-video w-full overflow-hidden rounded-xl border transition-all \${
+                className={`relative aspect-video w-full overflow-hidden rounded-xl border transition-all ${
                   isSelected
                     ? "border-[#FFD700] ring-2 ring-[#FFD700]/50 scale-95 opacity-100"
                     : "border-dark-border opacity-60 hover:opacity-100"
@@ -82,7 +94,7 @@ export default function ImageGallery({ images }: { images: GalleryImage[] }) {
               >
                 <img
                   src={img.src}
-                  alt={img.alt || `Thumbnail \${idx + 1}`}
+                  alt={img.alt || `Thumbnail ${idx + 1}`}
                   className="h-full w-full object-cover"
                 />
 

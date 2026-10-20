@@ -18,9 +18,13 @@ interface CommentItem {
   user_id?: number;
   comment: string;
   created_at?: string;
+  user_name?: string;
+  username?: string;
+  name?: string;
   user?: {
     id?: number;
     name?: string;
+    username?: string;
     role?: string;
   };
 }
@@ -176,7 +180,12 @@ export default function ArticleInteractions({
         const json = await res.json();
         const newCommentObj = json?.data || json;
         if (newCommentObj) {
-          setComments((prev) => [newCommentObj, ...prev]);
+          // Pastikan komentar baru membawa objek user milik currentUser jika API backend tidak eager-load
+          const commentWithUser: CommentItem = {
+            ...newCommentObj,
+            user: newCommentObj.user || (currentUser ? { id: currentUser.id, name: currentUser.name, role: currentUser.role } : undefined),
+          };
+          setComments((prev) => [commentWithUser, ...prev]);
         }
         setCommentInput("");
       }
@@ -341,6 +350,16 @@ export default function ArticleInteractions({
 
             const canDelete = Boolean(currentUser && (isOwner || isSuperAdmin));
 
+            // Resolusi nama user yang berlapis & presisi
+            const authorDisplayName =
+              c?.user?.name ||
+              c?.user?.username ||
+              c?.user_name ||
+              c?.username ||
+              c?.name ||
+              (isOwner ? currentUser?.name : null) ||
+              "Pengguna";
+
             return (
               <div
                 key={c.id}
@@ -349,7 +368,7 @@ export default function ArticleInteractions({
                 <div className="flex items-center justify-between text-xs font-mono text-text-muted">
                   <div className="flex items-center gap-2 text-white font-bold">
                     <UserIcon className="h-3.5 w-3.5 text-[#FFD700]" />
-                    <span>{c?.user?.name || "Member"}</span>
+                    <span>{authorDisplayName}</span>
                     {(c?.user?.role === "superadmin" ||
                       c?.user?.role === "admin") && (
                       <span className="rounded bg-[#FFD700]/20 border border-[#FFD700]/40 px-1.5 py-0.5 text-[9px] font-bold uppercase text-[#FFD700]">
