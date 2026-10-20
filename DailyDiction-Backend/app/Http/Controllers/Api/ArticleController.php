@@ -216,7 +216,7 @@ class ArticleController extends Controller
     {
         try {
             $articles = $this->publishedQuery()
-                ->where('created_at', '>=', now()->subDays(7))  // konten max 7 hari dari sekarang
+                ->where('created_at', '>=', now()->subDays(7))
                 ->orderBy('views', 'desc')
                 ->limit(5)
                 ->get();
@@ -251,7 +251,11 @@ class ArticleController extends Controller
     public function getComments($id)
     {
         try {
-            $comments = Comment::where('article_id', $id)->latest()->get();
+            // Eager load relasi user agar nama pengirim komentar tidak null
+            $comments = Comment::with('user')
+                ->where('article_id', $id)
+                ->latest()
+                ->get();
 
             return response()->json([
                 'status' => 'success',
@@ -273,9 +277,10 @@ class ArticleController extends Controller
                 'comment' => $request->comment
             ]);
 
+            // Sertakan relasi user pada instance komentar baru
             return response()->json([
                 'status' => 'success',
-                'data' => $comment
+                'data' => $comment->load('user')
             ], 201);
         } catch (Throwable $e) {
             return response()->json(['error' => $e->getMessage()], 500);

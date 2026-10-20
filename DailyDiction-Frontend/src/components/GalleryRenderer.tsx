@@ -8,18 +8,30 @@ interface GalleryRendererProps {
   htmlContent: string;
 }
 
-// Helper untuk mensterilkan & memformat URL Gambar agar tidak 404 / broken
+// Helper pembersih URL Gambar (Menghapus Localhost, 127.0.0.1, & Relative Path)
 function formatImageUrl(src: string): string {
   if (!src) return "";
   let clean = src.trim();
 
-  if (clean.startsWith("data:image")) return clean;
+  if (clean.startsWith("data:image") || clean.startsWith("blob:")) return clean;
 
-  if (clean.startsWith("http://")) {
-    clean = clean.replace("http://", "https://");
+  // Bersihkan IP / Domain lokal jika terikut di database
+  if (
+    clean.includes("localhost") ||
+    clean.includes("127.0.0.1") ||
+    (clean.includes("/storage/") && !clean.includes("dailydiction.id"))
+  ) {
+    const storageIdx = clean.indexOf("/storage/");
+    if (storageIdx !== -1) {
+      clean = clean.substring(storageIdx + 1);
+    }
   }
 
-  if (!clean.startsWith("https://")) {
+  if (clean.includes("dailydiction.id/storage/http")) {
+    clean = clean.replace(/https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "\$1");
+  }
+
+  if (!clean.startsWith("http://") && !clean.startsWith("https://")) {
     clean = clean.replace(/^\/+/, "");
     if (!clean.startsWith("storage/")) {
       clean = `storage/${clean}`;
@@ -27,25 +39,25 @@ function formatImageUrl(src: string): string {
     return `https://dailydiction.id/${clean}`;
   }
 
-  if (clean.includes("dailydiction.id/storage/http")) {
-    return clean.replace(/https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "\$1");
+  if (clean.startsWith("http://")) {
+    clean = clean.replace("http://", "https://");
   }
 
   return clean;
 }
 
-// Helper ekstraksi src yang presisi tanpa peduli urutan atribut HTML
+// Helper ekstraksi src yang presisi (\bsrc=) agar tidak terkecoh data-src / srcset
 function getImgSrcFromTag(tagStr: string): string {
   if (!tagStr) return "";
-  const srcMatch = tagStr.match(/src=["']([^"']+)["']/i);
+  const srcMatch = tagStr.match(/\bsrc=["']([^"']+)["']/i);
   return srcMatch ? srcMatch[1] : "";
 }
 
-// Helper untuk memperbarui semua tag <img> dalam string HTML dengan URL absolute
+// Helper memperbarui semua tag <img> dalam HTML dengan URL absolute
 function formatHtmlImageSrc(html: string): string {
   if (!html) return "";
   return html.replace(
-    /<img\s+([^>]*?)src=["']([^"']+)["']([^>]*?)>/gi,
+    /<img\s+([^>]*?)\bsrc=["']([^"']+)["']([^>]*?)>/gi,
     (match, prefix, src, suffix) => {
       const cleanSrc = formatImageUrl(src);
       return `<img ${prefix}src="${cleanSrc}" ${suffix}>`;
@@ -82,7 +94,6 @@ export default function GalleryRenderer({ htmlContent }: GalleryRendererProps) {
       const matchEnd = matchStart + match[0].length;
       const rawTag = match[0];
 
-      // Ekstrak src & caption secara langsung dari tag HTML yang tercantum
       const rawSrc = getImgSrcFromTag(rawTag);
       const imgSrc = formatImageUrl(rawSrc);
 
