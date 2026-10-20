@@ -8,17 +8,59 @@ interface GalleryRendererProps {
   htmlContent: string;
 }
 
+// Helper untuk mensterilkan & memformat URL Gambar agar tidak 404 / broken
+function formatImageUrl(src: string): string {
+  if (!src) return "";
+  let clean = src.trim();
+
+  if (clean.startsWith("data:image")) return clean;
+
+  if (clean.startsWith("http://")) {
+    clean = clean.replace("http://", "https://");
+  }
+
+  if (!clean.startsWith("https://")) {
+    clean = clean.replace(/^\/+/, "");
+    if (!clean.startsWith("storage/")) {
+      clean = `storage/${clean}`;
+    }
+    return `https://dailydiction.id/${clean}`;
+  }
+
+  if (clean.includes("dailydiction.id/storage/http")) {
+    return clean.replace(/https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i, "\$1");
+  }
+
+  return clean;
+}
+
+// Helper untuk memperbarui semua tag <img> dalam string HTML dengan URL absolute
+function formatHtmlImageSrc(html: string): string {
+  if (!html) return "";
+  return html.replace(
+    /<img\s+([^>]*?)src=["']([^"']+)["']([^>]*?)>/gi,
+    (match, prefix, src, suffix) => {
+      const cleanSrc = formatImageUrl(src);
+      return `<img ${prefix}src="${cleanSrc}" ${suffix}>`;
+    }
+  );
+}
+
 export default function GalleryRenderer({ htmlContent }: GalleryRendererProps) {
   const mergedBlocks = useMemo(() => {
     if (!htmlContent) return [];
 
-    // 1. Bersihkan sisa atribut tanpa merusak struktur HTML yang valid! (JANGAN hapus quote sembarangan)
-    const cleanHtml = htmlContent
+    // 1. Bersihkan sisa atribut tanpa merusak struktur HTML yang valid
+    let cleanHtml = htmlContent
       .replace(/\s*target=["']?_blank["']?/gi, "")
       .replace(/\s*rel=["']?noopener(?:\s+noreferrer)?["']?/gi, "");
 
-    // 2. Regex mendeteksi tag gambar
-    const imgRegex = /<figure[^>]*>\s*<img\s+[^>]*?src=["']([^"']+)["'][^>]*?>\s*(?:<figcaption[^>]*>(.*?)<\/figcaption>)?\s*<\/figure>|<img\s+[^>]*?src=["']([^"']+)["'][^>]*?>/gi;
+    // Normalisasi semua URL tag image di dalam HTML
+    cleanHtml = formatHtmlImageSrc(cleanHtml);
+
+    // 2. Regex mendeteksi tag gambar (<figure> atau <img>)
+    const imgRegex =
+      /<figure[^>]*>\s*<img\s+[^>]*?src=["']([^"']+)["'][^>]*?>\s*(?:<figcaption[^>]*>(.*?)<\/figcaption>)?\s*<\/figure>|<img\s+[^>]*?src=["']([^"']+)["'][^>]*?>/gi;
 
     const matches = Array.from(cleanHtml.matchAll(imgRegex));
 
@@ -33,15 +75,17 @@ export default function GalleryRenderer({ htmlContent }: GalleryRendererProps) {
     matches.forEach((match) => {
       const matchStart = match.index ?? 0;
       const matchEnd = matchStart + match[0].length;
-      const imgSrc = match[1] || match[3] || "";
+      const rawSrc = match[1] || match[3] || "";
+      const imgSrc = formatImageUrl(rawSrc);
       const imgCaption = match[2] ? match[2].replace(/<[^>]+>/g, "").trim() : "";
+      const rawTag = formatHtmlImageSrc(match[0]);
 
       if (!imgSrc) return;
 
       if (currentGroup.length === 0) {
         const textBefore = cleanHtml.substring(lastIdx, matchStart);
         if (textBefore) elements.push(textBefore);
-        currentGroup.push({ src: imgSrc, caption: imgCaption, raw: match[0], end: matchEnd });
+        currentGroup.push({ src: imgSrc, caption: imgCaption, raw: rawTag, end: matchEnd });
       } else {
         const prevEnd = currentGroup[currentGroup.length - 1].end;
         const textBetween = cleanHtml.substring(prevEnd, matchStart);
@@ -49,7 +93,7 @@ export default function GalleryRenderer({ htmlContent }: GalleryRendererProps) {
         // Cek apakah ada embed penting (YouTube, Twitter iframe, audio, video) di antara gambar
         const hasEmbed = /<iframe|<blockquote|<script|<video|<audio/i.test(textBetween);
 
-        // Bersihkan string pembatas antar gambar dari elemen kosong bawaan TipTap
+        // Bersihkan string pembatas antar gambar dari elemen kosong bawaan editor
         const cleanedText = textBetween
           .replace(/<p[^>]*>\s*(?:&nbsp;|<br\s*\/?>)?\s*<\/p>/gi, "")
           .replace(/&nbsp;/gi, " ")
@@ -58,9 +102,9 @@ export default function GalleryRenderer({ htmlContent }: GalleryRendererProps) {
 
         if (cleanedText.trim().length === 0 && !hasEmbed) {
           // Berdampingan langsung tanpa halangan teks bacaan / embed -> GABUNGKAN!
-          currentGroup.push({ src: imgSrc, caption: imgCaption, raw: match[0], end: matchEnd });
+          currentGroup.push({ src: imgSrc, caption: imgCaption, raw: rawTag, end: matchEnd });
         } else {
-          // Ada teks bacaan / iframe YouTube di antaranya -> PISAHKAN GAMBAR KE POSISI ASLINYA!
+          // Ada teks bacaan / iframe di antaranya -> PISAHKAN GAMBAR KE POSISI ASLINYA!
           if (currentGroup.length >= 2) {
             elements.push({
               type: "gallery",
@@ -70,10 +114,10 @@ export default function GalleryRenderer({ htmlContent }: GalleryRendererProps) {
             // Gambar cuma 1, render tag HTML gambar aslinya (berdiri sendiri)
             elements.push(currentGroup[0].raw);
           }
-          
+
           if (textBetween) elements.push(textBetween);
-          
-          currentGroup = [{ src: imgSrc, caption: imgCaption, raw: match[0], end: matchEnd }];
+
+          currentGroup = [{ src: imgSrc, caption: imgCaption, raw: rawTag, end: matchEnd }];
         }
       }
       lastIdx = matchEnd;

@@ -25,6 +25,7 @@ interface CommentItem {
     id?: number;
     name?: string;
     username?: string;
+    email?: string;
     role?: string;
   };
 }
@@ -180,10 +181,17 @@ export default function ArticleInteractions({
         const json = await res.json();
         const newCommentObj = json?.data || json;
         if (newCommentObj) {
-          // Pastikan komentar baru membawa objek user milik currentUser jika API backend tidak eager-load
           const commentWithUser: CommentItem = {
             ...newCommentObj,
-            user: newCommentObj.user || (currentUser ? { id: currentUser.id, name: currentUser.name, role: currentUser.role } : undefined),
+            user:
+              newCommentObj.user ||
+              (currentUser
+                ? {
+                    id: currentUser.id,
+                    name: currentUser.name,
+                    role: currentUser.role,
+                  }
+                : undefined),
           };
           setComments((prev) => [commentWithUser, ...prev]);
         }
@@ -350,15 +358,16 @@ export default function ArticleInteractions({
 
             const canDelete = Boolean(currentUser && (isOwner || isSuperAdmin));
 
-            // Resolusi nama user yang berlapis & presisi
+            // Penentuan nama user yang komprehensif
             const authorDisplayName =
               c?.user?.name ||
               c?.user?.username ||
+              (c?.user?.email ? c.user.email.split("@")[0] : null) ||
               c?.user_name ||
               c?.username ||
               c?.name ||
               (isOwner ? currentUser?.name : null) ||
-              "Pengguna";
+              "Member";
 
             return (
               <div
