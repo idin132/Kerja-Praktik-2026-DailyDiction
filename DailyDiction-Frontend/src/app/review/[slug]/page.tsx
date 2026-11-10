@@ -22,6 +22,7 @@ import ViewTracker from "@/components/ViewTracker";
 import ArticleContent from "@/components/ArticleContent";
 import TrendingSection from "@/components/TrendingSection";
 import LatestNewsSection from "@/components/LatestNewsSection";
+import StickySidebar from "@/components/StickySidebar";
 
 export const revalidate = 60;
 
@@ -122,7 +123,7 @@ function formatImageUrl(
     if (clean.includes("dailydiction.id/storage/http")) {
       clean = clean.replace(
         /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
-        "\$1"
+        "$1"
       );
     }
 
@@ -199,7 +200,7 @@ function parseContentMedia(content: any): string {
       if (cleanSrc.includes("dailydiction.id/storage/http")) {
         cleanSrc = cleanSrc.replace(
           /https?:\/\/[^\/]+\/storage\/(https?:\/\/)/i,
-          "\$1"
+          "$1"
         );
       }
 
@@ -477,7 +478,7 @@ export default async function DetailReview({
             </div>
 
             {/* SIDEBAR STICKY */}
-            <aside className="lg:col-span-4 w-full self-start lg:sticky lg:top-24 space-y-6">
+            <StickySidebar>
               <ShareWidget title={safeStringify(review.title)} />
 
               <div>
@@ -546,7 +547,7 @@ export default async function DetailReview({
 
               <TrendingSection />
               <LatestNewsSection />
-            </aside>
+            </StickySidebar>
           </div>
         </div>
       </main>

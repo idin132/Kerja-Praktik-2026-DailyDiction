@@ -16,6 +16,7 @@ import {
 import { getYouTubeVideos } from "@/lib/youtube";
 import { Flame, Star, ArrowRight } from "lucide-react";
 import TrendingSection from "@/components/TrendingSection";
+import StickySidebar from "@/components/StickySidebar";
 
 // OPTIMASI LCP: ISR (Cache 60 Detik)
 export const revalidate = 60;
@@ -294,7 +295,11 @@ export default async function Home() {
           </div>
 
           {/* KOLOM KANAN (SIDEBAR STICKY) */}
-          <aside className="xl:col-span-4 2xl:col-span-3 space-y-8 w-full self-start xl:sticky xl:top-24">
+          <StickySidebar
+            className="xl:col-span-4 2xl:col-span-3 xl:self-stretch"
+            innerClassName="space-y-8"
+            minBreakpoint={1280}
+          >
             <div className="w-full flex justify-center">
               <div className="w-full max-w-[330px] aspect-[4/3] rounded-xl border border-dashed border-dark-border bg-dark-bg/30 relative overflow-hidden group flex items-center justify-center">
                 <AdCarousel
@@ -309,7 +314,7 @@ export default async function Home() {
 
             <DiscordWidget />
             <TrendingSection />
-          </aside>
+          </StickySidebar>
         </div>
       </main>
 
