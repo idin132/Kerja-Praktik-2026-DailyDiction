@@ -29,14 +29,22 @@ function TiktokIcon({ className }: { className?: string }) {
   );
 }
 
+const categoryLinks = [
+  { name: "News", href: "/news" },
+  { name: "Review", href: "/review" },
+  { name: "Technology", href: "/technology" },
+  { name: "Entertainment", href: "/entertainment" },
+  { name: "Holiday Rush", href: "/holiday-rush" },
+];
+
 export default function Footer() {
   return (
     <footer className="mt-20 border-t border-dark-border bg-dark-card/50 backdrop-blur-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         {/* Main Grid */}
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12">
           {/* Brand Info */}
-          <div className="md:col-span-2 space-y-4">
+          <div className="sm:col-span-2 lg:col-span-5 space-y-4">
             <Link
               href="/"
               className="flex items-center gap-2 font-mono text-xl font-black tracking-wider text-text-primary group"
@@ -54,38 +62,57 @@ export default function Footer() {
 
             <p className="max-w-sm text-sm text-text-muted leading-relaxed">
               Situs portal berita, media review jujur, dan wadah berkumpulnya
-              komunitas gamer paling santai di Indonesia. Dapatkan update game &
+              komunitas gamer paling santai di Indonesia. Dapatkan update game &amp;
               pop-culture harianmu di sini!
             </p>
           </div>
 
           {/* Navigasi Kategori */}
-          <div>
+          <div className="lg:col-span-3">
             <h4 className="mb-4 text-xs font-mono font-bold uppercase tracking-widest text-text-primary">
               Kategori
             </h4>
             <ul className="space-y-2.5 text-sm text-text-muted">
+              {categoryLinks.map((item) => (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    className="transition-colors hover:text-[#FFD700]"
+                  >
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Tentang Kami */}
+          <div className="lg:col-span-2">
+            <h4 className="mb-4 text-xs font-mono font-bold uppercase tracking-widest text-text-primary">
+              Tentang Kami
+            </h4>
+            <ul className="space-y-2.5 text-sm text-text-muted">
               <li>
                 <Link
-                  href="/news"
+                  href="/about"
                   className="transition-colors hover:text-[#FFD700]"
                 >
-                  Berita Utama
+                  About Us
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/review"
+                <a
+                  href="mailto:business@dailydiction.id"
                   className="transition-colors hover:text-[#FFD700]"
                 >
-                  Ulasan Komplit
-                </Link>
+                  Kolaborasi
+                </a>
               </li>
             </ul>
           </div>
 
           {/* Social Media Links */}
-          <div>
+          <div className="lg:col-span-2">
             <h4 className="mb-4 text-xs font-mono font-bold uppercase tracking-widest text-text-primary">
               Media Sosial
             </h4>

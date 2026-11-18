@@ -17,6 +17,7 @@ import {
   Cpu,
   Tv2,
   Sparkles,
+  Info,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -36,6 +37,7 @@ export default function Navbar() {
     { name: "TECHNOLOGY", href: "/technology", icon: Cpu },
     { name: "ENTERTAINMENT", href: "/entertainment", icon: Tv2 },
     { name: "HOLIDAY RUSH", href: "/holiday-rush", icon: Sparkles },
+    { name: "ABOUT", href: "/about", icon: Info },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -139,7 +141,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Navigation Links (Hanya aktif di resolusi layar laptop/desktop xl ke atas) */}
-        <nav className="hidden xl:flex items-center gap-6 text-xs lg:text-sm font-medium text-text-muted">
+        <nav className="hidden xl:flex items-center gap-5 text-xs lg:text-sm font-medium text-text-muted">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
