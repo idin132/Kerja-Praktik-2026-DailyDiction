@@ -9,42 +9,42 @@ export const metadata: Metadata = {
 
 const teamMembers = [
   {
-    name: 'Bg Dito',
+    name: 'Dito Wangsa',
     role: 'Co-Founder',
     image: '/image/team/dito.png',
     instagram:
       'https://www.instagram.com/ditowangsa?utm_source=ig_web_button_share_sheet&gwpx=ZDNlZDc0MzIxNw==',
   },
   {
-    name: 'Bg Rizki',
+    name: 'Rizki Abdallah',
     role: 'Co-Founder',
     image: '/image/team/rizki.png',
     instagram:
       'https://www.instagram.com/rizki_abdallah?utm_source=ig_web_button_share_sheet&evlk=ZDNlZDc0MzIxNw==',
   },
   {
-    name: 'Bg Lendi',
+    name: 'Lendy Purtanto',
     role: 'Creative Manager',
     image: '/image/team/lendy.png',
     instagram:
       'https://www.instagram.com/letroo_?utm_source=ig_web_button_share_sheet&cnvx=ZDNlZDc0MzIxNw==',
   },
   {
-    name: 'Om Albert',
+    name: 'Albert Iskandar',
     role: 'Adviser',
     image: '/image/team/albert.png',
     instagram:
       'https://www.instagram.com/albertisk007/?utm_source=ig_web_button_share_sheet',
   },
   {
-    name: 'Yasfiro',
+    name: 'Yasfiro Blessahangga',
     role: 'Project Manager',
     image: '/image/team/firo.png',
     instagram:
       'https://www.instagram.com/yasfiro16?utm_source=ig_web_button_share_sheet&dmpr=ZDNlZDc0MzIxNw==',
   },
   {
-    name: 'Omul',
+    name: 'Rafi Nizhomul',
     role: 'Editor',
     image: '/image/team/omul.png',
     instagram:
