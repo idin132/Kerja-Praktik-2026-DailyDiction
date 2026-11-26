@@ -13,11 +13,10 @@ import {
   Filter,
   Cpu,
   ArrowUpRight,
-  ChevronLeft,
-  ChevronRight,
   Send,
 } from "lucide-react";
 import TrendingSection from "@/components/TrendingSection";
+import Pagination from "@/components/Pagination";
 
 interface TechItem {
   id: number;
@@ -370,41 +369,11 @@ export default function TechnologyPage() {
                     </motion.div>
                   </AnimatePresence>
 
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 pt-8 font-mono text-xs">
-                      <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700] disabled:opacity-30 disabled:pointer-events-none"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                        (pageNum) => (
-                          <button
-                            key={pageNum}
-                            onClick={() => handlePageChange(pageNum)}
-                            className={`h-9 min-w-[36px] px-3 rounded-xl font-bold transition-all ${
-                              currentPage === pageNum
-                                ? "bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.4)]"
-                                : "border border-dark-border bg-dark-card text-text-muted hover:border-[#FFD700] hover:text-text-primary"
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        ),
-                      )}
-
-                      <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-dark-border bg-dark-card text-text-muted transition-all hover:border-[#FFD700] hover:text-[#FFD700] disabled:opacity-30 disabled:pointer-events-none"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                  />
                 </>
               ) : (
                 <div className="rounded-2xl border border-dark-border bg-dark-card p-12 text-center font-mono">

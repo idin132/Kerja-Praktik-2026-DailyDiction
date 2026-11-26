@@ -30,7 +30,7 @@ function TiktokIcon({ className }: { className?: string }) {
 }
 
 const categoryLinks = [
-  { name: "News", href: "/news" },
+  { name: "Game", href: "/game" },
   { name: "Review", href: "/review" },
   { name: "Technology", href: "/technology" },
   { name: "Entertainment", href: "/entertainment" },

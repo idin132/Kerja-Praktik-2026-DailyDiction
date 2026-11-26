@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,25 +18,52 @@ import {
   Tv2,
   Sparkles,
   Info,
+  Wallet,
+  ChevronDown,
+  Gamepad2,
 } from "lucide-react";
+
+type NavSubItem = {
+  name: string;
+  href: string;
+  icon: typeof Flame;
+};
+
+type NavLinkItem = {
+  name: string;
+  href?: string;
+  icon: typeof Flame;
+  external?: boolean;
+  children?: NavSubItem[];
+};
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [mobileOpenMenu, setMobileOpenMenu] = useState<string | null>(null);
   const [keyword, setKeyword] = useState("");
   const [user, setUser] = useState<{ name: string } | null>(null);
+  const navRef = useRef<HTMLElement | null>(null);
 
   const pathname = usePathname();
   const router = useRouter();
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL || "https://dailydiction.id/api/v1";
 
-  const navLinks = [
+  const navLinks: NavLinkItem[] = [
     { name: "HOME", href: "/", icon: Flame },
-    { name: "NEWS", href: "/news", icon: Newspaper },
+    {
+      name: "NEWS",
+      icon: Newspaper,
+      children: [
+        { name: "GAME", href: "/game", icon: Gamepad2 },
+        { name: "TECHNOLOGY", href: "/technology", icon: Cpu },
+        { name: "ENTERTAINMENT", href: "/entertainment", icon: Tv2 },
+      ],
+    },
     { name: "REVIEW", href: "/review", icon: Star },
-    { name: "TECHNOLOGY", href: "/technology", icon: Cpu },
-    { name: "ENTERTAINMENT", href: "/entertainment", icon: Tv2 },
     { name: "HOLIDAY RUSH", href: "/holiday-rush", icon: Sparkles },
+    { name: "TOPUP", href: "https://topup.dailydiction.id/", icon: Wallet, external: true, },
     { name: "ABOUT", href: "/about", icon: Info },
   ];
 
@@ -57,6 +84,27 @@ export default function Navbar() {
         setUser(null);
       }
     }
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -141,17 +189,102 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Navigation Links (Hanya aktif di resolusi layar laptop/desktop xl ke atas) */}
-        <nav className="hidden xl:flex items-center gap-5 text-xs lg:text-sm font-medium text-text-muted">
+        <nav
+          ref={navRef}
+          className="hidden xl:flex items-center gap-4 2xl:gap-5 text-xs lg:text-sm font-medium text-text-muted"
+        >
           {navLinks.map((link) => {
-            const isActive = pathname === link.href;
-            return (
-              <Link
+            if (link.children) {
+              const isChildActive = link.children.some(
+                (child) => pathname === child.href
+              );
+              const isDropdownOpen = openDropdown === link.name;
+
+              return (
+                <div
+                  key={link.name}
+                  className="relative"
+                  onMouseEnter={() => setOpenDropdown(link.name)}
+                  onMouseLeave={() => setOpenDropdown(null)}
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOpenDropdown(isDropdownOpen ? null : link.name)
+                    }
+                    aria-expanded={isDropdownOpen}
+                    aria-haspopup="menu"
+                    className={`transition-colors hover:text-[#FFD700] flex items-center gap-1 whitespace-nowrap cursor-pointer ${
+                      isChildActive || isDropdownOpen
+                        ? "font-bold text-[#FFD700]"
+                        : ""
+                    }`}
+                  >
+                    <span>{link.name}</span>
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                        isDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  <AnimatePresence>
+                    {isDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 6 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        role="menu"
+                        className="absolute left-0 top-full pt-2.5 z-50"
+                      >
+                        <div className="w-52 rounded-xl border border-dark-border bg-dark-card/98 backdrop-blur-xl p-1.5 shadow-2xl space-y-0.5">
+                          {link.children.map((child) => {
+                            const ChildIcon = child.icon;
+                            const isSubActive = pathname === child.href;
+                            return (
+                              <Link
+                                key={child.name}
+                                href={child.href}
+                                role="menuitem"
+                                onClick={() => setOpenDropdown(null)}
+                                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                                  isSubActive
+                                    ? "bg-[#FFD700]/15 text-[#FFD700] font-bold"
+                                    : "text-text-muted hover:bg-dark-bg hover:text-[#FFD700]"
+                                }`}
+                              >
+                                <ChildIcon className="h-3.5 w-3.5 shrink-0" />
+                                <span>{child.name}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            }
+
+            const href = link.href || "/";
+            const isActive = !link.external && pathname === href;
+            const linkClassName = `transition-colors hover:text-[#FFD700] flex items-center gap-1.5 whitespace-nowrap ${
+              isActive ? "font-bold text-[#FFD700]" : ""
+            }`;
+
+            return link.external ? (
+              <a
                 key={link.name}
-                href={link.href}
-                className={`transition-colors hover:text-[#FFD700] flex items-center gap-1.5 whitespace-nowrap ${
-                  isActive ? "font-bold text-[#FFD700]" : ""
-                }`}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={linkClassName}
               >
+                <span>{link.name}</span>
+              </a>
+            ) : (
+              <Link key={link.name} href={href} className={linkClassName}>
                 <span>{link.name}</span>
               </Link>
             );
@@ -272,23 +405,108 @@ export default function Navbar() {
               <div className="space-y-1.5 pt-1">
                 {navLinks.map((link) => {
                   const Icon = link.icon;
-                  const isActive = pathname === link.href;
 
-                  return (
+                  if (link.children) {
+                    const isChildActive = link.children.some(
+                      (child) => pathname === child.href
+                    );
+                    const isSubOpen = mobileOpenMenu === link.name;
+
+                    return (
+                      <div key={link.name} className="space-y-1">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setMobileOpenMenu(isSubOpen ? null : link.name)
+                          }
+                          aria-expanded={isSubOpen}
+                          className={`flex w-full items-center justify-between rounded-xl px-4 py-3 font-bold transition-all text-xs sm:text-sm ${
+                            isChildActive
+                              ? "bg-[#FFD700]/15 border border-[#FFD700]/40 text-[#FFD700]"
+                              : "text-text-muted hover:bg-dark-bg hover:text-[#FFD700]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Icon className="h-4 w-4" />
+                            <span>{link.name}</span>
+                          </div>
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform duration-200 ${
+                              isSubOpen ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+
+                        <AnimatePresence initial={false}>
+                          {isSubOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2, ease: "easeInOut" }}
+                              className="overflow-hidden pl-4 space-y-1"
+                            >
+                              {link.children.map((child) => {
+                                const ChildIcon = child.icon;
+                                const isSubActive = pathname === child.href;
+                                return (
+                                  <Link
+                                    key={child.name}
+                                    href={child.href}
+                                    onClick={() => {
+                                      setIsOpen(false);
+                                      setMobileOpenMenu(null);
+                                    }}
+                                    className={`flex items-center gap-3 rounded-xl px-4 py-2.5 font-bold transition-all text-xs sm:text-sm ${
+                                      isSubActive
+                                        ? "bg-[#FFD700]/15 border border-[#FFD700]/40 text-[#FFD700]"
+                                        : "text-text-muted hover:bg-dark-bg hover:text-[#FFD700]"
+                                    }`}
+                                  >
+                                    <ChildIcon className="h-4 w-4" />
+                                    <span>{child.name}</span>
+                                  </Link>
+                                );
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  }
+
+                  const href = link.href || "/";
+                  const isActive = !link.external && pathname === href;
+                  const itemClassName = `flex items-center justify-between rounded-xl px-4 py-3 font-bold transition-all text-xs sm:text-sm ${isActive
+                      ? "bg-[#FFD700]/15 border border-[#FFD700]/40 text-[#FFD700]"
+                      : "text-text-muted hover:bg-dark-bg hover:text-[#FFD700]"
+                    }`;
+                  const content = (
+                    <div className="flex items-center gap-3">
+                      <Icon className="h-4 w-4" />
+                      <span>{link.name}</span>
+                    </div>
+                  );
+
+                  return link.external ? (
+                    <a
+                      key={link.name}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsOpen(false)}
+                      className={itemClassName}
+                    >
+                      {content}
+                    </a>
+                  ) : (
                     <Link
                       key={link.name}
-                      href={link.href}
+                      href={href}
                       onClick={() => setIsOpen(false)}
-                      className={`flex items-center justify-between rounded-xl px-4 py-3 font-bold transition-all text-xs sm:text-sm ${
-                        isActive
-                          ? "bg-[#FFD700]/15 border border-[#FFD700]/40 text-[#FFD700]"
-                          : "text-text-muted hover:bg-dark-bg hover:text-[#FFD700]"
-                      }`}
+                      className={itemClassName}
                     >
-                      <div className="flex items-center gap-3">
-                        <Icon className="h-4 w-4" />
-                        <span>{link.name}</span>
-                      </div>
+                      {content}
                     </Link>
                   );
                 })}

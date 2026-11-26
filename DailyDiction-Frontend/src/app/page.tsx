@@ -187,7 +187,7 @@ export default async function Home() {
                   </h2>
                 </div>
                 <a
-                  href="/news"
+                  href="/game"
                   className="flex items-center gap-1 text-xs font-mono font-bold text-[#FFD700] hover:underline hover:opacity-80 transition-opacity"
                 >
                   <span>ALL NEWS</span>

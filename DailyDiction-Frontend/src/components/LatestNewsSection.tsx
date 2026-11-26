@@ -153,7 +153,7 @@ export default function LatestNewsSection() {
           </h2>
         </div>
         <Link
-          href="/news"
+          href="/game"
           className="text-xs font-mono font-bold text-[#FFD700] hover:underline flex items-center gap-1"
         >
           <span>LIHAT ALL</span>
